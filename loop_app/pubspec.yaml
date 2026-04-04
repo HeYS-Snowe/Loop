@@ -1,0 +1,62 @@
+name: loop
+description: Loop - 周期计划管理应用
+publish_to: 'none'
+version: 0.0.1+1
+
+environment:
+  sdk: '>=3.6.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  flutter_riverpod: ^2.6.1
+  go_router: ^14.8.0
+  drift: ^2.22.1
+  sqlite3_flutter_libs: ^0.5.0
+  shared_preferences: ^2.3.5
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.10.0
+  fl_chart: ^0.70.2
+  table_calendar: ^3.1.3
+  flutter_animate: ^4.5.2
+  uuid: ^4.5.1
+  intl: ^0.20.2
+  path_provider: ^2.1.5
+  path: ^1.9.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  drift_dev: ^2.22.1
+  build_runner: ^2.4.13
+
+flutter:
+  generate: true
+  uses-material-design: true
+
+  fonts:
+    - family: MiSans
+      fonts:
+        - asset: fonts/ttf/MiSans-Thin.ttf
+          weight: 100
+        - asset: fonts/ttf/MiSans-ExtraLight.ttf
+          weight: 200
+        - asset: fonts/ttf/MiSans-Light.ttf
+          weight: 300
+        - asset: fonts/ttf/MiSans-Regular.ttf
+          weight: 400
+        - asset: fonts/ttf/MiSans-Medium.ttf
+          weight: 500
+        - asset: fonts/ttf/MiSans-Semibold.ttf
+          weight: 600
+        - asset: fonts/ttf/MiSans-Bold.ttf
+          weight: 700
+        - asset: fonts/ttf/MiSans-Heavy.ttf
+          weight: 800
+    - family: HunYuan
+      fonts:
+        - asset: fonts/ttf/潮字社混元简繁.ttf

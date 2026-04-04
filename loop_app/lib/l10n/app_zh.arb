@@ -1,0 +1,291 @@
+{
+  "@@locale": "zh",
+
+  "appName": "Loop",
+
+  "home": "首页",
+  "dailyPlan": "日计划",
+  "statistics": "统计",
+  "settings": "设置",
+
+  "todayPlan": "今日计划",
+  "viewAll": "查看全部",
+  "currentCycle": "当前周期",
+  "historyCycle": "历史周期",
+  "createCycle": "创建新周期",
+  "startFirstCycle": "开始你的第一个周期计划",
+  "noHistoryCycle": "暂无历史周期",
+  "createTodayPlan": "创建今日计划",
+  "startPlanDay": "开始规划你的一天",
+  "completed": "已完成",
+  "inProgress": "进行中",
+  "total": "总计",
+  "loadFailed": "加载失败: {error}",
+  "@loadFailed": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "unknownPlan": "未知计划",
+
+  "dailyCheckIn": "每日打卡",
+  "checkedInToday": "今日已打卡",
+  "notCheckedInToday": "今日未打卡",
+  "dayUnit": "天",
+  "checkInNow": "立即打卡",
+
+  "daysRemaining": "{count} 天剩余",
+  "@daysRemaining": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+
+  "streakCheckIn": "连续打卡",
+  "maxRecord": "最长记录",
+  "totalCheckIn": "累计打卡",
+
+  "checkIn": "打卡",
+  "checkInCalendar": "打卡日历",
+  "clickToCheckIn": "点击打卡",
+  "streakDays": "已连续 {count} 天",
+  "@streakDays": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+
+  "pageNotFound": "页面不存在",
+  "backToHome": "返回首页",
+
+  "dateYearMonthDay": "{year}年{month}月{day}日",
+  "@dateYearMonthDay": {
+    "placeholders": {
+      "year": {"type": "int"},
+      "month": {"type": "int"},
+      "day": {"type": "int"}
+    }
+  },
+
+  "dailyReminder": "每日提醒",
+  "dailyReminderBody": "每日任务提醒通知",
+
+  "editPlan": "编辑计划",
+  "createPlan": "创建计划",
+  "basicInfo": "基本信息",
+  "planName": "计划名称",
+  "planNameHint": "例如: 背英语单词",
+  "descriptionOptional": "描述(可选)",
+  "descriptionHint": "计划的详细说明",
+  "quantityTarget": "数量目标",
+  "dailyTarget": "每日目标",
+  "unit": "单位",
+  "unitHint": "个/分钟",
+  "enableQuantityValidation": "启用数量验证",
+  "enableQuantityValidationDesc": "开启后需输入完成数量",
+  "timeSlot": "时间段",
+  "timeSlotDesc": "设置计划在课程表中的显示时间",
+  "startTime": "开始时间",
+  "endTime": "结束时间",
+  "tapToEdit": "点击修改",
+  "selectStartTime": "选择开始时间",
+  "selectEndTime": "选择结束时间",
+  "cardColor": "卡片颜色",
+  "cardColorDesc": "选择在课程表中的显示颜色",
+  "repeatRule": "重复规则",
+  "noRepeat": "不重复",
+  "repeatDaily": "每天",
+  "repeatWeekly": "每周",
+  "repeatMonthly": "每月",
+  "repeatInterval": "自定义间隔",
+  "every": "每",
+  "repeatEveryDay": "天重复一次",
+  "activeDate": "活动日期",
+  "executeDaily": "每天执行",
+  "selectWeekdays": "选择要执行计划的星期",
+  "weekday": "工作日",
+  "everyday": "每天",
+  "weekend": "周末",
+  "timeRange": "时间范围",
+  "startDate": "开始日期",
+  "endDate": "结束日期",
+  "unlimited": "不限",
+  "saveChanges": "保存修改",
+  "pleaseEnter": "请输入{label}",
+  "@pleaseEnter": {
+    "placeholders": {
+      "label": {"type": "String"}
+    }
+  },
+  "pleaseSelectActiveDate": "请至少选择一个活动日期",
+  "planUpdated": "计划已更新",
+  "planCreated": "计划已创建",
+  "operationFailed": "操作失败: {error}",
+  "@operationFailed": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+
+  "timePickerDefaultTitle": "选择提醒时间",
+  "timePicker24Hour": "24小时制",
+  "hourUnit": "时",
+  "minuteUnit": "分",
+  "cancel": "取消",
+  "confirm": "确认",
+
+  "taskList": "任务列表",
+  "noActiveCycle": "暂无活动周期",
+  "pleaseCreateCycleFirst": "请先创建一个周期计划",
+  "createCycleBtn": "创建周期",
+  "noTask": "暂无任务",
+  "addTaskHint": "点击右下角按钮添加任务",
+  "inProgressCount": "进行中 ({count})",
+  "@inProgressCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "completedCount": "已完成 ({count})",
+  "@completedCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+
+  "taskDetail": "任务详情",
+  "taskNotExist": "任务不存在",
+  "progress": "进度",
+  "updateProgress": "更新进度",
+
+  "addTask": "添加任务",
+  "taskName": "任务名称",
+  "descOptional": "描述（可选）",
+  "targetAmount": "目标数量",
+  "unitOptional": "单位（可选）",
+  "repeatable": "可重复",
+  "repeatableDesc": "在新周期中自动创建",
+  "add": "添加",
+  "taskCreatedSuccess": "任务创建成功",
+
+  "editTask": "编辑任务",
+  "save": "保存",
+  "taskUpdated": "任务已更新",
+  "updateFailed": "更新失败: {error}",
+  "@updateFailed": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+
+  "editCycle": "编辑周期",
+  "cycleName": "周期名称",
+  "cycleNameHint": "例如：第一周学习计划",
+  "cycleDescHint": "为这个周期添加备注",
+  "cycleTime": "周期时间",
+  "totalDays": "共 {count} 天",
+  "@totalDays": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "quickSelectCycle": "快速选择周期",
+  "oneWeek": "1周",
+  "twoWeeks": "2周",
+  "threeWeeks": "3周",
+  "oneMonth": "1个月",
+  "twoMonths": "2个月",
+  "threeMonths": "3个月",
+  "cycleUpdated": "周期已更新",
+  "cycleCreatedSuccess": "周期创建成功",
+
+  "mon": "一",
+  "tue": "二",
+  "wed": "三",
+  "thu": "四",
+  "fri": "五",
+  "sat": "六",
+  "sun": "日",
+
+  "monday": "周一",
+  "tuesday": "周二",
+  "wednesday": "周三",
+  "thursday": "周四",
+  "friday": "周五",
+  "saturday": "周六",
+  "sunday": "周日",
+
+  "schedule": "行程表",
+  "loadFailedShort": "加载失败",
+  "thisWeek": "本周",
+  "lastWeek": "上周",
+  "nextWeek": "下周",
+  "weekAgo": "周前",
+  "weekLater": "周后",
+  "session": "节次",
+  "noCyclePlan": "暂无周期计划",
+  "createCycleScheduleHint": "创建一个周期计划后\n行程表将自动展示你的任务安排",
+
+  "noCycleData": "暂无周期数据",
+  "cycleStats": "周期统计",
+  "avgCompletionRate": "平均完成率 {rate}%",
+  "@avgCompletionRate": {
+    "placeholders": {
+      "rate": {"type": "int"}
+    }
+  },
+  "weeklyPlanStats": "本周计划统计",
+  "noWeeklyPlanData": "本周暂无计划数据",
+  "createPlanWeeklyHint": "创建计划后这里会显示每周统计",
+  "completionRate": "完成率",
+  "completedAmount": "已完成",
+  "totalAmount": "总数量",
+  "dailyCompletion": "每日完成量",
+  "target": "目标",
+  "finish": "完成",
+
+  "general": "通用",
+  "notificationReminder": "通知提醒",
+  "dailyCheckInReminder": "每日打卡提醒",
+  "reminderTime": "提醒时间",
+  "cycleSection": "周期",
+  "defaultCycleDays": "默认周期天数",
+  "autoContinueCycle": "自动延续周期",
+  "turnedOn": "已开启",
+  "turnedOff": "已关闭",
+  "categoryManagement": "分类管理",
+  "dataSection": "数据",
+  "exportData": "导出数据",
+  "exportDataDesc": "备份周期和打卡记录",
+  "clearAllData": "清除所有数据",
+  "clearDataWarning": "此操作不可撤销",
+  "cyclePlanManagement": "周期计划管理",
+  "taskCategory": "任务分类",
+  "addCategory": "添加分类",
+  "categoryName": "分类名称",
+  "categoryExample": "例如：学习、运动",
+  "selectColor": "选择颜色",
+  "noCategory": "暂无分类，点击添加",
+  "confirmDelete": "确认删除",
+  "clearDataConfirm": "确定要清除所有数据吗？此操作不可撤销。",
+  "allDataCleared": "所有数据已清除",
+  "delete": "删除",
+
+  "time": "时间",
+  "completedAmountLabel": "完成量:",
+
+  "generalSettings": "通用设置",
+  "language": "语言",
+  "languageZh": "中文",
+  "languageEn": "English",
+
+  "taskNameRequired": "请输入任务名称",
+  "taskNameTooLong": "任务名称不能超过50字符",
+  "targetMustBePositive": "目标量必须大于0",
+  "cycleNameRequired": "请输入周期名称",
+  "cycleNameTooLong": "周期名称不能超过30字符",
+  "selectDateRange": "请选择开始和结束日期",
+  "endDateBeforeStart": "结束日期不能早于开始日期",
+  "categoryNameRequired": "请输入分类名称",
+  "categoryNameTooLong": "分类名称不能超过20字符"
+}

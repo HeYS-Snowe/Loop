@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"[Environment]::SetEnvironmentVariable\\('ANDROID_HOME', 'D:\\\\Android\\\\Sdk', 'User'\\)\")",
+      "Bash(powershell -Command \"[Environment]::SetEnvironmentVariable\\('ANDROID_SDK_ROOT', 'D:\\\\Android\\\\Sdk', 'User'\\)\")",
+      "Bash(powershell -Command \"[Environment]::SetEnvironmentVariable\\('FLUTTER_ROOT', 'D:\\\\Flutter-SDK', 'User'\\)\")",
+      "Bash(echo \"=== ANDROID_HOME \\(User\\) ===\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('ANDROID_HOME', 'User'\\)\" && echo \"\" && echo \"=== ANDROID_HOME \\(System\\) ===\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('ANDROID_HOME', 'Machine'\\)\" && echo \"\" && echo \"=== ANDROID_SDK_ROOT \\(User\\) ===\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('ANDROID_SDK_ROOT', 'User'\\)\" && echo \"\" && echo \"=== ANDROID_SDK_ROOT \\(System\\) ===\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('ANDROID_SDK_ROOT', 'Machine'\\)\" && echo \"\" && echo \"=== FLUTTER_ROOT \\(User\\) ===\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('FLUTTER_ROOT', 'User'\\)\" && echo \"\" && echo \"=== FLUTTER_ROOT \\(System\\) ===\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('FLUTTER_ROOT', 'Machine'\\)\")",
+      "Bash(echo \"=== PATH \\(User\\) ===\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('Path', 'User'\\)\" | tr ';' '\\\\n' | grep -iE \"\\(android|flutter|dart\\)\" && echo \"\" && echo \"=== PATH \\(System\\) ===\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('Path', 'Machine'\\)\" | tr ';' '\\\\n' | grep -iE \"\\(android|flutter|dart\\)\")",
+      "Bash(echo \"=== GRADLE_HOME \\(User\\) ===\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('GRADLE_HOME', 'User'\\)\" && echo \"\" && echo \"=== GRADLE_HOME \\(System\\) ===\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('GRADLE_HOME', 'Machine'\\)\" && echo \"\" && echo \"=== PATH \\(User\\) - Gradle ===\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('Path', 'User'\\)\" | tr ';' '\\\\n' | grep -iE \"gradle\" && echo \"\" && echo \"=== PATH \\(System\\) - Gradle ===\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('Path', 'Machine'\\)\" | tr ';' '\\\\n' | grep -iE \"gradle\")",
+      "Bash(echo \"=== PUB_HOSTED_URL ===\" && echo \"User:\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('PUB_HOSTED_URL', 'User'\\)\" && echo \"System:\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('PUB_HOSTED_URL', 'Machine'\\)\" && echo \"\" && echo \"=== FLUTTER_STORAGE_BASE_URL ===\" && echo \"User:\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('FLUTTER_STORAGE_BASE_URL', 'User'\\)\" && echo \"System:\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('FLUTTER_STORAGE_BASE_URL', 'Machine'\\)\")",
+      "Read(//d/flutter_cache/**)",
+      "Bash(powershell -Command \"[Environment]::GetEnvironmentVariable\\(''PUB_CACHE'', ''User''\\)\")",
+      "Bash(powershell -Command \"[Environment]::GetEnvironmentVariable\\(''PUB_CACHE'', ''Machine''\\)\")",
+      "Bash(setx PUB_HOSTED_URL \"https://mirrors.tuna.tsinghua.edu.cn/dart-pub\" && setx FLUTTER_STORAGE_BASE_URL \"https://mirrors.tuna.tsinghua.edu.cn/flutter\")",
+      "Bash(echo \"=== 新的镜像配置 ===\" && echo \"PUB_HOSTED_URL:\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('PUB_HOSTED_URL', 'User'\\)\" && echo \"FLUTTER_STORAGE_BASE_URL:\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('FLUTTER_STORAGE_BASE_URL', 'User'\\)\")"
+    ]
+  }
+}

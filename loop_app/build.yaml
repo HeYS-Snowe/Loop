@@ -1,0 +1,8 @@
+targets:
+  $default:
+    builders:
+      sqlite3:
+        enabled: true
+        options:
+          source: system
+          name: sqlite3
