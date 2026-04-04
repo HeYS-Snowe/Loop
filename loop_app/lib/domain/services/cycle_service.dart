@@ -1,7 +1,7 @@
-import 'package:drift/drift.dart';
-import '../../data/database/app_database.dart';
 import '../../data/repositories/cycle_repository.dart';
 import '../../data/repositories/task_repository.dart';
+import '../../data/database/app_database.dart';
+import '../../data/extensions/model_extensions.dart';
 
 class CycleService {
   final CycleRepository _cycleRepository;
@@ -9,97 +9,77 @@ class CycleService {
 
   CycleService(this._cycleRepository, this._taskRepository);
 
-  Future<Cycle?> getActiveCycle() async {
-    return await _cycleRepository.getActiveCycle();
+  Future<List<Cycle>> getAllCycles() {
+    return _cycleRepository.getAllCycles();
   }
 
-  Future<List<Cycle>> getAllCycles() async {
-    return await _cycleRepository.getAllCycles();
+  Stream<List<Cycle>> watchAllCycles() {
+    return _cycleRepository.watchAllCycles();
   }
 
-  Future<void> createCycle(CyclesCompanion cycle) async {
-    final activeCycle = await _cycleRepository.getActiveCycle();
-    if (activeCycle != null) {
-      await _cycleRepository.updateCycle(CyclesCompanion(
-        id: Value(activeCycle.id),
-        isActive: const Value(false),
-        updatedAt: Value(DateTime.now()),
-      ));
+  Future<Cycle?> getActiveCycle() {
+    return _cycleRepository.getActiveCycle();
+  }
+
+  Future<Cycle?> getCycleById(String id) {
+    return _cycleRepository.getCycleById(id);
+  }
+
+  Future<Cycle> createCycle({
+    required String name,
+    String? description,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) {
+    return _cycleRepository.createCycle(
+      name: name,
+      description: description,
+      startDate: startDate,
+      endDate: endDate,
+    );
+  }
+
+  Future<void> updateCycle(Cycle cycle) {
+    return _cycleRepository.updateCycle(cycle);
+  }
+
+  Future<void> completeCycle(String cycleId) async {
+    await _cycleRepository.completeCycle(cycleId);
+  }
+
+  Future<void> deleteCycle(String id) async {
+    final tasks = await _taskRepository.getTasksByCycle(id);
+    for (final task in tasks) {
+      await _taskRepository.deleteTask(task.id);
     }
-
-    await _cycleRepository.insertCycle(cycle);
+    await _cycleRepository.deleteCycle(id);
   }
 
-  Future<void> activateCycle(String cycleId) async {
-    final activeCycle = await _cycleRepository.getActiveCycle();
-    if (activeCycle != null) {
-      await _cycleRepository.updateCycle(CyclesCompanion(
-        id: Value(activeCycle.id),
-        isActive: const Value(false),
-        updatedAt: Value(DateTime.now()),
-      ));
-    }
-
-    await _cycleRepository.updateCycle(CyclesCompanion(
-      id: Value(cycleId),
-      isActive: const Value(true),
-      updatedAt: Value(DateTime.now()),
-    ));
-  }
-
-  Future<void> endCycle(String cycleId) async {
-    await _cycleRepository.updateCycle(CyclesCompanion(
-      id: Value(cycleId),
-      isActive: const Value(false),
-      endDate: Value(DateTime.now()),
-      updatedAt: Value(DateTime.now()),
-    ));
-  }
-
-  Future<double> getCycleProgress(String cycleId) async {
-    final cycle = await _cycleRepository.getCycleById(cycleId);
-    if (cycle == null) return 0;
-
-    final tasks = await _taskRepository.getTasksByCycle(cycleId);
-    if (tasks.isEmpty) return 0;
-
-    final completedTasks = tasks.where((t) => t.isCompleted).length;
-    return completedTasks / tasks.length;
-  }
-
-  Future<Map<String, dynamic>> getCycleStatistics(String cycleId) async {
+  Future<CycleWithTasks> getCycleWithTasks(String cycleId) async {
     final cycle = await _cycleRepository.getCycleById(cycleId);
     if (cycle == null) {
-      return {
-        'totalTasks': 0,
-        'completedTasks': 0,
-        'totalProgress': 0.0,
-        'daysElapsed': 0,
-        'daysRemaining': 0,
-      };
+      throw Exception('Cycle not found');
     }
-
     final tasks = await _taskRepository.getTasksByCycle(cycleId);
-    final completedTasks = tasks.where((t) => t.isCompleted).length;
-    final now = DateTime.now();
+    return CycleWithTasks(cycle: cycle, tasks: tasks);
+  }
+}
 
-    int daysElapsed = 0;
-    int daysRemaining = 0;
+class CycleWithTasks {
+  final Cycle cycle;
+  final List<Task> tasks;
 
-    if (now.isAfter(cycle.startDate)) {
-      daysElapsed = now.difference(cycle.startDate).inDays + 1;
-    }
+  CycleWithTasks({required this.cycle, required this.tasks});
 
-    if (now.isBefore(cycle.endDate)) {
-      daysRemaining = cycle.endDate.difference(now).inDays + 1;
-    }
+  double get completionRate {
+    if (tasks.isEmpty) return 0;
+    final completed = tasks.where((t) => t.isCompleted).length;
+    return completed / tasks.length;
+  }
 
-    return {
-      'totalTasks': tasks.length,
-      'completedTasks': completedTasks,
-      'totalProgress': tasks.isEmpty ? 0.0 : completedTasks / tasks.length,
-      'daysElapsed': daysElapsed,
-      'daysRemaining': daysRemaining,
-    };
+  int get totalProgress {
+    if (tasks.isEmpty) return 0;
+    final totalProgress = tasks.fold<double>(0, (sum, t) => sum + t.progress);
+    return ((totalProgress / tasks.length) * 100).round();
   }
 }

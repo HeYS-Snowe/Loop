@@ -1,156 +1,172 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:loop/core/theme/colors.dart';
-import 'package:loop/core/theme/text_styles.dart';
-import 'package:loop/presentation/providers/check_in_provider.dart';
-import 'package:loop/presentation/widgets/common/glass_card.dart';
-import 'package:loop/presentation/widgets/common/gradient_decorations.dart';
+import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/text_styles.dart';
+import '../../../providers/check_in_provider.dart';
+import '../../../widgets/common/glass_card.dart';
+import '../../../widgets/common/animated_widgets.dart';
 
 class CheckInCard extends ConsumerWidget {
   const CheckInCard({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<CheckInState> checkInState = ref.watch(checkInNotifierProvider);
+    final checkInStateAsync = ref.watch(checkInNotifierProvider);
 
-    return checkInState.when(
-      data: (CheckInState state) => _buildCard(ref, state),
+    return checkInStateAsync.when(
+      data: (state) => _buildCard(context, ref, state),
       loading: () => const GlassCard(
-        padding: EdgeInsets.symmetric(vertical: 28),
-        child: Center(
-          child: CircularProgressIndicator(
-            color: AppColors.primary,
-            strokeWidth: 2,
-          ),
-        ),
+        child: SizedBox(height: 120),
       ),
-      error: (Object e, _) => GlassCard(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Center(
-          child: Text(
-            '加载失败: $e',
-            style: TextStyles.body2.copyWith(color: AppColors.error),
+      error: (error, stack) => GlassCard(
+        child: SizedBox(
+          height: 120,
+          child: Center(
+            child: Text('Error: $error', style: TextStyles.body2),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildCard(WidgetRef ref, CheckInState state) {
-    return GestureDetector(
-      onTap: state.checkedIn
-          ? null
-          : () => ref.read(checkInNotifierProvider.notifier).checkIn(),
-      child: GradientContainer(
-        style: state.checkedIn
-            ? GradientStyle.success
-            : GradientStyle.primaryToAccent,
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        state.checkedIn ? '今日已打卡' : '点击打卡',
-                        style: TextStyles.heading4.copyWith(
-                          color: AppColors.textOnPrimary,
-                        ),
+  Widget _buildCard(BuildContext context, WidgetRef ref, CheckInState state) {
+    return GlassCard(
+      borderRadius: 24,
+      showCornerAccent: true,
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          AppColors.surface.withValues(alpha: 0.8),
+          AppColors.card.withValues(alpha: 0.65),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '每日打卡',
+                    style: TextStyles.heading4,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    state.checkedInToday ? '今日已打卡' : '今日未打卡',
+                    style: TextStyles.body2.copyWith(
+                      color: state.checkedInToday
+                          ? AppColors.success
+                          : AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              AnimatedScaleButton(
+                onTap: state.checkedInToday
+                    ? null
+                    : () => ref.read(checkInNotifierProvider.notifier).checkIn(),
+                child: Container(
+                  width: 68,
+                  height: 68,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: state.checkedInToday
+                          ? [
+                              AppColors.success.withValues(alpha: 0.25),
+                              AppColors.success.withValues(alpha: 0.1),
+                            ]
+                          : [
+                              AppColors.primary.withValues(alpha: 0.2),
+                              AppColors.accent.withValues(alpha: 0.08),
+                            ],
+                    ),
+                    border: Border.all(
+                      color: state.checkedInToday
+                          ? AppColors.success.withValues(alpha: 0.3)
+                          : AppColors.primary.withValues(alpha: 0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Center(
+                    child: state.checkedInToday
+                        ? const Icon(
+                            Icons.check_rounded,
+                            size: 32,
+                            color: AppColors.success,
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                '${state.streakCount}',
+                                style: TextStyles.statValue.copyWith(
+                                  fontSize: 22,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              Text(
+                                '天',
+                                style: TextStyles.caption.copyWith(
+                                  color: AppColors.primary,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (!state.checkedInToday) ...[
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              child: AnimatedScaleButton(
+                onTap: () =>
+                    ref.read(checkInNotifierProvider.notifier).checkIn(),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    gradient: AppColors.primaryGradient,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.25),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
                       ),
-                      const SizedBox(height: 4),
+                    ],
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.check_rounded,
+                        color: AppColors.backgroundDeep,
+                        size: 20,
+                      ),
+                      SizedBox(width: 8),
                       Text(
-                        '已连续 ${state.streakCount} 天',
-                        style: TextStyles.body2.copyWith(
-                          color: AppColors.textOnPrimary.withOpacity(0.85),
+                        '立即打卡',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.backgroundDeep,
                         ),
                       ),
                     ],
                   ),
                 ),
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(
-                      state.checkedIn ? 0.25 : 0.15,
-                    ),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.4),
-                      width: 2,
-                    ),
-                  ),
-                  child: Icon(
-                    state.checkedIn
-                        ? Icons.check_rounded
-                        : Icons.touch_app_rounded,
-                    size: 28,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                _CheckInStatChip(
-                  label: '连续打卡',
-                  value: '${state.streakCount} 天',
-                ),
-                const SizedBox(width: 20),
-                _CheckInStatChip(
-                  label: '最长记录',
-                  value: '${state.maxStreak} 天',
-                ),
-                const SizedBox(width: 20),
-                _CheckInStatChip(
-                  label: '累计打卡',
-                  value: '${state.totalCheckIns} 天',
-                ),
-              ],
+              ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CheckInStatChip extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _CheckInStatChip({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyles.captionSmall.copyWith(
-              color: Colors.white.withOpacity(0.70),
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: TextStyles.numberSmall.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
         ],
       ),
     );

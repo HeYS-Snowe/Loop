@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:loop/core/theme/colors.dart';
-import 'package:loop/core/theme/text_styles.dart';
-import 'package:loop/presentation/widgets/common/glass_card.dart';
-import 'package:loop/presentation/widgets/common/animated_widgets.dart';
-import 'package:loop/presentation/providers/settings_provider.dart';
+import '../../../core/theme/colors.dart';
+import '../../../core/theme/text_styles.dart';
+import '../../providers/settings_provider.dart';
+import '../../widgets/common/glass_card.dart';
+import '../../widgets/common/gradient_decorations.dart';
+import '../../widgets/common/animated_widgets.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -15,377 +16,288 @@ class SettingsPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('设置', style: TextStyles.heading4),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        title: Text('设置', style: TextStyles.heading3),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: StaggeredList(
-          children: [
-            _buildSectionTitle('通用'),
-            _buildGeneralSection(context, ref, settings),
-            const SizedBox(height: 20),
-            _buildSectionTitle('分类管理'),
-            _buildCategorySection(context),
-            const SizedBox(height: 20),
-            _buildSectionTitle('数据'),
-            _buildDataSection(context),
-            const SizedBox(height: 20),
-            _buildSectionTitle('关于'),
-            _buildAboutSection(context),
-            const SizedBox(height: 32),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 10),
-      child: Text(
-        title,
-        style: TextStyles.labelSmall.copyWith(color: AppColors.textTertiary),
-      ),
-    );
-  }
-
-  Widget _buildGeneralSection(
-      BuildContext context, WidgetRef ref, SettingsState settings) {
-    return GlassCard(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      margin: EdgeInsets.zero,
-      borderRadius: 14,
-      child: Column(
+      body: Stack(
         children: [
-          _buildSwitchTile(
-            icon: Icons.notifications_outlined,
-            title: '每日打卡提醒',
-            subtitle: settings.notificationsEnabled ? '已开启' : '已关闭',
-            value: settings.notificationsEnabled,
-            onChanged: (value) {
-              ref
-                  .read(settingsProvider.notifier)
-                  .setNotificationsEnabled(value);
-            },
-          ),
-          _buildDivider(),
-          _buildNavigationTile(
-            icon: Icons.access_time,
-            title: '提醒时间',
-            subtitle: '${settings.reminderMinutesBefore} 分钟前',
-            onTap: () {
-              _showReminderTimeDialog(
-                  context, ref, settings.reminderMinutesBefore);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategorySection(BuildContext context) {
-    return GlassCard(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      margin: EdgeInsets.zero,
-      borderRadius: 14,
-      child: _buildNavigationTile(
-        icon: Icons.category_outlined,
-        title: '管理分类',
-        subtitle: '添加、编辑或删除任务分类',
-        onTap: () {},
-      ),
-    );
-  }
-
-  Widget _buildDataSection(BuildContext context) {
-    return GlassCard(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      margin: EdgeInsets.zero,
-      borderRadius: 14,
-      child: Column(
-        children: [
-          _buildNavigationTile(
-            icon: Icons.file_download_outlined,
-            title: '导出数据',
-            subtitle: '备份周期和打卡记录',
-            onTap: () => _showExportDialog(context),
-          ),
-          _buildDivider(),
-          _buildNavigationTile(
-            icon: Icons.delete_outline,
-            title: '清除所有数据',
-            subtitle: '此操作不可撤销',
-            titleColor: AppColors.error,
-            iconColor: AppColors.error,
-            iconBgColor: AppColors.errorMuted,
-            onTap: () => _showClearDataDialog(context),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAboutSection(BuildContext context) {
-    return GlassCard(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      margin: EdgeInsets.zero,
-      borderRadius: 14,
-      child: Column(
-        children: [
-          _buildNavigationTile(
-            icon: Icons.info_outline,
-            title: '版本',
-            subtitle: 'v1.0.0',
-            onTap: null,
-          ),
-          _buildDivider(),
-          _buildNavigationTile(
-            icon: Icons.code,
-            title: '开源许可',
-            subtitle: '',
-            onTap: () {
-              showLicensePage(
-                context: context,
-                applicationName: 'Loop',
-                applicationVersion: '1.0.0',
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Divider(
-        height: 1,
-        thickness: 1,
-        color: AppColors.dividerLight,
-      ),
-    );
-  }
-
-  Widget _buildSwitchTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          _buildIconContainer(icon),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: TextStyles.body1),
-                const SizedBox(height: 2),
-                Text(subtitle, style: TextStyles.body3),
-              ],
+          const Positioned.fill(
+            child: GradientDecoration(
+              style: GradientStyle.diagonalHalf,
+              color: AppColors.accent,
             ),
           ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeColor: AppColors.primary,
-            activeTrackColor: AppColors.primary.withOpacity(0.4),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavigationTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    Color? titleColor,
-    Color? iconColor,
-    Color? iconBgColor,
-    VoidCallback? onTap,
-  }) {
-    final effectiveIconColor = iconColor ?? AppColors.primary;
-    final effectiveIconBg = iconBgColor ?? AppColors.primaryMuted;
-
-    return GlassCard(
-      margin: EdgeInsets.zero,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      enableTapScale: onTap != null,
-      borderRadius: 14,
-      tintColor: const Color(0),
-      boxShadow: const [],
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.translucent,
-        child: Row(
-          children: [
-            _buildIconContainer(icon,
-                color: effectiveIconColor, bgColor: effectiveIconBg),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          Positioned.fill(
+            child: SafeArea(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
                 children: [
-                  Text(
-                    title,
-                    style: TextStyles.body1.copyWith(color: titleColor),
+                  AnimatedPageWrapper(
+                    index: 0,
+                    child: _buildSectionHeader('通用'),
                   ),
-                  if (subtitle.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(subtitle, style: TextStyles.body3),
-                  ],
+                  const SizedBox(height: 8),
+                  AnimatedPageWrapper(
+                    index: 1,
+                    child: GlassCard(
+                      borderRadius: 20,
+                      padding: EdgeInsets.zero,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.surface.withValues(alpha: 0.75),
+                          AppColors.card.withValues(alpha: 0.55),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          _buildSettingsTile(
+                            icon: Icons.notifications_rounded,
+                            iconColor: AppColors.warmAccent,
+                            title: '通知提醒',
+                            subtitle: '每日打卡提醒',
+                            trailing: Switch(
+                              value: settings.enableNotifications,
+                              onChanged: (value) {
+                                ref
+                                    .read(settingsProvider.notifier)
+                                    .updateNotifications(value);
+                              },
+                            ),
+                          ),
+                          const Divider(height: 1, indent: 20, endIndent: 20),
+                          _buildSettingsTile(
+                            icon: Icons.schedule_rounded,
+                            iconColor: AppColors.accent,
+                            title: '提醒时间',
+                            subtitle: settings.notificationTime.format(context),
+                            trailing: const Icon(
+                              Icons.chevron_right_rounded,
+                              color: AppColors.textTertiary,
+                              size: 20,
+                            ),
+                            onTap: () async {
+                              final time = await showTimePicker(
+                                context: context,
+                                initialTime: settings.notificationTime,
+                              );
+                              if (time != null) {
+                                ref
+                                    .read(settingsProvider.notifier)
+                                    .updateReminderTime(time);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  AnimatedPageWrapper(
+                    index: 2,
+                    child: _buildSectionHeader('周期'),
+                  ),
+                  const SizedBox(height: 8),
+                  AnimatedPageWrapper(
+                    index: 3,
+                    child: GlassCard(
+                      borderRadius: 20,
+                      padding: EdgeInsets.zero,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.surface.withValues(alpha: 0.75),
+                          AppColors.card.withValues(alpha: 0.55),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          _buildSettingsTile(
+                            icon: Icons.loop_rounded,
+                            iconColor: AppColors.primary,
+                            title: '默认周期天数',
+                            subtitle: '${settings.defaultCycleDays} 天',
+                            trailing: const Icon(
+                              Icons.chevron_right_rounded,
+                              color: AppColors.textTertiary,
+                              size: 20,
+                            ),
+                            onTap: () {},
+                          ),
+                          const Divider(height: 1, indent: 20, endIndent: 20),
+                          _buildSettingsTile(
+                            icon: Icons.auto_awesome_rounded,
+                            iconColor: AppColors.gold,
+                            title: '自动延续周期',
+                            subtitle: settings.autoExtendCycle ? '已开启' : '已关闭',
+                            trailing: Switch(
+                              value: settings.autoExtendCycle,
+                              onChanged: (value) {
+                                ref
+                                    .read(settingsProvider.notifier)
+                                    .updateAutoExtend(value);
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  AnimatedPageWrapper(
+                    index: 4,
+                    child: _buildSectionHeader('数据'),
+                  ),
+                  const SizedBox(height: 8),
+                  AnimatedPageWrapper(
+                    index: 5,
+                    child: GlassCard(
+                      borderRadius: 20,
+                      padding: EdgeInsets.zero,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.surface.withValues(alpha: 0.75),
+                          AppColors.card.withValues(alpha: 0.55),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          _buildSettingsTile(
+                            icon: Icons.cloud_upload_rounded,
+                            iconColor: AppColors.accent,
+                            title: '导出数据',
+                            subtitle: '备份周期和打卡记录',
+                            trailing: const Icon(
+                              Icons.chevron_right_rounded,
+                              color: AppColors.textTertiary,
+                              size: 20,
+                            ),
+                            onTap: () {},
+                          ),
+                          const Divider(height: 1, indent: 20, endIndent: 20),
+                          _buildSettingsTile(
+                            icon: Icons.delete_outline_rounded,
+                            iconColor: AppColors.error,
+                            title: '清除所有数据',
+                            subtitle: '此操作不可撤销',
+                            trailing: const Icon(
+                              Icons.chevron_right_rounded,
+                              color: AppColors.textTertiary,
+                              size: 20,
+                            ),
+                            onTap: () {
+                              _showDeleteConfirmation(context);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  AnimatedPageWrapper(
+                    index: 6,
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Text(
+                            'Loop v1.0.0',
+                            style: TextStyles.caption.copyWith(
+                              color: AppColors.textTertiary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '周期计划管理',
+                            style: TextStyles.caption.copyWith(
+                              color: AppColors.textTertiary,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
-            if (onTap != null)
-              Icon(
-                Icons.chevron_right_rounded,
-                size: 20,
-                color: AppColors.textTertiary,
-              ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        title,
+        style: TextStyles.overline,
+      ),
+    );
+  }
+
+  Widget _buildSettingsTile({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required Widget trailing,
+    VoidCallback? onTap,
+  }) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+      leading: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: iconColor.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10),
         ),
+        child: Icon(icon, color: iconColor, size: 20),
+      ),
+      title: Text(title, style: TextStyles.body1),
+      subtitle: Text(subtitle, style: TextStyles.body2),
+      trailing: trailing,
+      onTap: onTap,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
       ),
     );
   }
 
-  Widget _buildIconContainer(IconData icon,
-      {Color? color, Color? bgColor}) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: bgColor ?? AppColors.primaryMuted,
-        borderRadius: BorderRadius.circular(10),
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('确认删除', style: TextStyles.heading4),
+        content: Text(
+          '确定要清除所有数据吗？此操作不可撤销。',
+          style: TextStyles.body1,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              '取消',
+              style: TextStyles.body1.copyWith(color: AppColors.textSecondary),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text(
+              '删除',
+              style: TextStyles.body1.copyWith(color: AppColors.error),
+            ),
+          ),
+        ],
       ),
-      child: Icon(
-        icon,
-        size: 22,
-        color: color ?? AppColors.primary,
-      ),
-    );
-  }
-
-  void _showReminderTimeDialog(
-      BuildContext context, WidgetRef ref, int currentValue) {
-    final options = [5, 10, 15, 30, 60];
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: AppColors.surface,
-          title: Text('提醒时间', style: TextStyles.heading4),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: options.map((minutes) {
-              return RadioListTile<int>(
-                title: Text('$minutes 分钟前', style: TextStyles.body2),
-                value: minutes,
-                groupValue: currentValue,
-                activeColor: AppColors.primary,
-                onChanged: (value) {
-                  if (value != null) {
-                    ref
-                        .read(settingsProvider.notifier)
-                        .setReminderMinutesBefore(value);
-                  }
-                  Navigator.pop(context);
-                },
-              );
-            }).toList(),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showExportDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: AppColors.surface,
-          title: Text('导出数据', style: TextStyles.heading4),
-          content: Text(
-            '确定要导出所有数据吗？导出文件将保存到应用目录。',
-            style: TextStyles.body2,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('取消',
-                  style:
-                      TextStyles.label.copyWith(color: AppColors.textTertiary)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.textOnPrimary,
-              ),
-              onPressed: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('数据导出成功', style: TextStyles.body2),
-                    backgroundColor: AppColors.surfaceLight,
-                  ),
-                );
-              },
-              child: Text('导出', style: TextStyles.buttonSmall),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showClearDataDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: AppColors.surface,
-          title: Text('确认删除', style: TextStyles.heading4),
-          content: Text(
-            '确定要清除所有数据吗？此操作不可撤销。',
-            style: TextStyles.body2,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('取消',
-                  style:
-                      TextStyles.label.copyWith(color: AppColors.textTertiary)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.error,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('所有数据已清除', style: TextStyles.body2),
-                    backgroundColor: AppColors.surfaceLight,
-                  ),
-                );
-              },
-              child: Text('删除',
-                  style: TextStyles.buttonSmall.copyWith(color: Colors.white)),
-            ),
-          ],
-        );
-      },
     );
   }
 }

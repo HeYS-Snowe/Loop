@@ -2,46 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final sharedPreferencesProvider =
-    FutureProvider<SharedPreferences>((ref) async {
+final sharedPreferencesProvider = FutureProvider<SharedPreferences>((ref) async {
   return await SharedPreferences.getInstance();
 });
 
-final settingsProvider =
-    StateNotifierProvider<SettingsNotifier, SettingsState>((ref) {
-  final notifier = SettingsNotifier();
-  ref.onDispose(() {});
-  SharedPreferences.getInstance().then((prefs) {
-    notifier.loadSettings(prefs);
-  });
-  return notifier;
+final settingsProvider = StateNotifierProvider<SettingsNotifier, SettingsState>((ref) {
+  return SettingsNotifier();
 });
 
 class SettingsState {
-  final bool darkMode;
-  final bool notificationsEnabled;
-  final String defaultView;
-  final int reminderMinutesBefore;
+  final bool enableNotifications;
+  final TimeOfDay notificationTime;
+  final int defaultCycleDays;
+  final bool autoExtendCycle;
 
   SettingsState({
-    this.darkMode = false,
-    this.notificationsEnabled = true,
-    this.defaultView = 'home',
-    this.reminderMinutesBefore = 15,
+    this.enableNotifications = true,
+    this.notificationTime = const TimeOfDay(hour: 20, minute: 0),
+    this.defaultCycleDays = 30,
+    this.autoExtendCycle = false,
   });
 
   SettingsState copyWith({
-    bool? darkMode,
-    bool? notificationsEnabled,
-    String? defaultView,
-    int? reminderMinutesBefore,
+    bool? enableNotifications,
+    TimeOfDay? notificationTime,
+    int? defaultCycleDays,
+    bool? autoExtendCycle,
   }) {
     return SettingsState(
-      darkMode: darkMode ?? this.darkMode,
-      notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
-      defaultView: defaultView ?? this.defaultView,
-      reminderMinutesBefore:
-          reminderMinutesBefore ?? this.reminderMinutesBefore,
+      enableNotifications: enableNotifications ?? this.enableNotifications,
+      notificationTime: notificationTime ?? this.notificationTime,
+      defaultCycleDays: defaultCycleDays ?? this.defaultCycleDays,
+      autoExtendCycle: autoExtendCycle ?? this.autoExtendCycle,
     );
   }
 }
@@ -50,35 +42,38 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   SettingsNotifier() : super(SettingsState());
 
   Future<void> loadSettings(SharedPreferences prefs) async {
+    final hour = prefs.getInt('reminder_hour') ?? 20;
+    final minute = prefs.getInt('reminder_minute') ?? 0;
     state = SettingsState(
-      darkMode: prefs.getBool('darkMode') ?? false,
-      notificationsEnabled: prefs.getBool('notificationsEnabled') ?? true,
-      defaultView: prefs.getString('defaultView') ?? 'home',
-      reminderMinutesBefore: prefs.getInt('reminderMinutesBefore') ?? 15,
+      enableNotifications: prefs.getBool('notifications_enabled') ?? true,
+      notificationTime: TimeOfDay(hour: hour, minute: minute),
+      defaultCycleDays: prefs.getInt('default_cycle_days') ?? 30,
+      autoExtendCycle: prefs.getBool('auto_extend_cycle') ?? false,
     );
   }
 
-  Future<void> setDarkMode(bool value) async {
+  Future<void> updateNotifications(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('darkMode', value);
-    state = state.copyWith(darkMode: value);
+    await prefs.setBool('notifications_enabled', enabled);
+    state = state.copyWith(enableNotifications: enabled);
   }
 
-  Future<void> setNotificationsEnabled(bool value) async {
+  Future<void> updateReminderTime(TimeOfDay time) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('notificationsEnabled', value);
-    state = state.copyWith(notificationsEnabled: value);
+    await prefs.setInt('reminder_hour', time.hour);
+    await prefs.setInt('reminder_minute', time.minute);
+    state = state.copyWith(notificationTime: time);
   }
 
-  Future<void> setDefaultView(String value) async {
+  Future<void> updateDefaultCycleDays(int days) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('defaultView', value);
-    state = state.copyWith(defaultView: value);
+    await prefs.setInt('default_cycle_days', days);
+    state = state.copyWith(defaultCycleDays: days);
   }
 
-  Future<void> setReminderMinutesBefore(int value) async {
+  Future<void> updateAutoExtend(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('reminderMinutesBefore', value);
-    state = state.copyWith(reminderMinutesBefore: value);
+    await prefs.setBool('auto_extend_cycle', enabled);
+    state = state.copyWith(autoExtendCycle: enabled);
   }
 }

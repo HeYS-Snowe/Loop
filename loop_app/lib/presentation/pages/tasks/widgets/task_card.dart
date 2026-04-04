@@ -1,164 +1,200 @@
 import 'package:flutter/material.dart';
-import 'package:loop/core/theme/colors.dart';
-import 'package:loop/core/theme/text_styles.dart';
-import 'package:loop/presentation/widgets/common/glass_card.dart';
+import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/text_styles.dart';
+import '../../../../data/database/app_database.dart';
+import '../../../../data/extensions/model_extensions.dart';
+import '../../../widgets/common/glass_card.dart';
+import '../../../widgets/common/animated_widgets.dart';
 
 class TaskCard extends StatelessWidget {
-  final String name;
-  final String planName;
-  final int completedAmount;
-  final int targetAmount;
-  final bool isCompleted;
-  final int colorValue;
+  final Task task;
   final VoidCallback? onTap;
+  final void Function(int)? onProgressUpdate;
 
   const TaskCard({
     super.key,
-    required this.name,
-    required this.planName,
-    required this.completedAmount,
-    required this.targetAmount,
-    this.isCompleted = false,
-    this.colorValue = 0,
+    required this.task,
     this.onTap,
+    this.onProgressUpdate,
   });
 
   @override
   Widget build(BuildContext context) {
-    final progress =
-        targetAmount > 0 ? completedAmount / targetAmount : 0.0;
-    final clampedProgress = progress.clamp(0.0, 1.0);
-
     return GlassCard(
-      enableTapScale: true,
-      margin: EdgeInsets.zero,
-      padding: const EdgeInsets.all(16),
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.translucent,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    name,
-                    style: TextStyles.body1.copyWith(
-                      decoration:
-                          isCompleted ? TextDecoration.lineThrough : null,
-                      color: isCompleted
-                          ? AppColors.textTertiary
-                          : AppColors.textPrimary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+      onTap: onTap,
+      borderRadius: 20,
+      padding: const EdgeInsets.all(18),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          AppColors.surface.withValues(alpha: 0.75),
+          AppColors.card.withValues(alpha: 0.55),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  task.name,
+                  style: TextStyles.heading4.copyWith(
+                    decoration: task.isCompleted
+                        ? TextDecoration.lineThrough
+                        : null,
+                    color: task.isCompleted
+                        ? AppColors.textTertiary
+                        : AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(width: 8),
-                _buildStatusIcon(),
-              ],
-            ),
-            if (planName.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                planName,
-                style: TextStyles.body3.copyWith(
-                  color: AppColors.textTertiary,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
-            ],
-            const SizedBox(height: 12),
-            _buildProgressBar(clampedProgress),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '$completedAmount/$targetAmount',
-                  style: TextStyles.labelSmall.copyWith(
-                    color: isCompleted
-                        ? AppColors.success
-                        : AppColors.textSecondary,
+              if (task.isCompleted)
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: AppColors.successMuted,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    size: 18,
+                    color: AppColors.success,
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _getProgressColor().withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    _getProgressText(),
+                    style: TextStyles.label.copyWith(
+                      color: _getProgressColor(),
+                    ),
                   ),
                 ),
-                Text(
-                  '${(clampedProgress * 100).toInt()}%',
-                  style: TextStyles.labelSmall.copyWith(
-                    color: isCompleted
-                        ? AppColors.success
-                        : AppColors.primary,
-                    fontWeight: FontWeight.w600,
+            ],
+          ),
+          if (task.description != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              task.description!,
+              style: TextStyles.body2,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: task.progress),
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, child) {
+                return Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceLight,
+                    borderRadius: BorderRadius.circular(6),
                   ),
+                  child: FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: value,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: _getProgressGradient(),
+                        borderRadius: BorderRadius.circular(6),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _getProgressColor().withValues(alpha: 0.25),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          if (!task.isCompleted && onProgressUpdate != null) ...[
+            const SizedBox(height: 14),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                _buildQuickActionButton(
+                  label: '+1',
+                  onPressed: () => onProgressUpdate!(1),
+                ),
+                const SizedBox(width: 10),
+                _buildQuickActionButton(
+                  label: '+5',
+                  onPressed: () => onProgressUpdate!(5),
                 ),
               ],
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionButton({
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return AnimatedScaleButton(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.2),
+            width: 0.5,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyles.label.copyWith(
+            color: AppColors.primary,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildStatusIcon() {
-    if (isCompleted) {
-      return Container(
-        width: 24,
-        height: 24,
-        decoration: const BoxDecoration(
-          color: AppColors.success,
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(
-          Icons.check,
-          size: 16,
-          color: Colors.white,
-        ),
+  Color _getProgressColor() {
+    if (task.progress >= 1.0) return AppColors.success;
+    if (task.progress >= 0.5) return AppColors.primary;
+    return AppColors.warmAccent;
+  }
+
+  LinearGradient _getProgressGradient() {
+    if (task.progress >= 1.0) {
+      return const LinearGradient(
+        colors: [AppColors.success, AppColors.successLight],
       );
     }
-
-    return Container(
-      width: 24,
-      height: 24,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: AppColors.borderLight,
-          width: 2,
-        ),
-      ),
+    if (task.progress >= 0.5) {
+      return AppColors.progressGradient;
+    }
+    return const LinearGradient(
+      colors: [AppColors.warmAccent, AppColors.warning],
     );
   }
 
-  Widget _buildProgressBar(double progress) {
-    return Container(
-      height: 6,
-      decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(3),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(3),
-        child: Stack(
-          children: [
-            FractionallySizedBox(
-              widthFactor: progress,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: isCompleted
-                      ? const LinearGradient(
-                          colors: [AppColors.success, AppColors.success],
-                        )
-                      : const LinearGradient(
-                          colors: [AppColors.primary, AppColors.accent],
-                        ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  String _getProgressText() {
+    return '${task.completedAmount}/${task.targetAmount}';
   }
 }

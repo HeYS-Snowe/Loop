@@ -14,9 +14,58 @@ class CycleRepository {
 
   Future<Cycle?> getActiveCycle() => _database.getActiveCycle();
 
-  Future<String> insertCycle(CyclesCompanion cycle) => _database.insertCycle(cycle);
+  Future<Cycle> createCycle({
+    required String name,
+    String? description,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final id = _generateId();
+    await _database.insertCycle(CyclesCompanion(
+      id: Value(id),
+      name: Value(name),
+      description: Value(description),
+      startDate: Value(startDate),
+      endDate: Value(endDate),
+      status: const Value('active'),
+      isActive: const Value(true),
+    ));
+    final cycle = await _database.getCycleById(id);
+    return cycle!;
+  }
 
-  Future<void> updateCycle(CyclesCompanion cycle) => _database.updateCycle(cycle);
+  Future<void> updateCycle(Cycle cycle) async {
+    await _database.updateCycle(CyclesCompanion(
+      id: Value(cycle.id),
+      name: Value(cycle.name),
+      description: Value(cycle.description),
+      startDate: Value(cycle.startDate),
+      endDate: Value(cycle.endDate),
+      status: Value(cycle.status),
+      isActive: Value(cycle.isActive),
+      createdAt: Value(cycle.createdAt),
+      updatedAt: Value(DateTime.now()),
+    ));
+  }
+
+  Future<void> completeCycle(String cycleId) async {
+    await _database.updateCycle(CyclesCompanion(
+      id: Value(cycleId),
+      status: const Value('completed'),
+      isActive: const Value(false),
+      updatedAt: Value(DateTime.now()),
+    ));
+  }
 
   Future<void> deleteCycle(String id) => _database.deleteCycle(id);
+
+  String _generateId() {
+    final timestamp = DateTime.now().microsecondsSinceEpoch;
+    return '${timestamp.toRadixString(16).padLeft(8, '0')}-'
+        '${(timestamp ^ 0xFFFF).toRadixString(16).padLeft(4, '0')}-'
+        '4${(timestamp & 0x0FFF).toRadixString(16).padLeft(3, '0')}-'
+        '${(timestamp & 0x3FFF | 0x8000).toRadixString(16).padLeft(4, '0')}-'
+        '${(timestamp ^ 0xFFFFFFFF).toRadixString(16).padLeft(8, '0')}'
+        '${timestamp.toRadixString(16).padLeft(4, '0')}';
+  }
 }

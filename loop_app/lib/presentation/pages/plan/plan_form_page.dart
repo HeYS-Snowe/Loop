@@ -1,107 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:loop/core/theme/colors.dart';
-import 'package:loop/core/theme/text_styles.dart';
-import 'package:loop/data/database/app_database.dart';
-import 'package:loop/presentation/providers/plan_provider.dart';
-import 'package:loop/presentation/providers/cycle_provider.dart';
-import 'package:loop/presentation/widgets/common/animated_widgets.dart';
-import 'package:loop/presentation/widgets/common/glass_card.dart';
-import 'package:loop/presentation/widgets/common/gradient_decorations.dart';
-
-final planFormProvider =
-    StateNotifierProvider<PlanFormNotifier, PlanFormState>(
-  (ref) => PlanFormNotifier(),
-);
-
-class PlanFormState {
-  final String name;
-  final String description;
-  final String cycleId;
-  final int targetAmount;
-  final String unit;
-  final int selectedColorIndex;
-  final String categoryId;
-  final bool isRepeatable;
-  final String repeatType;
-
-  PlanFormState({
-    this.name = '',
-    this.description = '',
-    this.cycleId = '',
-    this.targetAmount = 0,
-    this.unit = '',
-    this.selectedColorIndex = 0,
-    this.categoryId = '',
-    this.isRepeatable = false,
-    this.repeatType = 'none',
-  });
-
-  PlanFormState copyWith({
-    String? name,
-    String? description,
-    String? cycleId,
-    int? targetAmount,
-    String? unit,
-    int? selectedColorIndex,
-    String? categoryId,
-    bool? isRepeatable,
-    String? repeatType,
-  }) {
-    return PlanFormState(
-      name: name ?? this.name,
-      description: description ?? this.description,
-      cycleId: cycleId ?? this.cycleId,
-      targetAmount: targetAmount ?? this.targetAmount,
-      unit: unit ?? this.unit,
-      selectedColorIndex: selectedColorIndex ?? this.selectedColorIndex,
-      categoryId: categoryId ?? this.categoryId,
-      isRepeatable: isRepeatable ?? this.isRepeatable,
-      repeatType: repeatType ?? this.repeatType,
-    );
-  }
-}
-
-class PlanFormNotifier extends StateNotifier<PlanFormState> {
-  PlanFormNotifier() : super(PlanFormState());
-
-  void initFromTemplate(PlanTemplate template) {
-    state = PlanFormState(
-      name: template.name,
-      description: template.description ?? '',
-      cycleId: '',
-      targetAmount: template.dailyTargetAmount,
-      unit: template.unit ?? '',
-      selectedColorIndex: AppColors.cardColors
-          .indexWhere((c) => c.value == template.colorValue)
-          .clamp(0, AppColors.cardColors.length - 1),
-      categoryId: template.categoryId ?? '',
-      isRepeatable: template.repeatType != 'none',
-      repeatType: template.repeatType,
-    );
-  }
-
-  void updateName(String value) =>
-      state = state.copyWith(name: value);
-  void updateDescription(String value) =>
-      state = state.copyWith(description: value);
-  void updateCycleId(String value) =>
-      state = state.copyWith(cycleId: value);
-  void updateTargetAmount(int value) =>
-      state = state.copyWith(targetAmount: value);
-  void updateUnit(String value) =>
-      state = state.copyWith(unit: value);
-  void updateColorIndex(int value) =>
-      state = state.copyWith(selectedColorIndex: value);
-  void updateCategoryId(String value) =>
-      state = state.copyWith(categoryId: value);
-  void updateIsRepeatable(bool value) =>
-      state = state.copyWith(isRepeatable: value);
-  void updateRepeatType(String value) =>
-      state = state.copyWith(repeatType: value);
-}
+import 'package:loop_app/core/theme/colors.dart';
+import 'package:loop_app/core/theme/text_styles.dart';
+import 'package:loop_app/data/database/app_database.dart';
+import 'package:loop_app/presentation/providers/plan_provider.dart';
+import 'package:loop_app/presentation/widgets/common/gradient_decorations.dart';
+import 'package:loop_app/shared/extensions/date_extensions.dart';
 
 class PlanFormPage extends ConsumerStatefulWidget {
   final PlanTemplate? template;
@@ -115,213 +20,398 @@ class PlanFormPage extends ConsumerStatefulWidget {
 class _PlanFormPageState extends ConsumerState<PlanFormPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _descController = TextEditingController();
   final _targetAmountController = TextEditingController();
   final _unitController = TextEditingController();
+  final _intervalController = TextEditingController();
 
-  bool get isEditing => widget.template != null;
+  late DateTime _startDate;
+  DateTime? _endDate;
+  late bool _enableQuantityTracking;
+  late String _repeatType;
+  late Set<int> _selectedDays;
+  bool _isSubmitting = false;
+
+  late int _startHour;
+  late int _startMinute;
+  late int _endHour;
+  late int _endMinute;
+  late int _selectedColorValue;
+
+  bool get _isEditMode => widget.template != null;
+
+  static const List<int> _presetColors = [
+    0xFF2196F3,
+    0xFFE91E63,
+    0xFF4CAF50,
+    0xFF9C27B0,
+    0xFFFF9800,
+    0xFF00BCD4,
+    0xFFF44336,
+    0xFF3F51B5,
+    0xFF8BC34A,
+    0xFFFF5722,
+    0xFF607D8B,
+    0xFF795548,
+  ];
+
+  static const List<String> _dayLabels = ['一', '二', '三', '四', '五', '六', '日'];
+
+  static const List<MapEntry<String, String>> _repeatOptions = [
+    MapEntry('none', '不重复'),
+    MapEntry('daily', '每天'),
+    MapEntry('weekly', '每周'),
+    MapEntry('monthly', '每月'),
+    MapEntry('interval', '自定义间隔'),
+  ];
 
   @override
   void initState() {
     super.initState();
-    if (widget.template != null) {
-      _nameController.text = widget.template!.name;
-      _targetAmountController.text =
-          widget.template!.dailyTargetAmount.toString();
-      _unitController.text = widget.template!.unit ?? '';
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref
-            .read(planFormProvider.notifier)
-            .initFromTemplate(widget.template!);
-      });
+    if (_isEditMode) {
+      final t = widget.template!;
+      _nameController.text = t.name;
+      _descController.text = t.description ?? '';
+      _targetAmountController.text = t.dailyTargetAmount > 0 ? t.dailyTargetAmount.toString() : '';
+      _unitController.text = t.unit ?? '';
+      _intervalController.text = t.repeatInterval > 1 ? t.repeatInterval.toString() : '1';
+      _startDate = t.startDate;
+      _endDate = t.endDate;
+      _enableQuantityTracking = t.enableQuantityTracking;
+      _repeatType = t.repeatType;
+      _selectedDays = t.activeDays
+          .split(',')
+          .map((s) => int.tryParse(s.trim()) ?? 0)
+          .where((d) => d >= 1 && d <= 7)
+          .toSet();
+      _startHour = t.startHour;
+      _startMinute = t.startMinute;
+      _endHour = t.endHour;
+      _endMinute = t.endMinute;
+      _selectedColorValue = t.colorValue;
+    } else {
+      _startDate = DateTime.now();
+      _endDate = null;
+      _enableQuantityTracking = true;
+      _repeatType = 'daily';
+      _selectedDays = {1, 2, 3, 4, 5};
+      _intervalController.text = '1';
+      _startHour = 8;
+      _startMinute = 0;
+      _endHour = 9;
+      _endMinute = 0;
+      _selectedColorValue = 0xFF2196F3;
     }
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _descController.dispose();
     _targetAmountController.dispose();
     _unitController.dispose();
+    _intervalController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final formState = ref.watch(planFormProvider);
-    final cyclesAsync = ref.watch(allCyclesProvider);
-
     return Scaffold(
-      backgroundColor: AppColors.background,
+      extendBodyBehindAppBar: true,
+      backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: Text(
-          isEditing ? '编辑计划' : '创建计划',
-          style: TextStyles.heading3,
-        ),
+        title: Text(_isEditMode ? '编辑计划' : '创建计划', style: TextStyles.heading4),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: AppColors.textPrimary,
-        actions: [
-          TextButton(
-            onPressed: _savePlan,
-            child: Text(
-              '保存',
-              style: TextStyles.buttonSmall.copyWith(
-                color: AppColors.primary,
-              ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.textPrimary, size: 20),
+          onPressed: () => context.pop(),
+        ),
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [AppColors.backgroundDeep, AppColors.background],
+          ),
+        ),
+        child: SafeArea(
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              children: [
+                _buildSectionCard(
+                  title: '基本信息',
+                  child: Column(
+                    children: [
+                      _buildTextField(
+                        controller: _nameController,
+                        label: '计划名称',
+                        hint: '例如: 背英语单词',
+                        required: true,
+                        maxLength: 50,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: _descController,
+                        label: '描述(可选)',
+                        hint: '计划的详细说明',
+                        maxLines: 2,
+                        maxLength: 200,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildSectionCard(
+                  title: '数量目标',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTextField(
+                              controller: _targetAmountController,
+                              label: '每日目标',
+                              hint: '0',
+                              keyboardType: TextInputType.number,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          SizedBox(
+                            width: 100,
+                            child: _buildTextField(
+                              controller: _unitController,
+                              label: '单位',
+                              hint: '个/分钟',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      _buildSwitchRow(
+                        label: '启用数量验证',
+                        subtitle: '开启后需输入完成数量',
+                        value: _enableQuantityTracking,
+                        onChanged: (v) => setState(() => _enableQuantityTracking = v),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildSectionCard(
+                  title: '时间段',
+                  subtitle: '设置计划在课程表中的显示时间',
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTimePickerTile(
+                              label: '开始时间',
+                              hour: _startHour,
+                              minute: _startMinute,
+                              onTap: () => _pickTime(isStart: true),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Text('-', style: TextStyles.heading4),
+                          ),
+                          Expanded(
+                            child: _buildTimePickerTile(
+                              label: '结束时间',
+                              hour: _endHour,
+                              minute: _endMinute,
+                              onTap: () => _pickTime(isStart: false),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildSectionCard(
+                  title: '卡片颜色',
+                  subtitle: '选择在课程表中的显示颜色',
+                  child: _buildColorPicker(),
+                ),
+                const SizedBox(height: 16),
+                _buildSectionCard(
+                  title: '重复规则',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _repeatOptions.map((option) {
+                          final isSelected = _repeatType == option.key;
+                          return GestureDetector(
+                            onTap: () => _onRepeatTypeChanged(option.key),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: isSelected ? AppColors.primary.withValues(alpha: 0.15) : AppColors.surfaceLight,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: isSelected ? AppColors.primary : AppColors.border,
+                                  width: isSelected ? 1.5 : 0.5,
+                                ),
+                              ),
+                              child: Text(
+                                option.value,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                  color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      if (_repeatType == 'interval') ...[
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Text('每', style: TextStyles.body2),
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              width: 60,
+                              child: TextFormField(
+                                controller: _intervalController,
+                                keyboardType: TextInputType.number,
+                                style: TextStyles.body1,
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: AppColors.surfaceLight,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text('天重复一次', style: TextStyles.body2),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildSectionCard(
+                  title: '活动日期',
+                  subtitle: _repeatType == 'daily' ? '每天执行' : '选择要执行计划的星期',
+                  child: _repeatType == 'daily'
+                      ? const SizedBox.shrink()
+                      : Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: List.generate(7, (index) {
+                                final day = index + 1;
+                                final isSelected = _selectedDays.contains(day);
+                                return GestureDetector(
+                                  onTap: () => _toggleDay(day),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: isSelected ? AppColors.primary : AppColors.surfaceLight,
+                                      border: Border.all(
+                                        color: isSelected ? AppColors.primary : AppColors.border,
+                                        width: isSelected ? 1.5 : 0.5,
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        _dayLabels[index],
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                          color: isSelected ? AppColors.backgroundDeep : AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _buildQuickDayChip('工作日', {1, 2, 3, 4, 5}),
+                                const SizedBox(width: 8),
+                                _buildQuickDayChip('每天', {1, 2, 3, 4, 5, 6, 7}),
+                                const SizedBox(width: 8),
+                                _buildQuickDayChip('周末', {6, 7}),
+                              ],
+                            ),
+                          ],
+                        ),
+                ),
+                const SizedBox(height: 16),
+                _buildSectionCard(
+                  title: '时间范围',
+                  child: Column(
+                    children: [
+                      _buildDateRow(
+                        label: '开始日期',
+                        date: _startDate,
+                        onTap: () => _pickDate(isStart: true),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildDateRow(
+                        label: '结束日期',
+                        date: _endDate,
+                        onTap: () => _pickDate(isStart: false),
+                        trailing: TextButton(
+                          onPressed: () => setState(() => _endDate = null),
+                          child: const Text('不限', style: TextStyle(color: AppColors.primary, fontSize: 12)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                _buildSubmitButton(),
+                const SizedBox(height: 40),
+              ],
             ),
           ),
-        ],
-      ),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              FadeInWidget(
-                child: _buildBasicInfoSection(formState, cyclesAsync),
-              ),
-              const SizedBox(height: 20),
-              FadeInWidget(
-                duration: const Duration(milliseconds: 500),
-                child: _buildTargetSection(formState),
-              ),
-              const SizedBox(height: 20),
-              FadeInWidget(
-                duration: const Duration(milliseconds: 600),
-                child: _buildColorSection(formState),
-              ),
-              const SizedBox(height: 20),
-              FadeInWidget(
-                duration: const Duration(milliseconds: 700),
-                child: _buildRepeatSection(formState),
-              ),
-              const SizedBox(height: 32),
-              FadeInWidget(
-                duration: const Duration(milliseconds: 800),
-                child: _buildSaveButton(),
-              ),
-              const SizedBox(height: 32),
-            ],
-          ),
         ),
       ),
     );
   }
 
-  Widget _buildBasicInfoSection(
-      PlanFormState formState, AsyncValue<List<Cycle>> cyclesAsync) {
-    return GlassCard(
-      margin: EdgeInsets.zero,
+  Widget _buildSectionCard({required String title, String? subtitle, required Widget child}) {
+    return GradientContainer(
+      style: GradientStyle.edgeShine,
       padding: const EdgeInsets.all(20),
+      borderRadius: 16,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionLabel('基本信息', AppColors.primary),
+          Text(title, style: TextStyles.heading4),
+          if (subtitle != null) ...[
+            const SizedBox(height: 4),
+            Text(subtitle, style: TextStyles.body2),
+          ],
           const SizedBox(height: 16),
-          _buildTextField(
-            controller: _nameController,
-            label: '计划名称',
-            hint: '例如: 背英语单词',
-            required: true,
-            maxLength: 50,
-            onChanged: (v) =>
-                ref.read(planFormProvider.notifier).updateName(v),
-          ),
-          const SizedBox(height: 16),
-          _buildCycleDropdown(formState, cyclesAsync),
+          child,
         ],
       ),
-    );
-  }
-
-  Widget _buildTargetSection(PlanFormState formState) {
-    return GlassCard(
-      margin: EdgeInsets.zero,
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionLabel('目标设置', AppColors.accent),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildTextField(
-                  controller: _targetAmountController,
-                  label: '目标量',
-                  hint: '0',
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  onChanged: (v) {
-                    final amount = int.tryParse(v) ?? 0;
-                    ref
-                        .read(planFormProvider.notifier)
-                        .updateTargetAmount(amount);
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildTextField(
-                  controller: _unitController,
-                  label: '单位',
-                  hint: '个/分钟',
-                  onChanged: (v) =>
-                      ref.read(planFormProvider.notifier).updateUnit(v),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildColorSection(PlanFormState formState) {
-    return GlassCard(
-      margin: EdgeInsets.zero,
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionLabel('卡片颜色', AppColors.info),
-          const SizedBox(height: 16),
-          _buildColorSelector(formState.selectedColorIndex),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRepeatSection(PlanFormState formState) {
-    return GlassCard(
-      margin: EdgeInsets.zero,
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionLabel('重复设置', AppColors.success),
-          const SizedBox(height: 16),
-          _buildRepeatToggle(formState.isRepeatable),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionLabel(String text, Color indicatorColor) {
-    return Row(
-      children: [
-        Container(
-          width: 3,
-          height: 18,
-          decoration: BoxDecoration(
-            color: indicatorColor,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(text, style: TextStyles.heading5),
-      ],
     );
   }
 
@@ -333,388 +423,389 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
     int maxLines = 1,
     int? maxLength,
     TextInputType? keyboardType,
-    List<TextInputFormatter>? inputFormatters,
-    ValueChanged<String>? onChanged,
   }) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      maxLength: maxLength,
-      keyboardType: keyboardType,
-      inputFormatters: inputFormatters,
-      style: TextStyles.body1,
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: required ? '$label *' : label,
-        hintText: hint,
-        hintStyle: TextStyles.body2.copyWith(color: AppColors.textHint),
-        labelStyle: TextStyles.labelSmall,
-        floatingLabelStyle:
-            TextStyles.labelSmall.copyWith(color: AppColors.primary),
-        counterText: '',
-        filled: true,
-        fillColor: AppColors.surfaceLight.withOpacity(0.4),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: AppColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: AppColors.borderLight),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: AppColors.error),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: AppColors.error),
-        ),
-      ),
-      validator: required
-          ? (value) {
-              if (value == null || value.isEmpty) {
-                return '请输入$label';
-              }
-              return null;
-            }
-          : null,
-    );
-  }
-
-  Widget _buildCycleDropdown(
-      PlanFormState formState, AsyncValue<List<Cycle>> cyclesAsync) {
-    return cyclesAsync.when(
-      data: (cycles) {
-        if (cycles.isEmpty) {
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceLight.withOpacity(0.4),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Text(
-              '暂无可用周期，请先创建周期',
-              style: TextStyles.body2.copyWith(color: AppColors.textTertiary),
-            ),
-          );
-        }
-
-        final selectedId = formState.cycleId.isEmpty
-            ? cycles.first.id
-            : formState.cycleId;
-        final selectedCycle = cycles.where((c) => c.id == selectedId).firstOrNull;
-
-        return GestureDetector(
-          onTap: () => _showCyclePicker(cycles, selectedId),
-          child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceLight.withOpacity(0.4),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('选择周期', style: TextStyles.labelSmall),
-                      const SizedBox(height: 4),
-                      Text(
-                        selectedCycle?.name ?? '请选择周期',
-                        style: TextStyles.body1,
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.expand_more,
-                  size: 20,
-                  color: AppColors.textTertiary,
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-      loading: () => const SizedBox(
-        height: 48,
-        child: Center(
-          child: SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-                strokeWidth: 2, color: AppColors.primary),
-          ),
-        ),
-      ),
-      error: (_, __) => const SizedBox.shrink(),
-    );
-  }
-
-  void _showCyclePicker(List<Cycle> cycles, String selectedId) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 8),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.borderLight,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text('选择周期', style: TextStyles.heading4),
-              ),
-              const SizedBox(height: 12),
-              ...cycles.map((cycle) {
-                final isSelected = cycle.id == selectedId;
-                return ListTile(
-                  title: Text(cycle.name, style: TextStyles.body2),
-                  trailing: isSelected
-                      ? const Icon(Icons.check, color: AppColors.primary)
-                      : null,
-                  onTap: () {
-                    ref
-                        .read(planFormProvider.notifier)
-                        .updateCycleId(cycle.id);
-                    Navigator.pop(context);
-                  },
-                );
-              }),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildColorSelector(int selectedIndex) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: List.generate(AppColors.cardColors.length, (index) {
-        final color = AppColors.cardColors[index];
-        final isSelected = index == selectedIndex;
-
-        return GestureDetector(
-          onTap: () =>
-              ref.read(planFormProvider.notifier).updateColorIndex(index),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              border: isSelected
-                  ? Border.all(color: AppColors.primary, width: 3)
-                  : Border.all(color: Colors.transparent, width: 3),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: color.withOpacity(0.4),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: isSelected
-                ? const Icon(Icons.check,
-                    color: AppColors.textOnPrimary, size: 16)
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        RichText(
+          text: TextSpan(
+            text: label,
+            style: TextStyles.label,
+            children: required
+                ? [const TextSpan(text: ' *', style: TextStyle(color: AppColors.error))]
                 : null,
           ),
-        );
-      }),
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: controller,
+          maxLines: maxLines,
+          maxLength: maxLength,
+          keyboardType: keyboardType,
+          style: TextStyles.body1,
+          validator: required
+              ? (v) {
+                  if (v == null || v.trim().isEmpty) return '请输入$label';
+                  return null;
+                }
+              : null,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyles.body2.copyWith(color: AppColors.textTertiary),
+            filled: true,
+            fillColor: AppColors.surfaceLight,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppColors.primary, width: 1),
+            ),
+            counterStyle: TextStyles.caption,
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildRepeatToggle(bool isRepeatable) {
-    return GestureDetector(
-      onTap: () => ref
-          .read(planFormProvider.notifier)
-          .updateIsRepeatable(!isRepeatable),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('是否重复', style: TextStyles.body2),
-                const SizedBox(height: 2),
-                Text(
-                  isRepeatable ? '每个周期自动创建' : '仅在当前周期有效',
-                  style: TextStyles.labelSmall,
-                ),
-              ],
-            ),
+  Widget _buildSwitchRow({
+    required String label,
+    String? subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: TextStyles.body1),
+              if (subtitle != null) Text(subtitle, style: TextStyles.caption),
+            ],
           ),
-          const SizedBox(width: 12),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 48,
-            height: 28,
-            decoration: BoxDecoration(
-              color: isRepeatable
-                  ? AppColors.primary
-                  : AppColors.surfaceLight,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isRepeatable
-                    ? AppColors.primary
-                    : AppColors.border,
-              ),
+        ),
+        Switch(
+          value: value,
+          onChanged: onChanged,
+          activeThumbColor: AppColors.primary,
+          activeTrackColor: AppColors.primaryMuted,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDateRow({
+    required String label,
+    required DateTime? date,
+    required VoidCallback onTap,
+    Widget? trailing,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceLight,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            Text(label, style: TextStyles.body2),
+            const Spacer(),
+            Text(
+              date != null ? date.format() : '不限',
+              style: TextStyles.body1.copyWith(color: date != null ? AppColors.primary : AppColors.textTertiary),
             ),
-            child: AnimatedAlign(
-              duration: const Duration(milliseconds: 200),
-              alignment: isRepeatable
-                  ? Alignment.centerRight
-                  : Alignment.centerLeft,
-              child: Container(
-                width: 22,
-                height: 22,
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                decoration: BoxDecoration(
-                  color: isRepeatable
-                      ? Colors.white
-                      : AppColors.textTertiary,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            const Icon(Icons.calendar_today, size: 16, color: AppColors.textTertiary),
+            if (trailing != null) trailing,
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildSaveButton() {
+  Widget _buildTimePickerTile({
+    required String label,
+    required int hour,
+    required int minute,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
-      onTap: _savePlan,
+      onTap: onTap,
       child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: GradientDecoration.primary.copyWith(
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withOpacity(0.3),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceLight,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: TextStyles.caption),
+            const SizedBox(height: 4),
+            Text(
+              '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}',
+              style: TextStyles.heading4.copyWith(color: AppColors.primary),
             ),
           ],
         ),
-        child: Center(
-          child: Text(
-            isEditing ? '保存计划' : '创建计划',
-            style: TextStyles.button,
+      ),
+    );
+  }
+
+  Widget _buildColorPicker() {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: _presetColors.map((colorValue) {
+        final isSelected = _selectedColorValue == colorValue;
+        final color = Color(colorValue);
+        return GestureDetector(
+          onTap: () => setState(() => _selectedColorValue = colorValue),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected ? color : color.withValues(alpha: 0.3),
+                width: isSelected ? 3 : 1,
+              ),
+            ),
+            child: isSelected
+                ? Icon(Icons.check, size: 20, color: color)
+                : null,
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Future<void> _pickTime({required bool isStart}) async {
+    final initialTime = isStart
+        ? TimeOfDay(hour: _startHour, minute: _startMinute)
+        : TimeOfDay(hour: _endHour, minute: _endMinute);
+
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: AppColors.primary,
+              onPrimary: AppColors.backgroundDeep,
+              surface: AppColors.surface,
+              onSurface: AppColors.textPrimary,
+            ),
+            timePickerTheme: TimePickerThemeData(
+              backgroundColor: AppColors.surface,
+              hourMinuteShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        if (isStart) {
+          _startHour = picked.hour;
+          _startMinute = picked.minute;
+        } else {
+          _endHour = picked.hour;
+          _endMinute = picked.minute;
+        }
+      });
+    }
+  }
+
+  Widget _buildQuickDayChip(String label, Set<int> days) {
+    final isActive = _selectedDays.length == days.length && _selectedDays.containsAll(days);
+    return GestureDetector(
+      onTap: () => setState(() => _selectedDays = Set.from(days)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.primary.withValues(alpha: 0.15) : AppColors.surfaceLight,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isActive ? AppColors.primary : AppColors.border,
+            width: isActive ? 1 : 0.5,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: isActive ? AppColors.primary : AppColors.textSecondary,
+            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
           ),
         ),
       ),
     );
   }
 
-  Future<void> _savePlan() async {
-    if (!_formKey.currentState!.validate()) return;
+  Widget _buildSubmitButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: ElevatedButton(
+        onPressed: _isSubmitting ? null : _submit,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.backgroundDeep,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          elevation: 0,
+        ),
+        child: _isSubmitting
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.backgroundDeep,
+                ),
+              )
+            : Text(_isEditMode ? '保存修改' : '创建计划', style: TextStyles.button),
+      ),
+    );
+  }
 
-    final formState = ref.read(planFormProvider);
-    final name = _nameController.text.trim();
-    final targetAmount = int.tryParse(_targetAmountController.text) ?? 0;
-    final unit = _unitController.text.trim();
-    final colorValue = AppColors.cardColors[formState.selectedColorIndex].value;
+  void _onRepeatTypeChanged(String type) {
+    setState(() {
+      _repeatType = type;
+      if (type == 'daily') {
+        _selectedDays = {1, 2, 3, 4, 5, 6, 7};
+      }
+    });
+  }
+
+  void _toggleDay(int day) {
+    setState(() {
+      if (_selectedDays.contains(day)) {
+        _selectedDays.remove(day);
+      } else {
+        _selectedDays.add(day);
+      }
+    });
+  }
+
+  Future<void> _pickDate({required bool isStart}) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: isStart ? _startDate : (_endDate ?? _startDate.add(const Duration(days: 30))),
+      firstDate: isStart ? DateTime.now().subtract(const Duration(days: 365)) : _startDate,
+      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: AppColors.primary,
+              onPrimary: AppColors.backgroundDeep,
+              surface: AppColors.surface,
+              onSurface: AppColors.textPrimary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        if (isStart) {
+          _startDate = picked;
+        } else {
+          _endDate = picked;
+        }
+      });
+    }
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_selectedDays.isEmpty && _repeatType != 'daily') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('请至少选择一个活动日期')),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
 
     try {
-      if (isEditing) {
-        final template = widget.template!;
+      final sortedDays = _selectedDays.toList()..sort();
+      final activeDays = _repeatType == 'daily'
+          ? '1,2,3,4,5,6,7'
+          : sortedDays.join(',');
+
+      final repeatInterval = _repeatType == 'interval'
+          ? int.tryParse(_intervalController.text) ?? 1
+          : 1;
+
+      final dailyTargetAmount = int.tryParse(_targetAmountController.text) ?? 0;
+
+      if (_isEditMode) {
+        final t = widget.template!;
         await ref.read(planTemplateNotifierProvider.notifier).updateTemplate(
               PlanTemplate(
-                id: template.id,
-                name: name,
-                description: formState.description.isEmpty
-                    ? null
-                    : formState.description,
-                categoryId: formState.categoryId.isEmpty
-                    ? null
-                    : formState.categoryId,
-                dailyTargetAmount: targetAmount,
-                unit: unit.isEmpty ? null : unit,
-                enableQuantityTracking: true,
-                repeatType:
-                    formState.isRepeatable ? formState.repeatType : 'none',
-                repeatInterval: 1,
-                activeDays: '1,2,3,4,5,6,7',
-                startHour: template.startHour,
-                startMinute: template.startMinute,
-                endHour: template.endHour,
-                endMinute: template.endMinute,
-                colorValue: colorValue,
-                startDate: template.startDate,
-                endDate: template.endDate,
-                isActive: template.isActive,
-                sortOrder: template.sortOrder,
-                createdAt: template.createdAt,
+                id: t.id,
+                name: _nameController.text.trim(),
+                description: _descController.text.trim().isEmpty ? null : _descController.text.trim(),
+                categoryId: t.categoryId,
+                dailyTargetAmount: dailyTargetAmount,
+                unit: _unitController.text.trim().isEmpty ? null : _unitController.text.trim(),
+                enableQuantityTracking: _enableQuantityTracking,
+                repeatType: _repeatType,
+                repeatInterval: repeatInterval,
+                activeDays: activeDays,
+                startHour: _startHour,
+                startMinute: _startMinute,
+                endHour: _endHour,
+                endMinute: _endMinute,
+                colorValue: _selectedColorValue,
+                startDate: _startDate,
+                endDate: _endDate,
+                isActive: true,
+                sortOrder: t.sortOrder,
+                createdAt: t.createdAt,
                 updatedAt: DateTime.now(),
               ),
             );
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('计划已更新')),
-          );
-          context.pop();
-        }
       } else {
-        await ref
-            .read(planTemplateNotifierProvider.notifier)
-            .createTemplate(
-              name: name,
-              description: formState.description.isEmpty
-                  ? null
-                  : formState.description,
-              dailyTargetAmount: targetAmount,
-              unit: unit.isEmpty ? null : unit,
-              enableQuantityTracking: true,
-              repeatType:
-                  formState.isRepeatable ? formState.repeatType : 'none',
-              repeatInterval: 1,
-              activeDays: '1,2,3,4,5,6,7',
-              startHour: 8,
-              startMinute: 0,
-              endHour: 9,
-              endMinute: 0,
-              colorValue: colorValue,
-              startDate: DateTime.now(),
+        await ref.read(planTemplateNotifierProvider.notifier).createTemplate(
+              name: _nameController.text.trim(),
+              description: _descController.text.trim().isEmpty ? null : _descController.text.trim(),
+              dailyTargetAmount: dailyTargetAmount,
+              unit: _unitController.text.trim().isEmpty ? null : _unitController.text.trim(),
+              enableQuantityTracking: _enableQuantityTracking,
+              repeatType: _repeatType,
+              repeatInterval: repeatInterval,
+              activeDays: activeDays,
+              startHour: _startHour,
+              startMinute: _startMinute,
+              endHour: _endHour,
+              endMinute: _endMinute,
+              colorValue: _selectedColorValue,
+              startDate: _startDate,
+              endDate: _endDate,
             );
+      }
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('计划已创建')),
-          );
-          context.pop();
-        }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_isEditMode ? '计划已更新' : '计划已创建')),
+        );
+        context.pop();
       }
     } catch (e) {
       if (mounted) {
@@ -722,6 +813,8 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
           SnackBar(content: Text('操作失败: $e')),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 }

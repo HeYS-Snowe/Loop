@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:loop/data/database/app_database.dart';
-import 'package:loop/data/repositories/plan_template_repository.dart';
-import 'package:loop/data/repositories/plan_instance_repository.dart';
-import 'package:loop/presentation/providers/cycle_provider.dart';
+import '../../data/database/app_database.dart';
+import '../../data/repositories/plan_template_repository.dart';
+import '../../data/repositories/plan_instance_repository.dart';
+import 'cycle_provider.dart';
 
 final planTemplateRepositoryProvider = Provider<PlanTemplateRepository>((ref) {
   return PlanTemplateRepository(ref.watch(databaseProvider));
@@ -144,10 +144,7 @@ class PlanInstanceNotifier
   Future<void> updateCompletedAmount(String instanceId, int amount) async {
     state = await AsyncValue.guard(() async {
       final instances = await _instanceRepo.getInstancesByDate(_currentDate);
-      final instance = instances.firstWhere(
-        (i) => i.id == instanceId,
-        orElse: () => throw StateError('Instance not found: $instanceId'),
-      );
+      final instance = instances.firstWhere((i) => i.id == instanceId);
       final targetAmount = instance.targetAmount;
       final clampedAmount = amount.clamp(0, targetAmount);
 
@@ -171,10 +168,7 @@ class PlanInstanceNotifier
   Future<void> toggleComplete(String instanceId) async {
     state = await AsyncValue.guard(() async {
       final instances = await _instanceRepo.getInstancesByDate(_currentDate);
-      final instance = instances.firstWhere(
-        (i) => i.id == instanceId,
-        orElse: () => throw StateError('Instance not found: $instanceId'),
-      );
+      final instance = instances.firstWhere((i) => i.id == instanceId);
 
       if (instance.isCompleted) {
         await _instanceRepo.uncompleteInstance(instanceId);

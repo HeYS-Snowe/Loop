@@ -1,17 +1,38 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:loop/core/theme/colors.dart';
+import '../../../core/theme/colors.dart';
+
+class Particle {
+  double x;
+  double y;
+  double size;
+  double speedX;
+  double speedY;
+  double opacity;
+  Color color;
+
+  Particle({
+    required this.x,
+    required this.y,
+    required this.size,
+    required this.speedX,
+    required this.speedY,
+    required this.opacity,
+    required this.color,
+  });
+}
 
 class ParticleBackground extends StatefulWidget {
   final int particleCount;
-  final Color particleColor;
-  final bool enableGlow;
+  final Color? baseColor;
+  final Widget? child;
 
   const ParticleBackground({
     super.key,
-    this.particleCount = 20,
-    this.particleColor = AppColors.primary,
-    this.enableGlow = false,
+    this.particleCount = 30,
+    this.baseColor,
+    this.child,
   });
 
   @override
@@ -21,7 +42,8 @@ class ParticleBackground extends StatefulWidget {
 class _ParticleBackgroundState extends State<ParticleBackground>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late List<_Particle> _particles;
+  List<Particle> _particles = [];
+  final Random _random = Random(42);
 
   @override
   void initState() {
@@ -31,18 +53,26 @@ class _ParticleBackgroundState extends State<ParticleBackground>
       duration: const Duration(seconds: 30),
     )..repeat();
 
-    final random = Random(42);
-    _particles = List.generate(widget.particleCount, (index) {
-      return _Particle(
-        x: random.nextDouble(),
-        y: random.nextDouble(),
-        size: 1.0 + random.nextDouble() * 2.0,
-        speed: 0.2 + random.nextDouble() * 0.6,
-        opacity: 0.08 + random.nextDouble() * 0.07,
-        phase: random.nextDouble() * 2 * pi,
-        driftX: (random.nextDouble() - 0.5) * 0.3,
-      );
-    });
+    _particles = List.generate(widget.particleCount, (_) => _createParticle());
+  }
+
+  Particle _createParticle() {
+    final colors = [
+      AppColors.primary.withValues(alpha: 0.15),
+      AppColors.accent.withValues(alpha: 0.1),
+      AppColors.warmAccent.withValues(alpha: 0.08),
+      AppColors.gold.withValues(alpha: 0.06),
+      widget.baseColor?.withValues(alpha: 0.12) ?? AppColors.primary.withValues(alpha: 0.1),
+    ];
+    return Particle(
+      x: _random.nextDouble(),
+      y: _random.nextDouble(),
+      size: _random.nextDouble() * 2.5 + 0.5,
+      speedX: (_random.nextDouble() - 0.5) * 0.0003,
+      speedY: (_random.nextDouble() - 0.5) * 0.0003,
+      opacity: _random.nextDouble() * 0.5 + 0.1,
+      color: colors[_random.nextInt(colors.length)],
+    );
   }
 
   @override
@@ -56,83 +86,66 @@ class _ParticleBackgroundState extends State<ParticleBackground>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        return CustomPaint(
-          painter: _ParticlePainter(
-            particles: _particles,
-            progress: _controller.value,
-            color: widget.particleColor,
-            enableGlow: widget.enableGlow,
-          ),
-          size: Size.infinite,
+        for (final particle in _particles) {
+          particle.x += particle.speedX;
+          particle.y += particle.speedY;
+
+          if (particle.x < -0.05) particle.x = 1.05;
+          if (particle.x > 1.05) particle.x = -0.05;
+          if (particle.y < -0.05) particle.y = 1.05;
+          if (particle.y > 1.05) particle.y = -0.05;
+        }
+
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _ParticlePainter(_particles),
+              ),
+            ),
+            if (widget.child != null) widget.child!,
+          ],
         );
       },
     );
   }
 }
 
-class _Particle {
-  double x;
-  double y;
-  final double size;
-  final double speed;
-  final double opacity;
-  final double phase;
-  final double driftX;
-
-  _Particle({
-    required this.x,
-    required this.y,
-    required this.size,
-    required this.speed,
-    required this.opacity,
-    required this.phase,
-    required this.driftX,
-  });
-}
-
 class _ParticlePainter extends CustomPainter {
-  final List<_Particle> particles;
-  final double progress;
-  final Color color;
-  final bool enableGlow;
+  final List<Particle> particles;
 
-  _ParticlePainter({
-    required this.particles,
-    required this.progress,
-    required this.color,
-    this.enableGlow = false,
-  });
+  _ParticlePainter(this.particles);
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..style = PaintingStyle.fill;
+    for (final particle in particles) {
+      final paint = Paint()
+        ..color = particle.color.withValues(alpha: particle.opacity)
+        ..style = PaintingStyle.fill;
 
-    for (final p in particles) {
-      final t = progress * 30 * p.speed;
-      final breathe = sin(t * 0.5 + p.phase) * 0.5 + 0.5;
-      final currentOpacity = p.opacity * (0.6 + breathe * 0.4);
+      final center = Offset(
+        particle.x * size.width,
+        particle.y * size.height,
+      );
 
-      double px = (p.x + sin(t * 0.3 + p.phase) * p.driftX * 0.1) % 1.0;
-      double py = (p.y - t * p.speed * 0.005) % 1.0;
-      if (py < 0) py += 1.0;
-      if (px < 0) px += 1.0;
+      canvas.drawCircle(center, particle.size, paint);
 
-      final dx = px * size.width;
-      final dy = py * size.height;
+      if (!kIsWeb) {
+        final glowPaint = Paint()
+          ..color = particle.color.withValues(alpha: particle.opacity * 0.3)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
 
-      paint.color = color.withOpacity(currentOpacity);
+        canvas.drawCircle(center, particle.size * 3, glowPaint);
+      } else {
+        final glowPaint = Paint()
+          ..color = particle.color.withValues(alpha: particle.opacity * 0.15)
+          ..style = PaintingStyle.fill;
 
-      if (enableGlow) {
-        paint.maskFilter =
-            const MaskFilter.blur(BlurStyle.normal, 3);
+        canvas.drawCircle(center, particle.size * 4, glowPaint);
       }
-
-      canvas.drawCircle(Offset(dx, dy), p.size, paint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _ParticlePainter oldDelegate) {
-    return progress != oldDelegate.progress;
-  }
+  bool shouldRepaint(covariant _ParticlePainter oldDelegate) => true;
 }

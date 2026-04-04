@@ -1,6 +1,6 @@
-import 'package:drift/drift.dart' hide Column;
+import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
@@ -22,18 +22,21 @@ class EditTaskDialog extends ConsumerStatefulWidget {
 
 class _EditTaskDialogState extends ConsumerState<EditTaskDialog> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _nameController;
-  late final TextEditingController _descriptionController;
-  late final TextEditingController _targetAmountController;
-  late final TextEditingController _unitController;
+  late TextEditingController _nameController;
+  late TextEditingController _descriptionController;
+  late TextEditingController _targetAmountController;
+  late TextEditingController _unitController;
   late bool _isRepeatable;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.task.name);
-    _descriptionController = TextEditingController(text: widget.task.description ?? '');
-    _targetAmountController = TextEditingController(text: widget.task.targetAmount.toString());
+    _descriptionController =
+        TextEditingController(text: widget.task.description ?? '');
+    _targetAmountController =
+        TextEditingController(text: widget.task.targetAmount.toString());
     _unitController = TextEditingController(text: widget.task.unit ?? '');
     _isRepeatable = widget.task.isRepeatable;
   }
@@ -49,148 +52,237 @@ class _EditTaskDialogState extends ConsumerState<EditTaskDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('编辑任务', style: TextStyles.heading4),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: '任务名称 *',
-                  hintText: '例如：背单词',
-                ),
-                style: TextStyles.body1,
-                validator: TaskValidator.validateName,
-                maxLength: 50,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: '描述（可选）',
-                  hintText: '任务描述',
-                ),
-                style: TextStyles.body1,
-                maxLines: 2,
-                maxLength: 200,
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _targetAmountController,
-                      decoration: const InputDecoration(
-                        labelText: '目标数量',
-                        hintText: '0',
-                      ),
-                      style: TextStyles.body1,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      validator: TaskValidator.validateTargetAmount,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _unitController,
-                      decoration: const InputDecoration(
-                        labelText: '单位（可选）',
-                        hintText: '个/分钟',
-                      ),
-                      style: TextStyles.body1,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              SwitchListTile(
-                title: Text('可重复', style: TextStyles.body2),
-                subtitle: Text(
-                  '在新周期中自动创建',
-                  style: TextStyles.caption,
-                ),
-                value: _isRepeatable,
-                onChanged: (value) {
-                  setState(() => _isRepeatable = value);
-                },
-                activeColor: AppColors.primary,
-                contentPadding: EdgeInsets.zero,
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text('取消', style: TextStyles.buttonSmall),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: _saveTask,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('保存'),
-                  ),
-                ],
-              ),
-            ],
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        border: Border(
+          top: BorderSide(
+            color: AppColors.glassBorder.withValues(alpha: 0.1),
+            width: 0.5,
           ),
         ),
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        child: kIsWeb
+            ? Padding(
+                padding: EdgeInsets.only(
+                  left: 24,
+                  right: 24,
+                  top: 20,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                ),
+                child: _buildFormContent(),
+              )
+            : BackdropFilter(
+                filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: 24,
+                    right: 24,
+                    top: 20,
+                    bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                  ),
+                  child: _buildFormContent(),
+                ),
+              ),
       ),
     );
   }
 
-  Future<void> _saveTask() async {
-    if (!_formKey.currentState!.validate()) return;
+  Widget _buildFormContent() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.textTertiary,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text('编辑任务', style: TextStyles.heading3),
+          const SizedBox(height: 24),
+          TextFormField(
+            controller: _nameController,
+            style: TextStyles.body1,
+            decoration: InputDecoration(
+              labelText: '任务名称',
+              prefixIcon: const Icon(Icons.edit_note_rounded, size: 20),
+            ),
+            validator: TaskValidator.validateName,
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _descriptionController,
+            style: TextStyles.body1,
+            decoration: InputDecoration(
+              labelText: '描述（可选）',
+              prefixIcon: const Icon(Icons.description_rounded, size: 20),
+            ),
+            maxLines: 2,
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _targetAmountController,
+                  style: TextStyles.body1,
+                  decoration: InputDecoration(
+                    labelText: '目标数量',
+                    prefixIcon: const Icon(Icons.flag_rounded, size: 20),
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: TaskValidator.validateTargetAmount,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: TextFormField(
+                  controller: _unitController,
+                  style: TextStyles.body1,
+                  decoration: InputDecoration(
+                    labelText: '单位（可选）',
+                    prefixIcon: const Icon(Icons.straighten_rounded, size: 20),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.surfaceLight.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: SwitchListTile(
+              title: Text('可重复', style: TextStyles.body1),
+              subtitle: Text(
+                '在新周期中自动创建',
+                style: TextStyles.body2,
+              ),
+              value: _isRepeatable,
+              onChanged: (value) {
+                setState(() {
+                  _isRepeatable = value;
+                });
+              },
+            ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  '取消',
+                  style: TextStyles.body1.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: AppColors.primaryGradient,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.2),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  onPressed: _isSubmitting ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    elevation: 0,
+                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            color: AppColors.backgroundDeep,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text('保存'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-    final name = _nameController.text.trim();
-    final description = _descriptionController.text.trim();
-    final targetAmount = int.tryParse(_targetAmountController.text) ?? 0;
-    final unit = _unitController.text.trim();
+  Future<void> _submit() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isSubmitting = true);
 
-    try {
-      await ref.read(taskNotifierProvider.notifier).updateTask(
-            TasksCompanion(
-              id: Value(widget.task.id),
-              cycleId: Value(widget.task.cycleId),
-              name: Value(name),
-              description: Value(description.isEmpty ? null : description),
-              targetAmount: Value(targetAmount),
-              completedAmount: Value(widget.task.completedAmount),
-              unit: Value(unit.isEmpty ? null : unit),
-              isRepeatable: Value(_isRepeatable),
-              repeatType: Value(widget.task.repeatType),
-              isCompleted: Value(widget.task.isCompleted),
-              createdAt: Value(widget.task.createdAt),
-              updatedAt: Value(DateTime.now()),
+      try {
+        final name = _nameController.text.trim();
+        final description = _descriptionController.text.trim();
+        final targetAmount = int.parse(_targetAmountController.text);
+        final unit = _unitController.text.trim();
+
+        final updatedTask = Task(
+          id: widget.task.id,
+          cycleId: widget.task.cycleId,
+          name: name,
+          description: description.isEmpty ? null : description,
+          targetAmount: targetAmount,
+          completedAmount: widget.task.completedAmount,
+          unit: unit.isEmpty ? null : unit,
+          categoryId: widget.task.categoryId,
+          isRepeatable: _isRepeatable,
+          repeatType: widget.task.repeatType,
+          isCompleted: widget.task.isCompleted,
+          createdAt: widget.task.createdAt,
+          updatedAt: DateTime.now(),
+        );
+
+        await ref
+            .read(taskNotifierProvider(widget.task.cycleId).notifier)
+            .editTask(updatedTask);
+
+        if (mounted) {
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('任务已更新',
+                  style:
+                      TextStyles.body2.copyWith(color: AppColors.textPrimary)),
             ),
           );
-
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('任务已更新')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('更新失败: $e')),
-        );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('更新失败: $e'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isSubmitting = false);
+        }
       }
     }
   }

@@ -1,11 +1,13 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../providers/check_in_provider.dart';
+import '../../../domain/services/check_in_service.dart';
+import '../../widgets/common/glass_card.dart';
+import '../../widgets/common/gradient_decorations.dart';
+import '../../widgets/common/particle_background.dart';
 import '../../widgets/common/animated_widgets.dart';
 
 class CheckInPage extends ConsumerStatefulWidget {
@@ -15,291 +17,389 @@ class CheckInPage extends ConsumerStatefulWidget {
   ConsumerState<CheckInPage> createState() => _CheckInPageState();
 }
 
-class _CheckInPageState extends ConsumerState<CheckInPage> {
+class _CheckInPageState extends ConsumerState<CheckInPage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulseController;
   DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay;
+  CalendarFormat _calendarFormat = CalendarFormat.month;
 
   @override
   void initState() {
     super.initState();
-    _selectedDay = _focusedDay;
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final checkInState = ref.watch(checkInNotifierProvider);
+    final checkInStateAsync = ref.watch(checkInNotifierProvider);
+    final statsAsync = ref.watch(checkInStatsProvider);
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       extendBodyBehindAppBar: true,
-      backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: const Text('打卡', style: TextStyles.heading4),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        title: Text('打卡', style: TextStyles.heading3),
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppColors.backgroundDeep, AppColors.background],
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                FadeInWidget(
-                  child: _buildCheckInCard(checkInState),
-                ),
-                const SizedBox(height: 24),
-                FadeInWidget(
-                  delay: const Duration(milliseconds: 100),
-                  child: _buildCalendar(),
-                ),
-                const SizedBox(height: 24),
-                FadeInWidget(
-                  delay: const Duration(milliseconds: 200),
-                  child: _buildStatsCard(checkInState),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCheckInCard(AsyncValue<CheckInState> checkInState) {
-    return checkInState.when(
-      data: (state) {
-        return Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: state.checkedIn
-                  ? [AppColors.success, AppColors.successLight]
-                  : [AppColors.primary, AppColors.primaryDark],
-            ),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: (state.checkedIn ? AppColors.success : AppColors.primary)
-                    .withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Icon(
-                state.checkedIn ? Icons.check_circle : Icons.radio_button_unchecked,
-                size: 64,
-                color: Colors.white,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                state.checkedIn ? '今日已打卡' : '今日未打卡',
-                style: TextStyles.heading3.copyWith(color: Colors.white),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '已连续 ${state.streakCount} 天',
-                style: TextStyles.body2.copyWith(color: Colors.white.withOpacity(0.9)),
-              ),
-              const SizedBox(height: 24),
-              if (!state.checkedIn)
-                ElevatedButton(
-                  onPressed: () {
-                    ref.read(checkInNotifierProvider.notifier).checkIn();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                  ),
-                  child: const Text('立即打卡'),
-                ),
-            ],
-          ),
-        );
-      },
-      loading: () => _buildLoadingCard(),
-      error: (e, _) => _buildErrorCard(e.toString()),
-    );
-  }
-
-  Widget _buildCalendar() {
-    final checkInRecordsAsync = ref.watch(checkInRecordsProvider);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border.withOpacity(0.5)),
-      ),
-      child: checkInRecordsAsync.when(
-        data: (records) {
-          final checkInDays = records.map((r) => DateTime(
-            r.date.year,
-            r.date.month,
-            r.date.day,
-          )).toSet();
-
-          return TableCalendar<DateTime>(
-            firstDay: DateTime.utc(2020, 1, 1),
-            lastDay: DateTime.utc(2030, 12, 31),
-            focusedDay: _focusedDay,
-            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-            onDaySelected: (selectedDay, focusedDay) {
-              setState(() {
-                _selectedDay = selectedDay;
-                _focusedDay = focusedDay;
-              });
-            },
-            calendarStyle: CalendarStyle(
-              todayDecoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.3),
-                shape: BoxShape.circle,
-              ),
-              selectedDecoration: const BoxDecoration(
-                color: AppColors.primary,
-                shape: BoxShape.circle,
-              ),
-              markerDecoration: const BoxDecoration(
-                color: AppColors.success,
-                shape: BoxShape.circle,
-              ),
-            ),
-            headerStyle: HeaderStyle(
-              titleCentered: true,
-              titleTextStyle: TextStyles.heading5,
-              formatButtonVisible: false,
-              leftChevronIcon: const Icon(Icons.chevron_left, color: AppColors.textPrimary),
-              rightChevronIcon: const Icon(Icons.chevron_right, color: AppColors.textPrimary),
-            ),
-            daysOfWeekStyle: DaysOfWeekStyle(
-              weekdayStyle: TextStyles.caption,
-              weekendStyle: TextStyles.caption.copyWith(color: AppColors.textTertiary),
-            ),
-            eventLoader: (day) {
-              final normalizedDay = DateTime(day.year, day.month, day.day);
-              return checkInDays.contains(normalizedDay) ? [day] : [];
-            },
-          );
-        },
-        loading: () => _buildLoadingCard(),
-        error: (e, _) => _buildErrorCard(e.toString()),
-      ),
-    );
-  }
-
-  Widget _buildStatsCard(AsyncValue<CheckInState> checkInState) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border.withOpacity(0.5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: Stack(
         children: [
-          Text('打卡统计', style: TextStyles.heading5),
-          const SizedBox(height: 16),
-          checkInState.when(
-            data: (state) {
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildStatItem(
-                    icon: Icons.local_fire_department,
-                    label: '连续打卡',
-                    value: '${state.streakCount}天',
-                    color: AppColors.warning,
-                  ),
-                  _buildStatItem(
-                    icon: Icons.emoji_events,
-                    label: '最长记录',
-                    value: '${state.maxStreak}天',
-                    color: AppColors.success,
-                  ),
-                  _buildStatItem(
-                    icon: Icons.calendar_today,
-                    label: '累计打卡',
-                    value: '${state.totalCheckIns}天',
-                    color: AppColors.primary,
-                  ),
-                ],
-              );
-            },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('加载失败: $e')),
+          const Positioned.fill(
+            child: GradientDecoration(
+              style: GradientStyle.meshGradient,
+            ),
+          ),
+          const Positioned.fill(
+            child: ParticleBackground(
+              particleCount: 20,
+              baseColor: AppColors.warmAccent,
+            ),
+          ),
+          Positioned.fill(
+            child: SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AnimatedPageWrapper(
+                      index: 0,
+                      child: checkInStateAsync.when(
+                        data: (state) => _buildCheckInButton(context, ref, state),
+                        loading: () => const GlassCard(
+                          child: SizedBox(height: 160),
+                        ),
+                        error: (_, __) => const GlassCard(
+                          child: SizedBox(height: 160),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    AnimatedPageWrapper(
+                      index: 1,
+                      child: statsAsync.when(
+                        data: (stats) => _buildStatsRow(stats),
+                        loading: () => const SizedBox(height: 80),
+                        error: (_, __) => const SizedBox(height: 80),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    AnimatedPageWrapper(
+                      index: 2,
+                      child: Text('打卡日历', style: TextStyles.heading4),
+                    ),
+                    const SizedBox(height: 12),
+                    AnimatedPageWrapper(
+                      index: 3,
+                      child: _buildCalendar(context, ref),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
+  Widget _buildCheckInButton(
+      BuildContext context, WidgetRef ref, CheckInState state) {
+    return GlassCard(
+      borderRadius: 24,
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: state.checkedInToday
+            ? [
+                AppColors.successMuted.withValues(alpha: 0.6),
+                AppColors.surface.withValues(alpha: 0.4),
+              ]
+            : [
+                AppColors.surface.withValues(alpha: 0.8),
+                AppColors.card.withValues(alpha: 0.6),
+              ],
+      ),
+      showCornerAccent: !state.checkedInToday,
+      child: Column(
+        children: [
+          AnimatedBuilder(
+            animation: _pulseController,
+            builder: (context, child) {
+              final pulse = 0.5 + _pulseController.value * 0.5;
+              return Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: state.checkedInToday
+                        ? [
+                            AppColors.success.withValues(alpha: 0.15 + pulse * 0.1),
+                            AppColors.success.withValues(alpha: 0.05),
+                          ]
+                        : [
+                            AppColors.primary.withValues(alpha: 0.15 + pulse * 0.1),
+                            AppColors.accent.withValues(alpha: 0.05),
+                          ],
+                  ),
+                  border: Border.all(
+                    color: state.checkedInToday
+                        ? AppColors.success.withValues(alpha: 0.2 + pulse * 0.1)
+                        : AppColors.primary.withValues(alpha: 0.2 + pulse * 0.1),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (state.checkedInToday
+                              ? AppColors.success
+                              : AppColors.primary)
+                          .withValues(alpha: 0.15 * pulse),
+                      blurRadius: 24 * pulse,
+                      spreadRadius: 4,
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: state.checkedInToday
+                      ? const Icon(
+                          Icons.check_rounded,
+                          size: 48,
+                          color: AppColors.success,
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '${state.streakCount}',
+                              style: TextStyles.heading1.copyWith(
+                                color: AppColors.primary,
+                                fontSize: 32,
+                              ),
+                            ),
+                            Text(
+                              '天',
+                              style: TextStyles.caption.copyWith(
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          Text(
+            state.checkedInToday ? '今日已打卡' : '点击打卡',
+            style: TextStyles.heading4.copyWith(
+              color: state.checkedInToday
+                  ? AppColors.success
+                  : AppColors.textPrimary,
+            ),
+          ),
+          if (!state.checkedInToday) ...[
+            const SizedBox(height: 6),
+            Text(
+              '已连续 ${state.streakCount} 天',
+              style: TextStyles.body2,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsRow(CheckInStats stats) {
+    return GlassCard(
+      borderRadius: 20,
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          AppColors.surface.withValues(alpha: 0.7),
+          AppColors.card.withValues(alpha: 0.5),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildStatItem('连续打卡', '${stats.currentStreak}', AppColors.warmAccent),
+          Container(width: 1, height: 32, color: AppColors.divider),
+          _buildStatItem('最长记录', '${stats.maxStreak}', AppColors.gold),
+          Container(width: 1, height: 32, color: AppColors.divider),
+          _buildStatItem('累计打卡', '${stats.totalDays}', AppColors.accent),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, Color color) {
     return Column(
       children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: color, size: 24),
-        ),
-        const SizedBox(height: 8),
-        Text(value, style: TextStyles.heading5.copyWith(color: color)),
+        Text(value, style: TextStyles.statValue.copyWith(fontSize: 24, color: color)),
         const SizedBox(height: 4),
         Text(label, style: TextStyles.caption),
       ],
     );
   }
 
-  Widget _buildLoadingCard() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+  Widget _buildCalendar(BuildContext context, WidgetRef ref) {
+    final statsAsync = ref.watch(checkInStatsProvider);
+
+    return GlassCard(
+      borderRadius: 24,
+      padding: const EdgeInsets.all(16),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          AppColors.surface.withValues(alpha: 0.75),
+          AppColors.card.withValues(alpha: 0.55),
+        ],
       ),
-      child: const Center(
-        child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2),
+      child: statsAsync.when(
+        data: (stats) => TableCalendar(
+          firstDay: DateTime(2024, 1, 1),
+          lastDay: DateTime.now().add(const Duration(days: 365)),
+          focusedDay: _focusedDay,
+          calendarFormat: _calendarFormat,
+          onFormatChanged: (format) {
+            setState(() {
+              _calendarFormat = format;
+            });
+          },
+          onDaySelected: (selected, focused) {
+            setState(() {
+              _focusedDay = focused;
+            });
+          },
+          headerVisible: true,
+          daysOfWeekHeight: 40,
+          rowHeight: 48,
+          headerStyle: HeaderStyle(
+            formatButtonVisible: true,
+            formatButtonDecoration: BoxDecoration(
+              color: AppColors.surfaceLight,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            formatButtonTextStyle:
+                TextStyles.label.copyWith(color: AppColors.primary),
+            titleTextStyle: TextStyles.heading4,
+            titleCentered: false,
+            leftChevronIcon: Icon(
+              Icons.chevron_left_rounded,
+              color: AppColors.textSecondary,
+            ),
+            rightChevronIcon: Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          daysOfWeekStyle: DaysOfWeekStyle(
+            weekdayStyle: TextStyles.label.copyWith(
+              color: AppColors.textSecondary,
+            ),
+            weekendStyle: TextStyles.label.copyWith(
+              color: AppColors.warmAccent.withValues(alpha: 0.7),
+            ),
+          ),
+          calendarBuilders: CalendarBuilders(
+            defaultBuilder: (context, day, focusedDay) {
+              final isToday = _isSameDay(day, DateTime.now());
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isToday
+                      ? AppColors.primary.withValues(alpha: 0.1)
+                      : Colors.transparent,
+                ),
+                child: Center(
+                  child: Text(
+                    '${day.day}',
+                    style: TextStyles.body1.copyWith(
+                      color: isToday
+                          ? AppColors.primary
+                          : AppColors.textPrimary,
+                      fontWeight: isToday ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                ),
+              );
+            },
+            selectedBuilder: (context, day, focusedDay) {
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: AppColors.primaryGradient,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    '${day.day}',
+                    style: TextStyles.body1.copyWith(
+                      color: AppColors.backgroundDeep,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              );
+            },
+            markerBuilder: (context, date, events) {
+              final isChecked = stats.checkedInDates.any(
+                (d) => _isSameDay(d, date),
+              );
+              if (isChecked) {
+                return Positioned(
+                  bottom: 2,
+                  child: Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.success,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.success.withValues(alpha: 0.4),
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+              return null;
+            },
+          ),
+          calendarStyle: CalendarStyle(
+            outsideDaysVisible: false,
+            isTodayHighlighted: false,
+          ),
+        ),
+        loading: () => const SizedBox(height: 300),
+        error: (_, __) => const SizedBox(height: 300),
       ),
     );
   }
 
-  Widget _buildErrorCard(String error) {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Center(
-        child: Text(
-          '加载失败: $error',
-          style: TextStyles.body2.copyWith(color: AppColors.error),
-        ),
-      ),
-    );
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 }

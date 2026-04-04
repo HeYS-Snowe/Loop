@@ -1,6 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:loop/data/database/app_database.dart';
-import 'package:loop/data/repositories/cycle_repository.dart';
+import '../../data/database/app_database.dart';
+import '../../data/repositories/cycle_repository.dart';
+import '../../data/repositories/task_repository.dart';
+import '../../data/repositories/check_in_repository.dart';
+import '../../data/repositories/category_repository.dart';
+import '../../domain/services/cycle_service.dart';
 
 final databaseProvider = Provider<AppDatabase>((ref) {
   return AppDatabase();
@@ -10,7 +14,26 @@ final cycleRepositoryProvider = Provider<CycleRepository>((ref) {
   return CycleRepository(ref.watch(databaseProvider));
 });
 
-final allCyclesProvider = FutureProvider<List<Cycle>>((ref) {
+final taskRepositoryProvider = Provider<TaskRepository>((ref) {
+  return TaskRepository(ref.watch(databaseProvider));
+});
+
+final checkInRepositoryProvider = Provider<CheckInRepository>((ref) {
+  return CheckInRepository(ref.watch(databaseProvider));
+});
+
+final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
+  return CategoryRepository(ref.watch(databaseProvider));
+});
+
+final cycleServiceProvider = Provider<CycleService>((ref) {
+  return CycleService(
+    ref.watch(cycleRepositoryProvider),
+    ref.watch(taskRepositoryProvider),
+  );
+});
+
+final cyclesProvider = FutureProvider<List<Cycle>>((ref) async {
   final repository = ref.watch(cycleRepositoryProvider);
   return repository.getAllCycles();
 });
@@ -20,8 +43,7 @@ final activeCycleProvider = FutureProvider<Cycle?>((ref) async {
   return repository.getActiveCycle();
 });
 
-final cycleNotifierProvider =
-    StateNotifierProvider<CycleNotifier, AsyncValue<List<Cycle>>>((ref) {
+final cycleNotifierProvider = StateNotifierProvider<CycleNotifier, AsyncValue<List<Cycle>>>((ref) {
   return CycleNotifier(ref.watch(cycleRepositoryProvider));
 });
 
@@ -32,29 +54,7 @@ class CycleNotifier extends StateNotifier<AsyncValue<List<Cycle>>> {
 
   Future<void> loadCycles() async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => _repository.getAllCycles());
-  }
-
-  Future<void> createCycle(CyclesCompanion cycle) async {
-    state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      await _repository.insertCycle(cycle);
-      return _repository.getAllCycles();
-    });
-  }
-
-  Future<void> updateCycle(CyclesCompanion cycle) async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      await _repository.updateCycle(cycle);
-      return _repository.getAllCycles();
-    });
-  }
-
-  Future<void> deleteCycle(String id) async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      await _repository.deleteCycle(id);
       return _repository.getAllCycles();
     });
   }

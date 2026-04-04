@@ -9,7 +9,6 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      fontFamily: 'MiSans',
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primary,
         onPrimary: AppColors.backgroundDeep,
@@ -37,7 +36,6 @@ class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
-          fontFamily: 'MiSans',
           fontSize: 22,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,

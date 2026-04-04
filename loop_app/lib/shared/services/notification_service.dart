@@ -1,54 +1,86 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/timezone.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz_data;
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
+  final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
+
   factory NotificationService() => _instance;
+
   NotificationService._internal();
 
-  final FlutterLocalNotificationsPlugin _notificationsPlugin =
-      FlutterLocalNotificationsPlugin();
-
   Future<void> initialize() async {
+    tz_data.initializeTimeZones();
+    
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
-
-    const settings = InitializationSettings(
+    
+    final initSettings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
     );
 
-    await _notificationsPlugin.initialize(
-      settings,
-      onDidReceiveNotificationResponse: _onNotificationTapped,
-    );
-  }
-
-  void _onNotificationTapped(NotificationResponse response) {
+    await _notificationsPlugin.initialize(initSettings);
   }
 
   Future<void> showDailyReminder({
     required int id,
     required String title,
-    required String body,
-    required TimeOfDay time,
+    String? body,
   }) async {
-    final androidDetails = AndroidNotificationDetails(
-      'daily_reminders',
+    const androidDetails = AndroidNotificationDetails(
+      'daily_reminder',
       '每日提醒',
       channelDescription: '每日任务提醒通知',
-      importance: Importance.high,
+      importance: Importance.max,
       priority: Priority.high,
     );
-
     const iosDetails = DarwinNotificationDetails();
+    
+    final notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
 
-    final details = NotificationDetails(
+    await _notificationsPlugin.show(
+      id,
+      title,
+      body,
+      notificationDetails,
+    );
+  }
+
+  Future<void> scheduleDailyReminder({
+    required int id,
+    required String title,
+    String? body,
+    required int hour,
+    required int minute,
+  }) async {
+    final now = DateTime.now();
+    var scheduledDate = DateTime(now.year, now.month, now.day, hour, minute);
+    
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    }
+
+    final tzScheduledDate = tz.TZDateTime.from(scheduledDate, tz.local);
+
+    const androidDetails = AndroidNotificationDetails(
+      'daily_reminder',
+      '每日提醒',
+      channelDescription: '每日任务提醒通知',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    const iosDetails = DarwinNotificationDetails();
+    
+    final notificationDetails = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
@@ -57,12 +89,10 @@ class NotificationService {
       id,
       title,
       body,
-      _nextInstanceOfTime(time.hour, time.minute),
-      details,
+      tzScheduledDate,
+      notificationDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.time,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 
@@ -72,14 +102,5 @@ class NotificationService {
 
   Future<void> cancelAllNotifications() async {
     await _notificationsPlugin.cancelAll();
-  }
-
-  TZDateTime _nextInstanceOfTime(int hour, int minute) {
-    final now = TZDateTime.now(local);
-    var scheduledDate = TZDateTime(local, now.year, now.month, now.day, hour, minute);
-    if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
-    }
-    return scheduledDate;
   }
 }

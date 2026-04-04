@@ -10,8 +10,8 @@ class Tasks extends Table {
   TextColumn get description => text().nullable().withLength(max: 200)();
   IntColumn get targetAmount => integer().check(targetAmount.isBiggerThanValue(0))();
   IntColumn get completedAmount => integer().withDefault(const Constant(0))();
-  TextColumn get categoryId => text().nullable().withLength(min: 36, max: 36).references(Categories, #id)();
   TextColumn get unit => text().nullable().withLength(max: 10)();
+  TextColumn get categoryId => text().nullable().withLength(min: 36, max: 36).references(Categories, #id)();
   BoolColumn get isRepeatable => boolean().withDefault(const Constant(false))();
   TextColumn get repeatType => text().nullable().withLength(max: 10)();
   BoolColumn get isCompleted => boolean().withDefault(const Constant(false))();

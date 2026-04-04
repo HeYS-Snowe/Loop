@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:loop_app/core/router/app_router.dart';
-import 'package:loop_app/core/theme/app_theme.dart';
-import 'package:loop_app/l10n/generated/app_localizations.dart';
-import 'package:loop_app/presentation/providers/settings_provider.dart';
+import 'core/router/app_router.dart';
+import 'core/theme/app_theme.dart';
 
-class LoopApp extends ConsumerWidget {
+class LoopApp extends StatelessWidget {
   const LoopApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -21,16 +18,11 @@ class LoopApp extends ConsumerWidget {
       ),
     );
 
-    final settingsState = ref.watch(settingsProvider);
-
     return MaterialApp.router(
       title: 'Loop',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       routerConfig: appRouter,
-      locale: settingsState.locale,
-      localizationsDelegates: S.localizationsDelegates,
-      supportedLocales: S.supportedLocales,
     );
   }
 }

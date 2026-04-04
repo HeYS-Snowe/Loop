@@ -1,77 +1,55 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:loop/core/theme/colors.dart';
-import 'package:loop/core/theme/text_styles.dart';
+import '../../../core/theme/colors.dart';
 
 class LoopBottomNav extends StatelessWidget {
-  final Widget child;
+  final int currentIndex;
+  final ValueChanged<int> onTap;
 
-  const LoopBottomNav({super.key, required this.child});
+  const LoopBottomNav({
+    super.key,
+    required this.currentIndex,
+    required this.onTap,
+  });
 
-  static const _items = [
-    _NavItem('/home', Icons.home_rounded, '首页'),
-    _NavItem('/daily-plan', Icons.calendar_today_rounded, '日计划'),
-    _NavItem('/summary', Icons.bar_chart_rounded, '统计'),
-    _NavItem('/settings', Icons.settings_rounded, '设置'),
+  static const List<_NavData> _items = [
+    _NavData(icon: Icons.home_rounded, activeIcon: Icons.home_rounded, label: '首页'),
+    _NavData(icon: Icons.calendar_month_rounded, activeIcon: Icons.calendar_month_rounded, label: '行程'),
+    _NavData(icon: Icons.bar_chart_rounded, activeIcon: Icons.bar_chart_rounded, label: '统计'),
+    _NavData(icon: Icons.settings_outlined, activeIcon: Icons.settings_rounded, label: '设置'),
   ];
-
-  int _currentIndex(BuildContext context) {
-    final location = GoRouterState.of(context).uri.toString();
-    for (int i = 0; i < _items.length; i++) {
-      if (location.startsWith(_items[i].path)) return i;
-    }
-    return 0;
-  }
 
   @override
   Widget build(BuildContext context) {
-    final index = _currentIndex(context);
-
-    return Scaffold(
-      body: child,
-      extendBody: true,
-      bottomNavigationBar: Container(
-        height: 68,
-        margin: const EdgeInsets.only(
-          left: 12,
-          right: 12,
-          bottom: 12,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.surface.withOpacity(0.85),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: AppColors.glassBorder,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface.withValues(alpha: 0.92),
+        border: Border(
+          top: BorderSide(
+            color: AppColors.glassBorder.withValues(alpha: 0.1),
             width: 0.5,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.shadowDefault,
-              blurRadius: 20,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                for (int i = 0; i < _items.length; i++)
-                  _NavItemWidget(
-                    item: _items[i],
-                    isSelected: i == index,
-                    onTap: () {
-                      if (i != index) {
-                        context.go(_items[i].path);
-                      }
-                    },
-                  ),
-              ],
-            ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(_items.length, (index) {
+              return _NavItem(
+                item: _items[index],
+                isSelected: currentIndex == index,
+                onTap: () => onTap(index),
+              );
+            }),
           ),
         ),
       ),
@@ -79,115 +57,77 @@ class LoopBottomNav extends StatelessWidget {
   }
 }
 
-class _NavItem {
-  final String path;
-  final IconData icon;
-  final String label;
-
-  const _NavItem(this.path, this.icon, this.label);
-}
-
-class _NavItemWidget extends StatefulWidget {
-  final _NavItem item;
+class _NavItem extends StatelessWidget {
+  final _NavData item;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _NavItemWidget({
+  const _NavItem({
     required this.item,
     required this.isSelected,
     required this.onTap,
   });
 
   @override
-  State<_NavItemWidget> createState() => _NavItemWidgetState();
-}
-
-class _NavItemWidgetState extends State<_NavItemWidget>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _scaleAnim = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween(begin: 1.0, end: 1.1)
-            .chain(CurveTween(curve: Curves.easeOut)),
-        weight: 40,
-      ),
-      TweenSequenceItem(
-        tween: Tween(begin: 1.1, end: 1.0)
-            .chain(CurveTween(curve: Curves.easeOut)),
-        weight: 60,
-      ),
-    ]).animate(_controller);
-  }
-
-  @override
-  void didUpdateWidget(covariant _NavItemWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isSelected && !oldWidget.isSelected) {
-      _controller.forward(from: 0);
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final color =
-        widget.isSelected ? AppColors.primary : AppColors.textTertiary;
-
-    return Expanded(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onTap,
-        child: Container(
-          color: Colors.transparent,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ScaleTransition(
-                scale: _scaleAnim,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 4,
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOutCubic,
+                  width: isSelected ? 36 : 0,
+                  height: isSelected ? 36 : 0,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.primary.withValues(alpha: 0.12),
                   ),
-                  decoration: widget.isSelected
-                      ? BoxDecoration(
-                          color: AppColors.primaryMuted,
-                          borderRadius: BorderRadius.circular(12),
-                        )
-                      : null,
+                ),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
                   child: Icon(
-                    widget.item.icon,
-                    color: color,
-                    size: 22,
+                    isSelected ? item.activeIcon : item.icon,
+                    key: ValueKey(isSelected),
+                    size: isSelected ? 23 : 21,
+                    color: isSelected ? AppColors.primary : AppColors.textTertiary,
                   ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 200),
+              style: TextStyle(
+                fontSize: isSelected ? 10 : 9,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                color: isSelected ? AppColors.primary : AppColors.textTertiary,
+                height: 1.2,
               ),
-              const SizedBox(height: 2),
-              Text(
-                widget.item.label,
-                style: TextStyles.labelSmall.copyWith(
-                  color: color,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
+              child: Text(item.label),
+            ),
+          ],
         ),
       ),
     );
   }
+}
+
+class _NavData {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+
+  const _NavData({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+  });
 }

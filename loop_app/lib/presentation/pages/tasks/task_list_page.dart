@@ -6,209 +6,219 @@ import '../../../core/theme/text_styles.dart';
 import '../../../data/database/app_database.dart';
 import '../../providers/cycle_provider.dart';
 import '../../providers/task_provider.dart';
-import 'widgets/add_task_dialog.dart';
+import '../../widgets/common/gradient_decorations.dart';
+import '../../widgets/common/animated_widgets.dart';
 import 'widgets/task_card.dart';
+import 'widgets/add_task_dialog.dart';
 
-class TaskListPage extends ConsumerStatefulWidget {
+class TaskListPage extends ConsumerWidget {
   const TaskListPage({super.key});
 
   @override
-  ConsumerState<TaskListPage> createState() => _TaskListPageState();
-}
-
-class _TaskListPageState extends ConsumerState<TaskListPage> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadTasks();
-    });
-  }
-
-  void _loadTasks() {
-    final activeCycle = ref.read(activeCycleProvider);
-    activeCycle.whenData((cycle) {
-      if (cycle != null) {
-        ref.read(tasksNotifierProvider(cycle.id).notifier).loadTasks(cycle.id);
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final activeCycleAsync = ref.watch(activeCycleProvider);
 
     return activeCycleAsync.when(
       data: (cycle) {
         if (cycle == null) {
-          return _buildNoCycleState();
+          return _buildNoCycleView(context);
         }
-        return _buildTaskList(cycle);
+        return _buildTaskListView(context, ref, cycle.id);
       },
       loading: () => Scaffold(
         backgroundColor: AppColors.background,
         body: const Center(
-          child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2),
+          child: CircularProgressIndicator(color: AppColors.primary),
         ),
       ),
-      error: (e, _) => Scaffold(
+      error: (error, stack) => Scaffold(
         backgroundColor: AppColors.background,
         body: Center(
-          child: Text(
-            '加载失败: $e',
-            style: TextStyles.body2.copyWith(color: AppColors.error),
-          ),
+          child: Text('Error: $error', style: TextStyles.body2),
         ),
       ),
     );
   }
 
-  Widget _buildNoCycleState() {
+  Widget _buildNoCycleView(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('任务列表', style: TextStyles.heading4),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        title: Text('任务列表', style: TextStyles.heading3),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.calendar_today_outlined,
+              Icons.event_busy_rounded,
               size: 64,
-              color: AppColors.textTertiary.withOpacity(0.5),
+              color: AppColors.textTertiary,
             ),
             const SizedBox(height: 16),
-            Text(
-              '暂无活动周期',
-              style: TextStyles.body1.copyWith(color: AppColors.textSecondary),
-            ),
+            Text('暂无活动周期', style: TextStyles.heading4),
             const SizedBox(height: 8),
-            Text(
-              '请先创建一个周期计划',
-              style: TextStyles.caption,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => context.push('/create-cycle'),
-              icon: const Icon(Icons.add, size: 20),
-              label: const Text('创建周期'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-            ),
+            Text('请先创建一个周期计划', style: TextStyles.body2),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTaskList(Cycle cycle) {
-    final tasksAsync = ref.watch(tasksNotifierProvider(cycle.id));
+  Widget _buildTaskListView(
+      BuildContext context, WidgetRef ref, String cycleId) {
+    final tasksAsync = ref.watch(taskNotifierProvider(cycleId));
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(cycle.name, style: TextStyles.heading4),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        title: Text('任务列表', style: TextStyles.heading3),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add, color: AppColors.primary),
-            onPressed: () => _showAddTaskDialog(cycle.id),
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.border.withValues(alpha: 0.3),
+                width: 0.5,
+              ),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.filter_list_rounded, size: 20),
+              onPressed: () {},
+            ),
           ),
         ],
       ),
-      body: tasksAsync.when(
-        data: (tasks) {
-          if (tasks.isEmpty) {
-            return _buildEmptyState(cycle.id);
-          }
-
-          final inProgressTasks = tasks.where((t) => !t.isCompleted).toList();
-          final completedTasks = tasks.where((t) => t.isCompleted).toList();
-
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              if (inProgressTasks.isNotEmpty) ...[
-                Text('进行中 (${inProgressTasks.length})', style: TextStyles.label),
-                const SizedBox(height: 8),
-                ...inProgressTasks.map((task) => TaskCard(
-                  name: task.name,
-                  planName: cycle.name,
-                  completedAmount: task.completedAmount,
-                  targetAmount: task.targetAmount,
-                  isCompleted: task.isCompleted,
-                  onTap: () => context.push('/tasks/${task.id}'),
-                )),
-                const SizedBox(height: 16),
-              ],
-              if (completedTasks.isNotEmpty) ...[
-                Text('已完成 (${completedTasks.length})', style: TextStyles.label),
-                const SizedBox(height: 8),
-                ...completedTasks.map((task) => TaskCard(
-                  name: task.name,
-                  planName: cycle.name,
-                  completedAmount: task.completedAmount,
-                  targetAmount: task.targetAmount,
-                  isCompleted: task.isCompleted,
-                  onTap: () => context.push('/tasks/${task.id}'),
-                )),
-              ],
-            ],
-          );
-        },
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2),
-        ),
-        error: (e, _) => Center(
-          child: Text(
-            '加载失败: $e',
-            style: TextStyles.body2.copyWith(color: AppColors.error),
+      body: Stack(
+        children: [
+          const Positioned.fill(
+            child: GradientDecoration(
+              style: GradientStyle.diagonalHalf,
+              color: AppColors.accent,
+            ),
           ),
-        ),
+          Positioned.fill(
+            child: tasksAsync.when(
+              data: (tasks) {
+                if (tasks.isEmpty) {
+                  return _buildEmptyView(context);
+                }
+                return _buildTaskList(context, ref, tasks, cycleId);
+              },
+              loading: () => const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              ),
+              error: (error, stack) => Center(
+                child: Text('Error: $error', style: TextStyles.body2),
+              ),
+            ),
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddTaskDialog(cycle.id),
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.white),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: FloatingActionButton(
+          onPressed: () => _showAddTaskDialog(context, cycleId),
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.backgroundDeep,
+          elevation: 0,
+          child: const Icon(Icons.add_rounded, size: 28),
+        ),
       ),
     );
   }
 
-  Widget _buildEmptyState(String cycleId) {
+  Widget _buildEmptyView(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.task_alt_outlined,
+            Icons.task_alt_rounded,
             size: 64,
-            color: AppColors.textTertiary.withOpacity(0.5),
+            color: AppColors.textTertiary,
           ),
           const SizedBox(height: 16),
-          Text(
-            '暂无任务',
-            style: TextStyles.body1.copyWith(color: AppColors.textSecondary),
-          ),
+          Text('暂无任务', style: TextStyles.heading4),
           const SizedBox(height: 8),
-          Text(
-            '点击右下角按钮添加任务',
-            style: TextStyles.caption,
-          ),
+          Text('点击右下角按钮添加任务', style: TextStyles.body2),
         ],
       ),
     );
   }
 
-  void _showAddTaskDialog(String cycleId) {
-    showDialog(
+  Widget _buildTaskList(
+      BuildContext context, WidgetRef ref, List<Task> tasks, String cycleId) {
+    final completedTasks = tasks.where((t) => t.isCompleted).toList();
+    final pendingTasks = tasks.where((t) => !t.isCompleted).toList();
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 80, 20, 100),
+      children: [
+        if (pendingTasks.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              '进行中 (${pendingTasks.length})',
+              style: TextStyles.overline,
+            ),
+          ),
+          ...pendingTasks.asMap().entries.map((entry) => AnimatedPageWrapper(
+                index: entry.key,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: TaskCard(
+                    task: entry.value,
+                    onTap: () => context.go('/tasks/${entry.value.id}'),
+                    onProgressUpdate: (amount) {
+                      ref
+                          .read(taskNotifierProvider(cycleId).notifier)
+                          .updateProgress(entry.value.id, amount);
+                    },
+                  ),
+                ),
+              )),
+        ],
+        if (completedTasks.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              '已完成 (${completedTasks.length})',
+              style: TextStyles.overline,
+            ),
+          ),
+          ...completedTasks.asMap().entries.map((entry) => AnimatedPageWrapper(
+                index: entry.key + pendingTasks.length,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: TaskCard(
+                    task: entry.value,
+                    onTap: () => context.go('/tasks/${entry.value.id}'),
+                  ),
+                ),
+              )),
+        ],
+      ],
+    );
+  }
+
+  void _showAddTaskDialog(BuildContext context, String cycleId) {
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) => AddTaskDialog(cycleId: cycleId),
     );
   }

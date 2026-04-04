@@ -1,4 +1,4 @@
-name: loop
+name: loop_app
 description: Loop - 周期计划管理应用
 publish_to: 'none'
 version: 0.0.1+1

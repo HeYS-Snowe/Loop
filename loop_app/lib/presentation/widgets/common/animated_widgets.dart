@@ -1,81 +1,112 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:loop/core/theme/colors.dart';
+import '../../../core/theme/colors.dart';
 
-class FadeInWidget extends StatefulWidget {
+class AnimatedPageWrapper extends StatelessWidget {
   final Widget child;
-  final Duration duration;
-  final Duration delay;
-  final double slideOffset;
-  final FadeInDirection direction;
-  final bool enableScale;
+  final int index;
+  final bool enableSlide;
 
-  const FadeInWidget({
+  const AnimatedPageWrapper({
     super.key,
     required this.child,
-    this.duration = const Duration(milliseconds: 400),
-    this.delay = Duration.zero,
-    this.slideOffset = 20.0,
-    this.direction = FadeInDirection.up,
-    this.enableScale = false,
+    this.index = 0,
+    this.enableSlide = true,
   });
 
   @override
-  State<FadeInWidget> createState() => _FadeInWidgetState();
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 500 + index * 80),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: enableSlide
+                ? Offset(0, (1.0 - value) * 20)
+                : Offset.zero,
+            child: child,
+          ),
+        );
+      },
+      child: child,
+    );
+  }
 }
 
-class _FadeInWidgetState extends State<FadeInWidget>
+class StaggeredList extends StatelessWidget {
+  final List<Widget> children;
+  final Duration delay;
+  final double slideOffset;
+
+  const StaggeredList({
+    super.key,
+    required this.children,
+    this.delay = const Duration(milliseconds: 60),
+    this.slideOffset = 16,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (int i = 0; i < children.length; i++)
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: Duration(milliseconds: 400 + i * delay.inMilliseconds),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, child) {
+              return Opacity(
+                opacity: value,
+                child: Transform.translate(
+                  offset: Offset(0, (1.0 - value) * slideOffset),
+                  child: child,
+                ),
+              );
+            },
+            child: children[i],
+          ),
+      ],
+    );
+  }
+}
+
+class AnimatedScaleButton extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+  final double minScale;
+  final Duration duration;
+
+  const AnimatedScaleButton({
+    super.key,
+    required this.child,
+    this.onTap,
+    this.minScale = 0.94,
+    this.duration = const Duration(milliseconds: 150),
+  });
+
+  @override
+  State<AnimatedScaleButton> createState() => _AnimatedScaleButtonState();
+}
+
+class _AnimatedScaleButtonState extends State<AnimatedScaleButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _opacity;
-  late Animation<Offset> _slide;
-  late Animation<double> _scale;
-  bool _started = false;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
-      vsync: this,
       duration: widget.duration,
+      vsync: this,
     );
-    _opacity = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
+    _scaleAnimation = Tween<double>(begin: 1.0, end: widget.minScale).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
     );
-    _slide = Tween<Offset>(
-      begin: _getBeginOffset(),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
-    ));
-    _scale = Tween<double>(
-      begin: widget.enableScale ? 0.92 : 1.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
-    ));
-
-    Future.delayed(widget.delay, () {
-      if (mounted) {
-        setState(() => _started = true);
-        _controller.forward();
-      }
-    });
-  }
-
-  Offset _getBeginOffset() {
-    switch (widget.direction) {
-      case FadeInDirection.up:
-        return Offset(0, widget.slideOffset);
-      case FadeInDirection.down:
-        return Offset(0, -widget.slideOffset);
-      case FadeInDirection.left:
-        return Offset(-widget.slideOffset, 0);
-      case FadeInDirection.right:
-        return Offset(widget.slideOffset, 0);
-    }
   }
 
   @override
@@ -86,119 +117,167 @@ class _FadeInWidgetState extends State<FadeInWidget>
 
   @override
   Widget build(BuildContext context) {
-    if (!_started) {
-      return const SizedBox.shrink();
-    }
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Opacity(
-          opacity: _opacity.value,
-          child: Transform.translate(
-            offset: _slide.value,
-            child: Transform.scale(
-              scale: _scale.value,
-              child: child,
-            ),
-          ),
-        );
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) {
+        _controller.reverse();
+        widget.onTap?.call();
       },
-      child: widget.child,
-    );
-  }
-}
-
-enum FadeInDirection { up, down, left, right }
-
-class AnimatedProgressIndicator extends StatelessWidget {
-  final double progress;
-  final double height;
-  final LinearGradient? gradient;
-  final Color backgroundColor;
-  final Duration duration;
-  final Curve curve;
-  final BorderRadius borderRadius;
-
-  const AnimatedProgressIndicator({
-    super.key,
-    required this.progress,
-    this.height = 6,
-    this.gradient,
-    this.backgroundColor = AppColors.surfaceElevated,
-    this.duration = const Duration(milliseconds: 600),
-    this.curve = Curves.easeInOutCubic,
-    this.borderRadius = const BorderRadius.all(Radius.circular(3)),
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final effectiveGradient =
-        gradient ?? AppColors.progressGradient;
-
-    return ClipRRect(
-      borderRadius: borderRadius,
-      child: SizedBox(
-        height: height,
-        child: Stack(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: backgroundColor,
-                borderRadius: borderRadius,
-              ),
-            ),
-            TweenAnimationBuilder<double>(
-              tween: Tween(end: progress.clamp(0.0, 1.0)),
-              duration: duration,
-              curve: curve,
-              builder: (context, value, child) {
-                return FractionallySizedBox(
-                  widthFactor: value,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: effectiveGradient,
-                      borderRadius: borderRadius,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
+      onTapCancel: () => _controller.reverse(),
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: child,
+          );
+        },
+        child: widget.child,
       ),
     );
   }
 }
 
-class StaggeredList extends StatelessWidget {
-  final List<Widget> children;
-  final Duration itemDuration;
-  final Duration staggerDelay;
-  final int maxItems;
+class GlowIcon extends StatefulWidget {
+  final IconData icon;
+  final Color? color;
+  final double size;
+  final double glowRadius;
+  final double glowOpacity;
 
-  const StaggeredList({
+  const GlowIcon({
     super.key,
-    required this.children,
-    this.itemDuration = const Duration(milliseconds: 400),
-    this.staggerDelay = const Duration(milliseconds: 50),
-    this.maxItems = 10,
+    required this.icon,
+    this.color,
+    this.size = 24,
+    this.glowRadius = 12,
+    this.glowOpacity = 0.3,
   });
 
   @override
+  State<GlowIcon> createState() => _GlowIconState();
+}
+
+class _GlowIconState extends State<GlowIcon>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (int i = 0; i < children.length; i++)
-          FadeInWidget(
-            duration: itemDuration,
-            delay: Duration(
-              milliseconds: staggerDelay.inMilliseconds *
-                  (i < maxItems ? i : maxItems),
-            ),
-            child: children[i],
+    final color = widget.color ?? AppColors.primary;
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final glowIntensity = 0.5 + _controller.value * 0.5;
+        return Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: widget.glowOpacity * glowIntensity),
+                blurRadius: widget.glowRadius * glowIntensity,
+                spreadRadius: 2,
+              ),
+            ],
           ),
-      ],
+          child: Icon(
+            widget.icon,
+            color: color,
+            size: widget.size,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class ShimmerText extends StatefulWidget {
+  final String text;
+  final TextStyle? style;
+  final Color? shimmerColor;
+
+  const ShimmerText({
+    super.key,
+    required this.text,
+    this.style,
+    this.shimmerColor,
+  });
+
+  @override
+  State<ShimmerText> createState() => _ShimmerTextState();
+}
+
+class _ShimmerTextState extends State<ShimmerText>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final shimmerColor = widget.shimmerColor ?? AppColors.primary;
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        if (kIsWeb) {
+          return Opacity(
+            opacity: 0.7 + _controller.value * 0.3,
+            child: Text(
+              widget.text,
+              style: widget.style,
+            ),
+          );
+        }
+        return ShaderMask(
+          shaderCallback: (bounds) {
+            return LinearGradient(
+              colors: [
+                (widget.style?.color ?? AppColors.textPrimary),
+                shimmerColor,
+                (widget.style?.color ?? AppColors.textPrimary),
+              ],
+              stops: [
+                _controller.value - 0.3,
+                _controller.value,
+                _controller.value + 0.3,
+              ].map((s) => s.clamp(0.0, 1.0)).toList(),
+            ).createShader(bounds);
+          },
+          blendMode: BlendMode.srcIn,
+          child: Text(
+            widget.text,
+            style: widget.style,
+          ),
+        );
+      },
     );
   }
 }

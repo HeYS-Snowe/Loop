@@ -56,6 +56,8 @@ extension CycleExtension on Cycle {
     return (elapsedDays / totalDays).clamp(0.0, 1.0);
   }
 
+  double get progressPercentage => progress;
+
   bool get isExpired {
     return DateTime.now().isAfter(endDate);
   }

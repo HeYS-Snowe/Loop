@@ -2,15 +2,13 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/text_styles.dart';
-import '../../../l10n/generated/app_localizations.dart';
 
 class LoopTimePicker extends StatefulWidget {
   final TimeOfDay initialTime;
-  final String? title;
 
-  const LoopTimePicker({super.key, required this.initialTime, this.title});
+  const LoopTimePicker({super.key, required this.initialTime});
 
-  static Future<TimeOfDay?> show(BuildContext context, {required TimeOfDay initialTime, String? title}) {
+  static Future<TimeOfDay?> show(BuildContext context, {required TimeOfDay initialTime}) {
     return showGeneralDialog<TimeOfDay>(
       context: context,
       barrierDismissible: true,
@@ -32,7 +30,7 @@ class LoopTimePicker extends StatefulWidget {
       },
       pageBuilder: (context, animation, secondaryAnimation) {
         return Center(
-          child: LoopTimePicker(initialTime: initialTime, title: title),
+          child: LoopTimePicker(initialTime: initialTime),
         );
       },
     );
@@ -121,9 +119,8 @@ class _LoopTimePickerState extends State<LoopTimePicker> with TickerProviderStat
   }
 
   Widget _buildHeader() {
-    final displayTitle = widget.title ?? S.of(context)!.timePickerDefaultTitle;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(24, 24, 24, 0),
       child: Row(
         children: [
           SizedBox(
@@ -132,23 +129,23 @@ class _LoopTimePickerState extends State<LoopTimePicker> with TickerProviderStat
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: AppColors.primaryGradient,
-                borderRadius: const BorderRadius.all(Radius.circular(12)),
+                borderRadius: BorderRadius.all(Radius.circular(12)),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.schedule_rounded,
                 color: AppColors.backgroundDeep,
                 size: 22,
               ),
             ),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(displayTitle, style: TextStyles.heading4),
-                const SizedBox(height: 2),
-                Text(S.of(context)!.timePicker24Hour, style: TextStyles.caption),
+                Text('选择提醒时间', style: TextStyles.heading4),
+                SizedBox(height: 2),
+                Text('设置每日打卡提醒的时间', style: TextStyles.caption),
               ],
             ),
           ),
@@ -233,7 +230,6 @@ class _LoopTimePickerState extends State<LoopTimePicker> with TickerProviderStat
   }
 
   Widget _buildWheelSection() {
-    final s = S.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: SizedBox(
@@ -245,7 +241,7 @@ class _LoopTimePickerState extends State<LoopTimePicker> with TickerProviderStat
                 controller: _hourController,
                 itemCount: 24,
                 selectedItem: _selectedHour,
-                unit: s.hourUnit,
+                unit: '时',
                 onChanged: (index) {
                   setState(() => _selectedHour = index);
                 },
@@ -257,7 +253,7 @@ class _LoopTimePickerState extends State<LoopTimePicker> with TickerProviderStat
                 controller: _minuteController,
                 itemCount: 60,
                 selectedItem: _selectedMinute,
-                unit: s.minuteUnit,
+                unit: '分',
                 onChanged: (index) {
                   setState(() => _selectedMinute = index);
                 },
@@ -395,7 +391,7 @@ class _LoopTimePickerState extends State<LoopTimePicker> with TickerProviderStat
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  S.of(context)!.cancel,
+                  '取消',
                   style: TextStyles.body1.copyWith(
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w500,
@@ -439,7 +435,7 @@ class _LoopTimePickerState extends State<LoopTimePicker> with TickerProviderStat
                   ),
                   alignment: Alignment.center,
                   child: Text(
-                    S.of(context)!.confirm,
+                    '确认',
                     style: TextStyles.button.copyWith(fontSize: 16),
                   ),
                 ),
