@@ -7,4 +7,11 @@ class RouteConstants {
   static const String checkIn = '/check-in';
   static const String summary = '/summary';
   static const String settings = '/settings';
+  static const String schedule = '/schedule';
+  static const String dailyPlan = '/daily-plan';
+  static const String createCycle = '/create-cycle';
+  static const String editCycle = '/edit-cycle';
+  static const String createPlan = '/create-plan';
+  static const String editPlan = '/edit-plan';
+  static const String editTask = '/edit-task';
 }

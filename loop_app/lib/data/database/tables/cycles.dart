@@ -7,7 +7,8 @@ class Cycles extends Table {
   TextColumn get description => text().nullable().withLength(max: 200)();
   DateTimeColumn get startDate => dateTime()();
   DateTimeColumn get endDate => dateTime()();
-  TextColumn get status => text().withLength(max: 20).withDefault(const Constant('active'))();
+  TextColumn get status =>
+      text().withLength(max: 20).withDefault(const Constant('active'))();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();

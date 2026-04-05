@@ -26,6 +26,11 @@ final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
   return CategoryRepository(ref.watch(databaseProvider));
 });
 
+final categoriesProvider = FutureProvider<List<Category>>((ref) {
+  final repository = ref.watch(categoryRepositoryProvider);
+  return repository.getAllCategories();
+});
+
 final cycleServiceProvider = Provider<CycleService>((ref) {
   return CycleService(
     ref.watch(cycleRepositoryProvider),
@@ -42,20 +47,3 @@ final activeCycleProvider = FutureProvider<Cycle?>((ref) async {
   final repository = ref.watch(cycleRepositoryProvider);
   return repository.getActiveCycle();
 });
-
-final cycleNotifierProvider = StateNotifierProvider<CycleNotifier, AsyncValue<List<Cycle>>>((ref) {
-  return CycleNotifier(ref.watch(cycleRepositoryProvider));
-});
-
-class CycleNotifier extends StateNotifier<AsyncValue<List<Cycle>>> {
-  final CycleRepository _repository;
-
-  CycleNotifier(this._repository) : super(const AsyncValue.loading());
-
-  Future<void> loadCycles() async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      return _repository.getAllCycles();
-    });
-  }
-}

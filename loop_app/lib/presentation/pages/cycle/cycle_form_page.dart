@@ -5,9 +5,9 @@ import 'package:loop_app/core/theme/colors.dart';
 import 'package:loop_app/core/theme/text_styles.dart';
 import 'package:loop_app/core/utils/validators.dart';
 import 'package:loop_app/data/database/app_database.dart';
+import 'package:loop_app/l10n/generated/app_localizations.dart';
 import 'package:loop_app/presentation/providers/cycle_provider.dart';
 import 'package:loop_app/presentation/widgets/common/gradient_decorations.dart';
-import 'package:loop_app/shared/extensions/date_extensions.dart';
 
 class CycleFormPage extends ConsumerStatefulWidget {
   final Cycle? cycle;
@@ -59,7 +59,7 @@ class _CycleFormPageState extends ConsumerState<CycleFormPage> {
       extendBodyBehindAppBar: true,
       backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: Text(_isEditMode ? '编辑周期' : '创建周期'),
+        title: Text(_isEditMode ? S.of(context)!.editCycle : S.of(context)!.createCycle),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () => context.pop(),
@@ -112,7 +112,7 @@ class _CycleFormPageState extends ConsumerState<CycleFormPage> {
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: Text(
-            '周期名称',
+            S.of(context)!.cycleName,
             style: TextStyles.label,
           ),
         ),
@@ -120,11 +120,11 @@ class _CycleFormPageState extends ConsumerState<CycleFormPage> {
           controller: _nameController,
           style: TextStyles.body1,
           decoration: InputDecoration(
-            hintText: '例如：第一周学习计划',
+            hintText: S.of(context)!.cycleNameHint,
             hintStyle: TextStyles.body1.copyWith(color: AppColors.textHint),
             prefixIcon: const Icon(Icons.edit_note_rounded, size: 20),
           ),
-          validator: CycleValidator.validateName,
+          validator: (v) => CycleValidator.validateName(S.of(context)!, v),
         ),
       ],
     );
@@ -137,7 +137,7 @@ class _CycleFormPageState extends ConsumerState<CycleFormPage> {
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: Text(
-            '描述（可选）',
+            S.of(context)!.descOptional,
             style: TextStyles.label,
           ),
         ),
@@ -145,7 +145,7 @@ class _CycleFormPageState extends ConsumerState<CycleFormPage> {
           controller: _descriptionController,
           style: TextStyles.body1,
           decoration: InputDecoration(
-            hintText: '为这个周期添加备注',
+            hintText: S.of(context)!.cycleDescHint,
             hintStyle: TextStyles.body1.copyWith(color: AppColors.textHint),
             prefixIcon: const Icon(Icons.description_rounded, size: 20),
           ),
@@ -161,20 +161,20 @@ class _CycleFormPageState extends ConsumerState<CycleFormPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '周期时间',
+          S.of(context)!.cycleTime,
           style: TextStyles.heading4,
         ),
         const SizedBox(height: 16),
         _buildDateTile(
           icon: Icons.calendar_today_rounded,
-          label: '开始日期',
+          label: S.of(context)!.startDate,
           date: _startDate,
           onTap: () => _selectDate(isStart: true),
         ),
         const SizedBox(height: 12),
         _buildDateTile(
           icon: Icons.event_available_rounded,
-          label: '结束日期',
+          label: S.of(context)!.endDate,
           date: _endDate,
           onTap: () => _selectDate(isStart: false),
         ),
@@ -197,7 +197,7 @@ class _CycleFormPageState extends ConsumerState<CycleFormPage> {
               ),
               const SizedBox(width: 8),
               Text(
-                '共 ${_endDate.difference(_startDate).inDays + 1} 天',
+                S.of(context)!.totalDays(_endDate.difference(_startDate).inDays + 1),
                 style: TextStyles.body2.copyWith(
                   color: AppColors.primaryLight,
                 ),
@@ -215,6 +215,7 @@ class _CycleFormPageState extends ConsumerState<CycleFormPage> {
     required DateTime date,
     required VoidCallback onTap,
   }) {
+    final s = S.of(context)!;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -243,7 +244,7 @@ class _CycleFormPageState extends ConsumerState<CycleFormPage> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      date.formatCN(),
+                      s.dateYearMonthDay(date.year, date.month, date.day),
                       style: TextStyles.body1,
                     ),
                   ],
@@ -265,7 +266,7 @@ class _CycleFormPageState extends ConsumerState<CycleFormPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '快速选择周期',
+          S.of(context)!.quickSelectCycle,
           style: TextStyles.heading4,
         ),
         const SizedBox(height: 12),
@@ -273,12 +274,12 @@ class _CycleFormPageState extends ConsumerState<CycleFormPage> {
           spacing: 10,
           runSpacing: 10,
           children: [
-            _buildPresetChip('1周', 7),
-            _buildPresetChip('2周', 14),
-            _buildPresetChip('3周', 21),
-            _buildPresetChip('1个月', 30),
-            _buildPresetChip('2个月', 60),
-            _buildPresetChip('3个月', 90),
+            _buildPresetChip(S.of(context)!.oneWeek, 7),
+            _buildPresetChip(S.of(context)!.twoWeeks, 14),
+            _buildPresetChip(S.of(context)!.threeWeeks, 21),
+            _buildPresetChip(S.of(context)!.oneMonth, 30),
+            _buildPresetChip(S.of(context)!.twoMonths, 60),
+            _buildPresetChip(S.of(context)!.threeMonths, 90),
           ],
         ),
       ],
@@ -357,7 +358,7 @@ class _CycleFormPageState extends ConsumerState<CycleFormPage> {
                   ),
                 )
               : Text(
-                  _isEditMode ? '保存修改' : '创建周期',
+                  _isEditMode ? S.of(context)!.saveChanges : S.of(context)!.createCycle,
                   style: TextStyles.button,
                 ),
         ),
@@ -407,7 +408,7 @@ class _CycleFormPageState extends ConsumerState<CycleFormPage> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final durationError = CycleValidator.validateDuration(_startDate, _endDate);
+    final durationError = CycleValidator.validateDateRange(S.of(context)!, _startDate, _endDate);
     if (durationError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -454,7 +455,7 @@ class _CycleFormPageState extends ConsumerState<CycleFormPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _isEditMode ? '周期已更新' : '周期创建成功',
+              _isEditMode ? S.of(context)!.cycleUpdated : S.of(context)!.cycleCreatedSuccess,
               style: TextStyles.body2.copyWith(color: AppColors.textPrimary),
             ),
           ),
@@ -465,7 +466,7 @@ class _CycleFormPageState extends ConsumerState<CycleFormPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('操作失败: $e'),
+            content: Text(S.of(context)!.operationFailed(e.toString())),
             backgroundColor: AppColors.error,
           ),
         );

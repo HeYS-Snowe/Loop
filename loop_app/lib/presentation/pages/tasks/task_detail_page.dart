@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:loop_app/l10n/generated/app_localizations.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../data/extensions/model_extensions.dart';
@@ -7,6 +8,7 @@ import '../../providers/task_provider.dart';
 import '../../widgets/common/glass_card.dart';
 import '../../widgets/common/gradient_decorations.dart';
 import '../../widgets/common/animated_widgets.dart';
+import 'widgets/edit_task_dialog.dart';
 
 class TaskDetailPage extends ConsumerWidget {
   final String taskId;
@@ -24,7 +26,36 @@ class TaskDetailPage extends ConsumerWidget {
       backgroundColor: AppColors.background,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text('任务详情', style: TextStyles.heading3),
+        title: Text(S.of(context)!.taskDetail, style: TextStyles.heading3),
+        actions: [
+          taskAsync.when(
+            data: (task) => task != null
+                ? Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.border.withValues(alpha: 0.3),
+                        width: 0.5,
+                      ),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.edit_rounded, size: 20),
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (_) => EditTaskDialog(task: task),
+                        );
+                      },
+                    ),
+                  )
+                : const SizedBox.shrink(),
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -39,13 +70,12 @@ class TaskDetailPage extends ConsumerWidget {
               data: (task) {
                 if (task == null) {
                   return Center(
-                    child: Text('任务不存在', style: TextStyles.body2),
+                    child: Text(S.of(context)!.taskNotExist, style: TextStyles.body2),
                   );
                 }
                 return SafeArea(
                   child: SingleChildScrollView(
-                    padding:
-                        const EdgeInsets.fromLTRB(20, 8, 20, 40),
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -77,7 +107,7 @@ class TaskDetailPage extends ConsumerWidget {
                                               BorderRadius.circular(20),
                                         ),
                                         child: Text(
-                                          '已完成',
+                                          S.of(context)!.completed,
                                           style: TextStyles.label.copyWith(
                                             color: AppColors.success,
                                           ),
@@ -93,7 +123,7 @@ class TaskDetailPage extends ConsumerWidget {
                                               BorderRadius.circular(20),
                                         ),
                                         child: Text(
-                                          '进行中',
+                                          S.of(context)!.inProgress,
                                           style: TextStyles.label.copyWith(
                                             color: AppColors.primary,
                                           ),
@@ -125,7 +155,7 @@ class TaskDetailPage extends ConsumerWidget {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          '进度',
+                                          S.of(context)!.progress,
                                           style: TextStyles.label,
                                         ),
                                         const SizedBox(height: 4),
@@ -146,12 +176,15 @@ class TaskDetailPage extends ConsumerWidget {
                                           begin: Alignment.topLeft,
                                           end: Alignment.bottomRight,
                                           colors: [
-                                            AppColors.primary.withValues(alpha: 0.15),
-                                            AppColors.accent.withValues(alpha: 0.08),
+                                            AppColors.primary
+                                                .withValues(alpha: 0.15),
+                                            AppColors.accent
+                                                .withValues(alpha: 0.08),
                                           ],
                                         ),
                                         border: Border.all(
-                                          color: AppColors.primary.withValues(alpha: 0.2),
+                                          color: AppColors.primary
+                                              .withValues(alpha: 0.2),
                                           width: 1.5,
                                         ),
                                       ),
@@ -160,15 +193,14 @@ class TaskDetailPage extends ConsumerWidget {
                                           tween: Tween(
                                               begin: 0,
                                               end: task.progress * 100),
-                                          duration: const Duration(
-                                              milliseconds: 800),
+                                          duration:
+                                              const Duration(milliseconds: 800),
                                           curve: Curves.easeOutCubic,
-                                          builder:
-                                              (context, value, child) {
+                                          builder: (context, value, child) {
                                             return Text(
                                               '${value.round()}%',
-                                              style: TextStyles.heading4
-                                                  .copyWith(
+                                              style:
+                                                  TextStyles.heading4.copyWith(
                                                 color: AppColors.primary,
                                               ),
                                             );
@@ -182,10 +214,8 @@ class TaskDetailPage extends ConsumerWidget {
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(8),
                                   child: TweenAnimationBuilder<double>(
-                                    tween: Tween(
-                                        begin: 0, end: task.progress),
-                                    duration:
-                                        const Duration(milliseconds: 800),
+                                    tween: Tween(begin: 0, end: task.progress),
+                                    duration: const Duration(milliseconds: 800),
                                     curve: Curves.easeOutCubic,
                                     builder: (context, value, child) {
                                       return Container(
@@ -209,8 +239,7 @@ class TaskDetailPage extends ConsumerWidget {
                                                   color: AppColors.primary
                                                       .withValues(alpha: 0.3),
                                                   blurRadius: 10,
-                                                  offset:
-                                                      const Offset(0, 3),
+                                                  offset: const Offset(0, 3),
                                                 ),
                                               ],
                                             ),
@@ -239,10 +268,9 @@ class TaskDetailPage extends ConsumerWidget {
                                 ],
                               ),
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('更新进度', style: TextStyles.heading4),
+                                  Text(S.of(context)!.updateProgress, style: TextStyles.heading4),
                                   const SizedBox(height: 16),
                                   Row(
                                     children: [

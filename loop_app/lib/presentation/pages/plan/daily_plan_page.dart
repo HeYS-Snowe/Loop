@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:loop_app/core/theme/colors.dart';
 import 'package:loop_app/core/theme/text_styles.dart';
 import 'package:loop_app/data/database/app_database.dart';
+import 'package:loop_app/l10n/generated/app_localizations.dart';
 import 'package:loop_app/presentation/providers/plan_provider.dart';
 
 class DailyPlanPage extends ConsumerStatefulWidget {
@@ -17,6 +18,7 @@ class DailyPlanPage extends ConsumerStatefulWidget {
 class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   late DateTime _selectedDate;
   bool _hasScrolledToCurrentTime = false;
+  int _weekOffset = 0;
 
   static const double _hourHeight = 72.0;
   static const int _startHour = 6;
@@ -24,6 +26,7 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   static const double _timeLabelWidth = 48.0;
 
   final ScrollController _scrollController = ScrollController();
+  final PageController _weekPageController = PageController(initialPage: 5200);
 
   @override
   void initState() {
@@ -37,6 +40,7 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _weekPageController.dispose();
     super.dispose();
   }
 
@@ -71,7 +75,7 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
       extendBodyBehindAppBar: true,
       backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: const Text('日计划', style: TextStyles.heading4),
+        title: Text(S.of(context)!.dailyPlan, style: TextStyles.heading4),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
@@ -105,7 +109,7 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
                     child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2),
                   ),
                   error: (e, _) => Center(
-                    child: Text('加载失败: $e', style: TextStyles.body2.copyWith(color: AppColors.error)),
+                    child: Text(S.of(context)!.loadFailed(e.toString()), style: TextStyles.body2.copyWith(color: AppColors.error)),
                   ),
                 ),
               ),
@@ -118,8 +122,8 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
 
   Widget _buildWeekSelector() {
     final now = DateTime.now();
-    final weekday = now.weekday;
-    final weekStart = DateTime(now.year, now.month, now.day).subtract(Duration(days: weekday - 1));
+    final s = S.of(context)!;
+    final dayNames = [s.mon, s.tue, s.wed, s.thu, s.fri, s.sat, s.sun];
 
     return Container(
       height: 72,
@@ -128,62 +132,88 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
         color: AppColors.surface.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(14),
       ),
-      child: Row(
-        children: List.generate(7, (index) {
-          final date = weekStart.add(Duration(days: index));
-          final isSelected = _isSameDay(date, _selectedDate);
-          final isToday = _isSameDay(date, now);
-          final dayNames = ['一', '二', '三', '四', '五', '六', '日'];
+      child: PageView.builder(
+        controller: _weekPageController,
+        onPageChanged: (page) {
+          final newOffset = page - 5200;
+          final weekStart = _getWeekStart(now, newOffset);
+          final targetDate = DateTime(weekStart.year, weekStart.month, weekStart.day);
+          setState(() {
+            _weekOffset = newOffset;
+            _selectedDate = targetDate;
+          });
+          ref.read(planInstanceNotifierProvider.notifier).loadForDate(targetDate);
+        },
+        itemBuilder: (context, page) {
+          final offset = page - 5200;
+          final weekStart = _getWeekStart(now, offset);
 
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => _changeDate(date),
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColors.primary
-                      : isToday
-                          ? AppColors.primary.withValues(alpha: 0.12)
-                          : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      dayNames[index],
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isSelected
-                            ? AppColors.backgroundDeep
-                            : isToday
-                                ? AppColors.primary
-                                : AppColors.textTertiary,
-                        fontWeight: FontWeight.w500,
-                      ),
+          return Row(
+            children: List.generate(7, (index) {
+              final date = weekStart.add(Duration(days: index));
+              final isSelected = _isSameDay(date, _selectedDate);
+              final isToday = _isSameDay(date, now);
+
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => _changeDate(date),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.primary
+                          : isToday
+                              ? AppColors.primary.withValues(alpha: 0.12)
+                              : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${date.day}',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: isSelected || isToday ? FontWeight.w700 : FontWeight.w400,
-                        color: isSelected
-                            ? AppColors.backgroundDeep
-                            : isToday
-                                ? AppColors.primary
-                                : AppColors.textPrimary,
-                      ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          dayNames[index],
+                          style: TextStyle(
+                            fontFamily: 'MiSans',
+                            fontSize: 11,
+                            color: isSelected
+                                ? AppColors.backgroundDeep
+                                : isToday
+                                    ? AppColors.primary
+                                    : AppColors.textTertiary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${date.day}',
+                          style: TextStyle(
+                            fontFamily: 'MiSans',
+                            fontSize: 16,
+                            fontWeight: isSelected || isToday ? FontWeight.w700 : FontWeight.w400,
+                            color: isSelected
+                                ? AppColors.backgroundDeep
+                                : isToday
+                                    ? AppColors.primary
+                                    : AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
+              );
+            }),
           );
-        }),
+        },
       ),
     );
+  }
+
+  DateTime _getWeekStart(DateTime now, int weekOffset) {
+    final weekday = now.weekday;
+    return DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: weekday - 1))
+        .add(Duration(days: weekOffset * 7));
   }
 
   Widget _buildTimeTable(List<PlanInstance> instances) {
@@ -218,7 +248,7 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2)),
-      error: (e, _) => Center(child: Text('加载失败: $e', style: TextStyles.body2.copyWith(color: AppColors.error))),
+      error: (e, _) => Center(child: Text(S.of(context)!.loadFailed(e.toString()), style: TextStyles.body2.copyWith(color: AppColors.error))),
     );
   }
 
@@ -344,6 +374,7 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   }
 
   void _showInstanceDetail(PlanInstance instance, PlanTemplate template) {
+    final s = S.of(context)!;
     final progress = instance.targetAmount > 0
         ? (instance.completedAmount / instance.targetAmount).clamp(0.0, 1.0)
         : (instance.isCompleted ? 1.0 : 0.0);
@@ -379,9 +410,9 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
                 ],
               ),
               const SizedBox(height: 16),
-              _buildDetailRow('时间', '${template.startHour.toString().padLeft(2, '0')}:${template.startMinute.toString().padLeft(2, '0')} - ${template.endHour.toString().padLeft(2, '0')}:${template.endMinute.toString().padLeft(2, '0')}'),
+              _buildDetailRow(s.time, '${template.startHour.toString().padLeft(2, '0')}:${template.startMinute.toString().padLeft(2, '0')} - ${template.endHour.toString().padLeft(2, '0')}:${template.endMinute.toString().padLeft(2, '0')}'),
               if (instance.targetAmount > 0) ...[
-                _buildDetailRow('进度', '${instance.completedAmount}/${instance.targetAmount} ${template.unit ?? ''}'),
+                _buildDetailRow(s.progress, '${instance.completedAmount}/${instance.targetAmount} ${template.unit ?? ''}'),
                 const SizedBox(height: 12),
                 _buildDetailProgressBar(progress),
                 const SizedBox(height: 12),
@@ -389,7 +420,7 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
               ],
               if (template.description != null && template.description!.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                _buildDetailRow('描述', template.description!),
+                _buildDetailRow(s.descriptionOptional, template.description!),
               ],
               const SizedBox(height: 20),
             ],
@@ -465,10 +496,11 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   }
 
   Widget _buildAmountInput(PlanInstance instance) {
+    final s = S.of(context)!;
     final controller = TextEditingController(text: instance.completedAmount.toString());
     return Row(
       children: [
-        Text('完成量:', style: TextStyles.body2),
+        Text(s.completedAmountLabel, style: TextStyles.body2),
         const SizedBox(width: 8),
         SizedBox(
           width: 80,

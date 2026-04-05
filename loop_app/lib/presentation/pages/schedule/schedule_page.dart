@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../data/database/app_database.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../providers/cycle_provider.dart';
 
 class SchedulePage extends ConsumerStatefulWidget {
@@ -17,7 +18,6 @@ class _SchedulePageState extends ConsumerState<SchedulePage> with SingleTickerPr
   late PageController _pageController;
   static const int _initialPage = 5200;
 
-  static const List<String> _weekDays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
   static const List<Color> _cardColors = [
     Color(0xFF4A90D9),
     Color(0xFF00BFA5),
@@ -81,12 +81,13 @@ class _SchedulePageState extends ConsumerState<SchedulePage> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context)!;
     final activeCycleAsync = ref.watch(activeCycleProvider);
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: const Text('行程表', style: TextStyles.heading4),
+        title: Text(s.schedule, style: TextStyles.heading4),
         centerTitle: true,
       ),
       body: Column(
@@ -105,7 +106,7 @@ class _SchedulePageState extends ConsumerState<SchedulePage> with SingleTickerPr
                 child: CircularProgressIndicator(color: AppColors.primary),
               ),
               error: (e, _) => Center(
-                child: Text('加载失败', style: TextStyles.body2.copyWith(color: AppColors.error)),
+                child: Text(s.loadFailedShort, style: TextStyles.body2.copyWith(color: AppColors.error)),
               ),
             ),
           ),
@@ -189,17 +190,18 @@ class _SchedulePageState extends ConsumerState<SchedulePage> with SingleTickerPr
   }
 
   String _getWeekLabel(DateTime weekStart) {
+    final s = S.of(context)!;
     final now = DateTime.now();
     final currentWeekStart = _getWeekStart(now);
     final diff = currentWeekStart.difference(weekStart).inDays;
 
-    if (diff == 0) return '本周';
-    if (diff == 7) return '上周';
-    if (diff == -7) return '下周';
+    if (diff == 0) return s.thisWeek;
+    if (diff == 7) return s.lastWeek;
+    if (diff == -7) return s.nextWeek;
 
     final weekNum = (now.difference(weekStart).inDays / 7).ceil();
-    if (weekNum > 0) return '${weekNum}周前';
-    return '${-weekNum}周后';
+    if (weekNum > 0) return '$weekNum${s.weekAgo}';
+    return '${-weekNum}${s.weekLater}';
   }
 
   String _getDateRangeLabel(DateTime weekStart) {
@@ -208,8 +210,10 @@ class _SchedulePageState extends ConsumerState<SchedulePage> with SingleTickerPr
   }
 
   Widget _buildDayHeaders() {
+    final s = S.of(context)!;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
+    final weekDays = [s.monday, s.tuesday, s.wednesday, s.thursday, s.friday, s.saturday, s.sunday];
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -219,7 +223,7 @@ class _SchedulePageState extends ConsumerState<SchedulePage> with SingleTickerPr
             width: 52,
             child: Center(
               child: Text(
-                '节次',
+                s.session,
                 style: TextStyle(
                   fontSize: 11,
                   color: AppColors.textTertiary,
@@ -238,7 +242,7 @@ class _SchedulePageState extends ConsumerState<SchedulePage> with SingleTickerPr
                   child: Column(
                     children: [
                       Text(
-                        _weekDays[i],
+                        weekDays[i],
                         style: TextStyle(
                           fontSize: 11,
                           color: isToday ? AppColors.primary : AppColors.textTertiary,
@@ -477,6 +481,7 @@ class _SchedulePageState extends ConsumerState<SchedulePage> with SingleTickerPr
   }
 
   Widget _buildEmptyState() {
+    final s = S.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
@@ -504,10 +509,10 @@ class _SchedulePageState extends ConsumerState<SchedulePage> with SingleTickerPr
               ),
             ),
             const SizedBox(height: 20),
-            Text('暂无周期计划', style: TextStyles.heading4),
+            Text(s.noCyclePlan, style: TextStyles.heading4),
             const SizedBox(height: 8),
             Text(
-              '创建一个周期计划后\n行程表将自动展示你的任务安排',
+              s.createCycleScheduleHint,
               textAlign: TextAlign.center,
               style: TextStyles.body2,
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:loop_app/l10n/generated/app_localizations.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../providers/check_in_provider.dart';
@@ -32,10 +33,10 @@ class QuickStatsCard extends ConsumerWidget {
             child: _buildStatItem(
               context,
               icon: Icons.local_fire_department_rounded,
-              label: '连续打卡',
+              label: S.of(context)!.streakCheckIn,
               valueAsync: checkInStatsAsync,
               getValue: (stats) => '${stats.currentStreak}',
-              unit: '天',
+              unit: S.of(context)!.dayUnit,
               color: AppColors.warmAccent,
               colorMuted: Color(0xFF3D2A1A),
             ),
@@ -49,10 +50,10 @@ class QuickStatsCard extends ConsumerWidget {
             child: _buildStatItem(
               context,
               icon: Icons.emoji_events_rounded,
-              label: '最长记录',
+              label: S.of(context)!.maxRecord,
               valueAsync: checkInStatsAsync,
               getValue: (stats) => '${stats.maxStreak}',
-              unit: '天',
+              unit: S.of(context)!.dayUnit,
               color: AppColors.gold,
               colorMuted: AppColors.goldMuted,
             ),
@@ -66,10 +67,10 @@ class QuickStatsCard extends ConsumerWidget {
             child: _buildStatItem(
               context,
               icon: Icons.schedule_rounded,
-              label: '当前周期',
+              label: S.of(context)!.currentCycle,
               valueAsync: activeCycleAsync,
               getValue: (cycle) => cycle != null ? '${cycle.remainingDays}' : '-',
-              unit: '天',
+              unit: S.of(context)!.dayUnit,
               color: AppColors.accent,
               colorMuted: Color(0xFF0D2D3D),
             ),

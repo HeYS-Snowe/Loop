@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:loop_app/l10n/generated/app_localizations.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../providers/check_in_provider.dart';
@@ -50,12 +51,12 @@ class CheckInCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '每日打卡',
+                    S.of(context)!.dailyCheckIn,
                     style: TextStyles.heading4,
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    state.checkedInToday ? '今日已打卡' : '今日未打卡',
+                    state.checkedInToday ? S.of(context)!.checkedInToday : S.of(context)!.notCheckedInToday,
                     style: TextStyles.body2.copyWith(
                       color: state.checkedInToday
                           ? AppColors.success
@@ -111,7 +112,7 @@ class CheckInCard extends ConsumerWidget {
                                 ),
                               ),
                               Text(
-                                '天',
+                                S.of(context)!.dayUnit,
                                 style: TextStyles.caption.copyWith(
                                   color: AppColors.primary,
                                   fontSize: 10,
@@ -144,18 +145,18 @@ class CheckInCard extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.check_rounded,
                         color: AppColors.backgroundDeep,
                         size: 20,
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
-                        '立即打卡',
-                        style: TextStyle(
+                        S.of(context)!.checkInNow,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: AppColors.backgroundDeep,

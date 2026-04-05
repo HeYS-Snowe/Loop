@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/database/app_database.dart';
-import '../../data/repositories/check_in_repository.dart';
 import '../../domain/services/check_in_service.dart';
 import 'cycle_provider.dart';
 
@@ -59,7 +58,9 @@ class CheckInState {
 class CheckInNotifier extends StateNotifier<AsyncValue<CheckInState>> {
   final CheckInService _service;
 
-  CheckInNotifier(this._service) : super(const AsyncValue.loading());
+  CheckInNotifier(this._service) : super(const AsyncValue.loading()) {
+    loadState();
+  }
 
   Future<void> checkIn() async {
     state = const AsyncValue.loading();

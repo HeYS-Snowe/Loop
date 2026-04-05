@@ -4,7 +4,10 @@ import 'colors.dart';
 class TextStyles {
   TextStyles._();
 
+  static const String _fontFamily = 'MiSans';
+
   static const TextStyle heading1 = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 32,
     fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
@@ -13,6 +16,7 @@ class TextStyles {
   );
 
   static const TextStyle heading2 = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 26,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
@@ -21,6 +25,7 @@ class TextStyles {
   );
 
   static const TextStyle heading3 = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 20,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
@@ -29,6 +34,7 @@ class TextStyles {
   );
 
   static const TextStyle heading4 = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 17,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
@@ -37,6 +43,7 @@ class TextStyles {
   );
 
   static const TextStyle body1 = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 15,
     fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
@@ -44,6 +51,7 @@ class TextStyles {
   );
 
   static const TextStyle body2 = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 13,
     fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
@@ -51,6 +59,7 @@ class TextStyles {
   );
 
   static const TextStyle caption = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 11,
     fontWeight: FontWeight.w400,
     color: AppColors.textTertiary,
@@ -59,6 +68,7 @@ class TextStyles {
   );
 
   static const TextStyle button = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 15,
     fontWeight: FontWeight.w600,
     color: AppColors.backgroundDeep,
@@ -67,6 +77,7 @@ class TextStyles {
   );
 
   static const TextStyle label = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 12,
     fontWeight: FontWeight.w500,
     color: AppColors.textSecondary,
@@ -75,6 +86,7 @@ class TextStyles {
   );
 
   static const TextStyle statValue = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 28,
     fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
@@ -83,6 +95,7 @@ class TextStyles {
   );
 
   static const TextStyle overline = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 10,
     fontWeight: FontWeight.w600,
     color: AppColors.primary,

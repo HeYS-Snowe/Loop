@@ -10,12 +10,14 @@ class TaskCard extends StatelessWidget {
   final Task task;
   final VoidCallback? onTap;
   final void Function(int)? onProgressUpdate;
+  final VoidCallback? onEdit;
 
   const TaskCard({
     super.key,
     required this.task,
     this.onTap,
     this.onProgressUpdate,
+    this.onEdit,
   });
 
   @override
@@ -41,15 +43,31 @@ class TaskCard extends StatelessWidget {
                 child: Text(
                   task.name,
                   style: TextStyles.heading4.copyWith(
-                    decoration: task.isCompleted
-                        ? TextDecoration.lineThrough
-                        : null,
+                    decoration:
+                        task.isCompleted ? TextDecoration.lineThrough : null,
                     color: task.isCompleted
                         ? AppColors.textTertiary
                         : AppColors.textPrimary,
                   ),
                 ),
               ),
+              if (onEdit != null)
+                GestureDetector(
+                  onTap: onEdit,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceLight.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.edit_rounded,
+                      size: 16,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              if (onEdit != null) const SizedBox(width: 8),
               if (task.isCompleted)
                 Container(
                   width: 28,
@@ -66,8 +84,8 @@ class TaskCard extends StatelessWidget {
                 )
               else
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: _getProgressColor().withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20),

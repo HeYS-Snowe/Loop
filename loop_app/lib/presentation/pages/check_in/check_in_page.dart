@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:loop_app/l10n/generated/app_localizations.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../providers/check_in_provider.dart';
@@ -47,7 +48,7 @@ class _CheckInPageState extends ConsumerState<CheckInPage>
       backgroundColor: AppColors.background,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text('打卡', style: TextStyles.heading3),
+        title: Text(S.of(context)!.checkIn, style: TextStyles.heading3),
       ),
       body: Stack(
         children: [
@@ -93,7 +94,7 @@ class _CheckInPageState extends ConsumerState<CheckInPage>
                     const SizedBox(height: 24),
                     AnimatedPageWrapper(
                       index: 2,
-                      child: Text('打卡日历', style: TextStyles.heading4),
+                      child: Text(S.of(context)!.checkInCalendar, style: TextStyles.heading4),
                     ),
                     const SizedBox(height: 12),
                     AnimatedPageWrapper(
@@ -187,7 +188,7 @@ class _CheckInPageState extends ConsumerState<CheckInPage>
                               ),
                             ),
                             Text(
-                              '天',
+                              S.of(context)!.dayUnit,
                               style: TextStyles.caption.copyWith(
                                 color: AppColors.primary,
                               ),
@@ -200,7 +201,7 @@ class _CheckInPageState extends ConsumerState<CheckInPage>
           ),
           const SizedBox(height: 16),
           Text(
-            state.checkedInToday ? '今日已打卡' : '点击打卡',
+            state.checkedInToday ? S.of(context)!.checkedInToday : S.of(context)!.clickToCheckIn,
             style: TextStyles.heading4.copyWith(
               color: state.checkedInToday
                   ? AppColors.success
@@ -210,7 +211,7 @@ class _CheckInPageState extends ConsumerState<CheckInPage>
           if (!state.checkedInToday) ...[
             const SizedBox(height: 6),
             Text(
-              '已连续 ${state.streakCount} 天',
+              S.of(context)!.streakDays(state.streakCount),
               style: TextStyles.body2,
             ),
           ],
@@ -234,11 +235,11 @@ class _CheckInPageState extends ConsumerState<CheckInPage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildStatItem('连续打卡', '${stats.currentStreak}', AppColors.warmAccent),
+          _buildStatItem(S.of(context)!.streakCheckIn, '${stats.currentStreak}', AppColors.warmAccent),
           Container(width: 1, height: 32, color: AppColors.divider),
-          _buildStatItem('最长记录', '${stats.maxStreak}', AppColors.gold),
+          _buildStatItem(S.of(context)!.maxRecord, '${stats.maxStreak}', AppColors.gold),
           Container(width: 1, height: 32, color: AppColors.divider),
-          _buildStatItem('累计打卡', '${stats.totalDays}', AppColors.accent),
+          _buildStatItem(S.of(context)!.totalCheckIn, '${stats.totalDays}', AppColors.accent),
         ],
       ),
     );

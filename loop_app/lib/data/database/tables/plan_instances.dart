@@ -9,7 +9,7 @@ class PlanInstances extends Table {
   IntColumn get targetAmount => integer().withDefault(const Constant(0))();
   IntColumn get completedAmount => integer().withDefault(const Constant(0))();
   BoolColumn get isCompleted => boolean().withDefault(const Constant(false))();
-  TextColumn get note => text().nullable().withLength(max: 200)();
+  TextColumn get note => text().nullable().withLength(max: 500)();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 

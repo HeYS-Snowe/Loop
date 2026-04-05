@@ -1,16 +1,20 @@
 import 'package:drift/drift.dart';
-import '../database/app_database.dart';
+import 'package:loop_app/data/database/app_database.dart';
+import 'package:uuid/uuid.dart';
 
 class PlanTemplateRepository {
   final AppDatabase _database;
+  final _uuid = const Uuid();
 
   PlanTemplateRepository(this._database);
 
-  Future<List<PlanTemplate>> getAllTemplates() =>
-      _database.getAllPlanTemplates();
+  Future<List<PlanTemplate>> getAllTemplates() {
+    return _database.getAllPlanTemplates();
+  }
 
-  Future<PlanTemplate?> getTemplateById(String id) =>
-      _database.getPlanTemplateById(id);
+  Future<PlanTemplate?> getTemplateById(String id) {
+    return _database.getPlanTemplateById(id);
+  }
 
   Future<void> createTemplate({
     required String name,
@@ -27,74 +31,46 @@ class PlanTemplateRepository {
     int endHour = 9,
     int endMinute = 0,
     int colorValue = 0xFF2196F3,
+    bool isActive = true,
     required DateTime startDate,
     DateTime? endDate,
     int sortOrder = 0,
   }) async {
-    await _database.insertPlanTemplate(PlanTemplatesCompanion(
-      id: Value(Uuid().v4()),
-      name: Value(name),
-      description: Value(description),
-      categoryId: Value(categoryId),
-      dailyTargetAmount: Value(dailyTargetAmount),
-      unit: Value(unit),
-      enableQuantityTracking: Value(enableQuantityTracking),
-      repeatType: Value(repeatType),
-      repeatInterval: Value(repeatInterval),
-      activeDays: Value(activeDays),
-      startHour: Value(startHour),
-      startMinute: Value(startMinute),
-      endHour: Value(endHour),
-      endMinute: Value(endMinute),
-      colorValue: Value(colorValue),
-      startDate: Value(startDate),
-      endDate: Value(endDate),
-      isActive: const Value(true),
-      sortOrder: Value(sortOrder),
-      createdAt: Value(DateTime.now()),
-      updatedAt: Value(DateTime.now()),
-    ));
+    final id = _uuid.v4();
+    final now = DateTime.now();
+    await _database.into(_database.planTemplates).insert(
+          PlanTemplatesCompanion.insert(
+            id: id,
+            name: name,
+            description: Value(description),
+            categoryId: Value(categoryId),
+            dailyTargetAmount: Value(dailyTargetAmount),
+            unit: Value(unit),
+            enableQuantityTracking: Value(enableQuantityTracking),
+            repeatType: Value(repeatType),
+            repeatInterval: Value(repeatInterval),
+            activeDays: Value(activeDays),
+            startHour: Value(startHour),
+            startMinute: Value(startMinute),
+            endHour: Value(endHour),
+            endMinute: Value(endMinute),
+            colorValue: Value(colorValue),
+            startDate: startDate,
+            endDate: Value(endDate),
+            sortOrder: Value(sortOrder),
+            createdAt: Value(now),
+            updatedAt: Value(now),
+          ),
+        );
   }
 
   Future<void> updateTemplate(PlanTemplate template) async {
-    await _database.updatePlanTemplate(PlanTemplatesCompanion(
-      id: Value(template.id),
-      name: Value(template.name),
-      description: Value(template.description),
-      categoryId: Value(template.categoryId),
-      dailyTargetAmount: Value(template.dailyTargetAmount),
-      unit: Value(template.unit),
-      enableQuantityTracking: Value(template.enableQuantityTracking),
-      repeatType: Value(template.repeatType),
-      repeatInterval: Value(template.repeatInterval),
-      activeDays: Value(template.activeDays),
-      startHour: Value(template.startHour),
-      startMinute: Value(template.startMinute),
-      endHour: Value(template.endHour),
-      endMinute: Value(template.endMinute),
-      colorValue: Value(template.colorValue),
-      startDate: Value(template.startDate),
-      endDate: Value(template.endDate),
-      isActive: Value(template.isActive),
-      sortOrder: Value(template.sortOrder),
-      createdAt: Value(template.createdAt),
-      updatedAt: Value(DateTime.now()),
-    ));
+    await _database.update(_database.planTemplates).replace(template);
   }
 
   Future<void> deleteTemplate(String id) async {
-    await _database.deletePlanTemplate(id);
-  }
-}
-
-class Uuid {
-  String v4() {
-    final random = DateTime.now().microsecondsSinceEpoch;
-    return '${random.toRadixString(16).padLeft(8, '0')}-'
-        '${(random ^ 0xFFFF).toRadixString(16).padLeft(4, '0')}-'
-        '4${(random & 0x0FFF).toRadixString(16).padLeft(3, '0')}-'
-        '${(random & 0x3FFF | 0x8000).toRadixString(16).padLeft(4, '0')}-'
-        '${(random ^ 0xFFFFFFFF).toRadixString(16).padLeft(8, '0')}'
-        '${random.toRadixString(16).padLeft(4, '0')}';
+    await (_database.delete(_database.planTemplates)
+          ..where((t) => t.id.equals(id)))
+        .go();
   }
 }

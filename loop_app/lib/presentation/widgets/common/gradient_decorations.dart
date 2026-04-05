@@ -30,9 +30,15 @@ class GradientDecoration extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final effectiveWidth = constraints.maxWidth == double.infinity
+            ? 400.0
+            : constraints.maxWidth;
+        final effectiveHeight = constraints.maxHeight == double.infinity
+            ? 400.0
+            : constraints.maxHeight;
         return SizedBox(
-          width: constraints.maxWidth,
-          height: constraints.maxHeight,
+          width: effectiveWidth,
+          height: effectiveHeight,
           child: CustomPaint(
             painter: _GradientPainter(
               style: style,

@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:loop_app/core/theme/colors.dart';
 import 'package:loop_app/core/theme/text_styles.dart';
 import 'package:loop_app/data/database/app_database.dart';
+import 'package:loop_app/l10n/generated/app_localizations.dart';
 import 'package:loop_app/presentation/providers/plan_provider.dart';
 import 'package:loop_app/presentation/widgets/common/gradient_decorations.dart';
+import 'package:loop_app/presentation/widgets/common/loop_time_picker.dart';
 import 'package:loop_app/shared/extensions/date_extensions.dart';
 
 class PlanFormPage extends ConsumerStatefulWidget {
@@ -55,14 +57,12 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
     0xFF795548,
   ];
 
-  static const List<String> _dayLabels = ['一', '二', '三', '四', '五', '六', '日'];
-
-  static const List<MapEntry<String, String>> _repeatOptions = [
-    MapEntry('none', '不重复'),
-    MapEntry('daily', '每天'),
-    MapEntry('weekly', '每周'),
-    MapEntry('monthly', '每月'),
-    MapEntry('interval', '自定义间隔'),
+  static const List<String> _repeatOptionKeys = [
+    'none',
+    'daily',
+    'weekly',
+    'monthly',
+    'interval',
   ];
 
   @override
@@ -114,13 +114,27 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
     super.dispose();
   }
 
+  List<String> _getDayLabels(S s) => [s.mon, s.tue, s.wed, s.thu, s.fri, s.sat, s.sun];
+
+  String _getRepeatLabel(S s, String key) {
+    switch (key) {
+      case 'none': return s.noRepeat;
+      case 'daily': return s.repeatDaily;
+      case 'weekly': return s.repeatWeekly;
+      case 'monthly': return s.repeatMonthly;
+      case 'interval': return s.repeatInterval;
+      default: return key;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context)!;
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: AppColors.backgroundDeep,
       appBar: AppBar(
-        title: Text(_isEditMode ? '编辑计划' : '创建计划', style: TextStyles.heading4),
+        title: Text(_isEditMode ? s.editPlan : s.createPlan, style: TextStyles.heading4),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -143,21 +157,21 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               children: [
                 _buildSectionCard(
-                  title: '基本信息',
+                  title: s.basicInfo,
                   child: Column(
                     children: [
                       _buildTextField(
                         controller: _nameController,
-                        label: '计划名称',
-                        hint: '例如: 背英语单词',
+                        label: s.planName,
+                        hint: s.planNameHint,
                         required: true,
                         maxLength: 50,
                       ),
                       const SizedBox(height: 16),
                       _buildTextField(
                         controller: _descController,
-                        label: '描述(可选)',
-                        hint: '计划的详细说明',
+                        label: s.descriptionOptional,
+                        hint: s.descriptionHint,
                         maxLines: 2,
                         maxLength: 200,
                       ),
@@ -166,7 +180,7 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
                 ),
                 const SizedBox(height: 16),
                 _buildSectionCard(
-                  title: '数量目标',
+                  title: s.quantityTarget,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -175,7 +189,7 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
                           Expanded(
                             child: _buildTextField(
                               controller: _targetAmountController,
-                              label: '每日目标',
+                              label: s.dailyTarget,
                               hint: '0',
                               keyboardType: TextInputType.number,
                             ),
@@ -185,16 +199,16 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
                             width: 100,
                             child: _buildTextField(
                               controller: _unitController,
-                              label: '单位',
-                              hint: '个/分钟',
+                              label: s.unit,
+                              hint: s.unitHint,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
                       _buildSwitchRow(
-                        label: '启用数量验证',
-                        subtitle: '开启后需输入完成数量',
+                        label: s.enableQuantityValidation,
+                        subtitle: s.enableQuantityValidationDesc,
                         value: _enableQuantityTracking,
                         onChanged: (v) => setState(() => _enableQuantityTracking = v),
                       ),
@@ -203,56 +217,89 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
                 ),
                 const SizedBox(height: 16),
                 _buildSectionCard(
-                  title: '时间段',
-                  subtitle: '设置计划在课程表中的显示时间',
-                  child: Column(
+                  title: s.timeSlot,
+                  subtitle: s.timeSlotDesc,
+                  child: Row(
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildTimePickerTile(
-                              label: '开始时间',
-                              hour: _startHour,
-                              minute: _startMinute,
-                              onTap: () => _pickTime(isStart: true),
+                      Expanded(
+                        child: _buildTimePickerTile(
+                          label: s.startTime,
+                          hour: _startHour,
+                          minute: _startMinute,
+                          onTap: () => _pickTime(isStart: true),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 16),
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    AppColors.primary.withValues(alpha: 0.3),
+                                    AppColors.accent.withValues(alpha: 0.3),
+                                  ],
+                                ),
+                                border: Border.all(
+                                  color: AppColors.primary.withValues(alpha: 0.2),
+                                  width: 0.5,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 16,
+                                color: AppColors.primary,
+                              ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: Text('-', style: TextStyles.heading4),
-                          ),
-                          Expanded(
-                            child: _buildTimePickerTile(
-                              label: '结束时间',
-                              hour: _endHour,
-                              minute: _endMinute,
-                              onTap: () => _pickTime(isStart: false),
+                            const SizedBox(height: 4),
+                            Text(
+                              _buildDurationText(),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: AppColors.textTertiary,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: _buildTimePickerTile(
+                          label: s.endTime,
+                          hour: _endHour,
+                          minute: _endMinute,
+                          onTap: () => _pickTime(isStart: false),
+                        ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 16),
                 _buildSectionCard(
-                  title: '卡片颜色',
-                  subtitle: '选择在课程表中的显示颜色',
+                  title: s.cardColor,
+                  subtitle: s.cardColorDesc,
                   child: _buildColorPicker(),
                 ),
                 const SizedBox(height: 16),
                 _buildSectionCard(
-                  title: '重复规则',
+                  title: s.repeatRule,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: _repeatOptions.map((option) {
-                          final isSelected = _repeatType == option.key;
+                        children: _repeatOptionKeys.map((key) {
+                          final isSelected = _repeatType == key;
                           return GestureDetector(
-                            onTap: () => _onRepeatTypeChanged(option.key),
+                            onTap: () => _onRepeatTypeChanged(key),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                               decoration: BoxDecoration(
@@ -264,7 +311,7 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
                                 ),
                               ),
                               child: Text(
-                                option.value,
+                                _getRepeatLabel(s, key),
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
@@ -279,7 +326,7 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
                         const SizedBox(height: 16),
                         Row(
                           children: [
-                            Text('每', style: TextStyles.body2),
+                            Text(s.every, style: TextStyles.body2),
                             const SizedBox(width: 8),
                             SizedBox(
                               width: 60,
@@ -299,7 +346,7 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            Text('天重复一次', style: TextStyles.body2),
+                            Text(s.repeatEveryDay, style: TextStyles.body2),
                           ],
                         ),
                       ],
@@ -308,22 +355,22 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
                 ),
                 const SizedBox(height: 16),
                 _buildSectionCard(
-                  title: '活动日期',
-                  subtitle: _repeatType == 'daily' ? '每天执行' : '选择要执行计划的星期',
+                  title: s.activeDate,
+                  subtitle: _repeatType == 'daily' ? s.executeDaily : s.selectWeekdays,
                   child: _repeatType == 'daily'
                       ? const SizedBox.shrink()
                       : Column(
                           children: [
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: List.generate(7, (index) {
                                 final day = index + 1;
                                 final isSelected = _selectedDays.contains(day);
-                                return GestureDetector(
+                                final dayLabels = _getDayLabels(s);
+                                return Expanded(
+                                  child: GestureDetector(
                                   onTap: () => _toggleDay(day),
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 200),
-                                    width: 40,
                                     height: 40,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
@@ -335,7 +382,7 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
                                     ),
                                     child: Center(
                                       child: Text(
-                                        _dayLabels[index],
+                                        dayLabels[index],
                                         style: TextStyle(
                                           fontSize: 13,
                                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
@@ -344,6 +391,7 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
                                       ),
                                     ),
                                   ),
+                                  ),
                                 );
                               }),
                             ),
@@ -351,11 +399,11 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                _buildQuickDayChip('工作日', {1, 2, 3, 4, 5}),
+                                _buildQuickDayChip(s.weekday, {1, 2, 3, 4, 5}),
                                 const SizedBox(width: 8),
-                                _buildQuickDayChip('每天', {1, 2, 3, 4, 5, 6, 7}),
+                                _buildQuickDayChip(s.everyday, {1, 2, 3, 4, 5, 6, 7}),
                                 const SizedBox(width: 8),
-                                _buildQuickDayChip('周末', {6, 7}),
+                                _buildQuickDayChip(s.weekend, {6, 7}),
                               ],
                             ),
                           ],
@@ -363,22 +411,22 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
                 ),
                 const SizedBox(height: 16),
                 _buildSectionCard(
-                  title: '时间范围',
+                  title: s.timeRange,
                   child: Column(
                     children: [
                       _buildDateRow(
-                        label: '开始日期',
+                        label: s.startDate,
                         date: _startDate,
                         onTap: () => _pickDate(isStart: true),
                       ),
                       const SizedBox(height: 12),
                       _buildDateRow(
-                        label: '结束日期',
+                        label: s.endDate,
                         date: _endDate,
                         onTap: () => _pickDate(isStart: false),
                         trailing: TextButton(
                           onPressed: () => setState(() => _endDate = null),
-                          child: const Text('不限', style: TextStyle(color: AppColors.primary, fontSize: 12)),
+                          child: Text(s.unlimited, style: const TextStyle(color: AppColors.primary, fontSize: 12)),
                         ),
                       ),
                     ],
@@ -445,7 +493,7 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
           style: TextStyles.body1,
           validator: required
               ? (v) {
-                  if (v == null || v.trim().isEmpty) return '请输入$label';
+                  if (v == null || v.trim().isEmpty) return S.of(context)!.pleaseEnter(label);
                   return null;
                 }
               : null,
@@ -503,6 +551,7 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
     required VoidCallback onTap,
     Widget? trailing,
   }) {
+    final s = S.of(context)!;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
@@ -517,7 +566,7 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
             Text(label, style: TextStyles.body2),
             const Spacer(),
             Text(
-              date != null ? date.format() : '不限',
+              date != null ? date.format() : s.unlimited,
               style: TextStyles.body1.copyWith(color: date != null ? AppColors.primary : AppColors.textTertiary),
             ),
             const SizedBox(width: 8),
@@ -535,22 +584,73 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
     required int minute,
     required VoidCallback onTap,
   }) {
+    final s = S.of(context)!;
+    final isStart = label == s.startTime;
+    final gradientColors = isStart
+        ? [AppColors.primary.withValues(alpha: 0.15), AppColors.accent.withValues(alpha: 0.08)]
+        : [AppColors.warmAccent.withValues(alpha: 0.15), AppColors.gold.withValues(alpha: 0.08)];
+    final accentColor = isStart ? AppColors.primary : AppColors.warmAccent;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: AppColors.surfaceLight,
-          borderRadius: BorderRadius.circular(10),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: gradientColors,
+          ),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: accentColor.withValues(alpha: 0.25),
+            width: 0.5,
+          ),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: TextStyles.caption),
-            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  isStart ? Icons.play_arrow_rounded : Icons.stop_rounded,
+                  size: 14,
+                  color: accentColor,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  label,
+                  style: TextStyles.caption.copyWith(color: accentColor),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Text(
               '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}',
-              style: TextStyles.heading4.copyWith(color: AppColors.primary),
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+                letterSpacing: 1.0,
+                height: 1.0,
+                fontFamily: 'MiSans',
+              ),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                s.tapToEdit,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: accentColor.withValues(alpha: 0.8),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
           ],
         ),
@@ -588,32 +688,16 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
   }
 
   Future<void> _pickTime({required bool isStart}) async {
-    final initialTime = isStart
-        ? TimeOfDay(hour: _startHour, minute: _startMinute)
-        : TimeOfDay(hour: _endHour, minute: _endMinute);
+    final s = S.of(context)!;
+    final initialTime = TimeOfDay(
+      hour: isStart ? _startHour : _endHour,
+      minute: isStart ? _startMinute : _endMinute,
+    );
 
-    final picked = await showTimePicker(
-      context: context,
+    final picked = await LoopTimePicker.show(
+      context,
       initialTime: initialTime,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: AppColors.primary,
-              onPrimary: AppColors.backgroundDeep,
-              surface: AppColors.surface,
-              onSurface: AppColors.textPrimary,
-            ),
-            timePickerTheme: TimePickerThemeData(
-              backgroundColor: AppColors.surface,
-              hourMinuteShape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-          child: child!,
-        );
-      },
+      title: isStart ? s.selectStartTime : s.selectEndTime,
     );
 
     if (picked != null) {
@@ -627,6 +711,18 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
         }
       });
     }
+  }
+
+  String _buildDurationText() {
+    final startMinutes = _startHour * 60 + _startMinute;
+    final endMinutes = _endHour * 60 + _endMinute;
+    final diff = endMinutes - startMinutes;
+    if (diff <= 0) return '';
+    final hours = diff ~/ 60;
+    final minutes = diff % 60;
+    if (hours > 0 && minutes > 0) return '${hours}h${minutes}m';
+    if (hours > 0) return '${hours}h';
+    return '${minutes}m';
   }
 
   Widget _buildQuickDayChip(String label, Set<int> days) {
@@ -656,6 +752,7 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
   }
 
   Widget _buildSubmitButton() {
+    final s = S.of(context)!;
     return SizedBox(
       width: double.infinity,
       height: 52,
@@ -676,7 +773,7 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
                   color: AppColors.backgroundDeep,
                 ),
               )
-            : Text(_isEditMode ? '保存修改' : '创建计划', style: TextStyles.button),
+            : Text(_isEditMode ? s.saveChanges : s.createPlan, style: TextStyles.button),
       ),
     );
   }
@@ -732,10 +829,11 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
   }
 
   Future<void> _submit() async {
+    final s = S.of(context)!;
     if (!_formKey.currentState!.validate()) return;
     if (_selectedDays.isEmpty && _repeatType != 'daily') {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请至少选择一个活动日期')),
+        SnackBar(content: Text(s.pleaseSelectActiveDate)),
       );
       return;
     }
@@ -803,14 +901,14 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_isEditMode ? '计划已更新' : '计划已创建')),
+          SnackBar(content: Text(_isEditMode ? s.planUpdated : s.planCreated)),
         );
         context.pop();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('操作失败: $e')),
+          SnackBar(content: Text(s.operationFailed(e.toString()))),
         );
       }
     } finally {

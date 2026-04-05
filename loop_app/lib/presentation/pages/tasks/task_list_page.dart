@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loop_app/l10n/generated/app_localizations.dart';
+import '../../../core/constants/route_constants.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../data/database/app_database.dart';
@@ -10,6 +12,7 @@ import '../../widgets/common/gradient_decorations.dart';
 import '../../widgets/common/animated_widgets.dart';
 import 'widgets/task_card.dart';
 import 'widgets/add_task_dialog.dart';
+import 'widgets/edit_task_dialog.dart';
 
 class TaskListPage extends ConsumerWidget {
   const TaskListPage({super.key});
@@ -44,7 +47,7 @@ class TaskListPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('任务列表', style: TextStyles.heading3),
+        title: Text(S.of(context)!.taskList, style: TextStyles.heading3),
       ),
       body: Center(
         child: Column(
@@ -56,9 +59,37 @@ class TaskListPage extends ConsumerWidget {
               color: AppColors.textTertiary,
             ),
             const SizedBox(height: 16),
-            Text('暂无活动周期', style: TextStyles.heading4),
+            Text(S.of(context)!.noActiveCycle, style: TextStyles.heading4),
             const SizedBox(height: 8),
-            Text('请先创建一个周期计划', style: TextStyles.body2),
+            Text(S.of(context)!.pleaseCreateCycleFirst, style: TextStyles.body2),
+            const SizedBox(height: 24),
+            Container(
+              decoration: BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.2),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ElevatedButton(
+                onPressed: () => context.go(RouteConstants.createCycle),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  elevation: 0,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: Text(S.of(context)!.createCycleBtn, style: TextStyles.button),
+              ),
+            ),
           ],
         ),
       ),
@@ -73,7 +104,7 @@ class TaskListPage extends ConsumerWidget {
       backgroundColor: AppColors.background,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text('任务列表', style: TextStyles.heading3),
+        title: Text(S.of(context)!.taskList, style: TextStyles.heading3),
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 8),
@@ -150,9 +181,9 @@ class TaskListPage extends ConsumerWidget {
             color: AppColors.textTertiary,
           ),
           const SizedBox(height: 16),
-          Text('暂无任务', style: TextStyles.heading4),
+          Text(S.of(context)!.noTask, style: TextStyles.heading4),
           const SizedBox(height: 8),
-          Text('点击右下角按钮添加任务', style: TextStyles.body2),
+          Text(S.of(context)!.addTaskHint, style: TextStyles.body2),
         ],
       ),
     );
@@ -170,7 +201,7 @@ class TaskListPage extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
-              '进行中 (${pendingTasks.length})',
+              S.of(context)!.inProgressCount(pendingTasks.length),
               style: TextStyles.overline,
             ),
           ),
@@ -181,6 +212,7 @@ class TaskListPage extends ConsumerWidget {
                   child: TaskCard(
                     task: entry.value,
                     onTap: () => context.go('/tasks/${entry.value.id}'),
+                    onEdit: () => _showEditTaskDialog(context, entry.value),
                     onProgressUpdate: (amount) {
                       ref
                           .read(taskNotifierProvider(cycleId).notifier)
@@ -195,7 +227,7 @@ class TaskListPage extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
-              '已完成 (${completedTasks.length})',
+              S.of(context)!.completedCount(completedTasks.length),
               style: TextStyles.overline,
             ),
           ),
@@ -206,11 +238,21 @@ class TaskListPage extends ConsumerWidget {
                   child: TaskCard(
                     task: entry.value,
                     onTap: () => context.go('/tasks/${entry.value.id}'),
+                    onEdit: () => _showEditTaskDialog(context, entry.value),
                   ),
                 ),
               )),
         ],
       ],
+    );
+  }
+
+  void _showEditTaskDialog(BuildContext context, Task task) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => EditTaskDialog(task: task),
     );
   }
 

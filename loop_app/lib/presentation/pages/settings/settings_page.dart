@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../providers/settings_provider.dart';
+import '../../providers/cycle_provider.dart';
 import '../../widgets/common/glass_card.dart';
 import '../../widgets/common/gradient_decorations.dart';
 import '../../widgets/common/animated_widgets.dart';
+import '../../widgets/common/loop_time_picker.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -13,12 +16,13 @@ class SettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
+    final s = S.of(context)!;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text('设置', style: TextStyles.heading3),
+        title: Text(s.settings, style: TextStyles.heading3),
       ),
       body: Stack(
         children: [
@@ -35,7 +39,7 @@ class SettingsPage extends ConsumerWidget {
                 children: [
                   AnimatedPageWrapper(
                     index: 0,
-                    child: _buildSectionHeader('通用'),
+                    child: _buildSectionHeader(s.general),
                   ),
                   const SizedBox(height: 8),
                   AnimatedPageWrapper(
@@ -54,10 +58,23 @@ class SettingsPage extends ConsumerWidget {
                       child: Column(
                         children: [
                           _buildSettingsTile(
+                            icon: Icons.language_rounded,
+                            iconColor: AppColors.primary,
+                            title: s.language,
+                            subtitle: _getLanguageName(settings.locale, s),
+                            trailing: const Icon(
+                              Icons.chevron_right_rounded,
+                              color: AppColors.textTertiary,
+                              size: 20,
+                            ),
+                            onTap: () => _showLanguagePicker(context, ref, settings.locale),
+                          ),
+                          const Divider(height: 1, indent: 20, endIndent: 20),
+                          _buildSettingsTile(
                             icon: Icons.notifications_rounded,
                             iconColor: AppColors.warmAccent,
-                            title: '通知提醒',
-                            subtitle: '每日打卡提醒',
+                            title: s.notificationReminder,
+                            subtitle: s.dailyCheckInReminder,
                             trailing: Switch(
                               value: settings.enableNotifications,
                               onChanged: (value) {
@@ -71,7 +88,7 @@ class SettingsPage extends ConsumerWidget {
                           _buildSettingsTile(
                             icon: Icons.schedule_rounded,
                             iconColor: AppColors.accent,
-                            title: '提醒时间',
+                            title: s.reminderTime,
                             subtitle: settings.notificationTime.format(context),
                             trailing: const Icon(
                               Icons.chevron_right_rounded,
@@ -79,8 +96,8 @@ class SettingsPage extends ConsumerWidget {
                               size: 20,
                             ),
                             onTap: () async {
-                              final time = await showTimePicker(
-                                context: context,
+                              final time = await LoopTimePicker.show(
+                                context,
                                 initialTime: settings.notificationTime,
                               );
                               if (time != null) {
@@ -97,7 +114,7 @@ class SettingsPage extends ConsumerWidget {
                   const SizedBox(height: 24),
                   AnimatedPageWrapper(
                     index: 2,
-                    child: _buildSectionHeader('周期'),
+                    child: _buildSectionHeader(s.cycleSection),
                   ),
                   const SizedBox(height: 8),
                   AnimatedPageWrapper(
@@ -118,21 +135,22 @@ class SettingsPage extends ConsumerWidget {
                           _buildSettingsTile(
                             icon: Icons.loop_rounded,
                             iconColor: AppColors.primary,
-                            title: '默认周期天数',
-                            subtitle: '${settings.defaultCycleDays} 天',
+                            title: s.defaultCycleDays,
+                            subtitle: '${settings.defaultCycleDays} ${s.dayUnit}',
                             trailing: const Icon(
                               Icons.chevron_right_rounded,
                               color: AppColors.textTertiary,
                               size: 20,
                             ),
-                            onTap: () {},
+                            onTap: () => _showCycleDaysPicker(
+                                context, ref, settings.defaultCycleDays),
                           ),
                           const Divider(height: 1, indent: 20, endIndent: 20),
                           _buildSettingsTile(
                             icon: Icons.auto_awesome_rounded,
                             iconColor: AppColors.gold,
-                            title: '自动延续周期',
-                            subtitle: settings.autoExtendCycle ? '已开启' : '已关闭',
+                            title: s.autoContinueCycle,
+                            subtitle: settings.autoExtendCycle ? s.turnedOn : s.turnedOff,
                             trailing: Switch(
                               value: settings.autoExtendCycle,
                               onChanged: (value) {
@@ -149,7 +167,17 @@ class SettingsPage extends ConsumerWidget {
                   const SizedBox(height: 24),
                   AnimatedPageWrapper(
                     index: 4,
-                    child: _buildSectionHeader('数据'),
+                    child: _buildSectionHeader(s.categoryManagement),
+                  ),
+                  const SizedBox(height: 8),
+                  AnimatedPageWrapper(
+                    index: 5,
+                    child: _buildCategorySection(context, ref),
+                  ),
+                  const SizedBox(height: 24),
+                  AnimatedPageWrapper(
+                    index: 6,
+                    child: _buildSectionHeader(s.dataSection),
                   ),
                   const SizedBox(height: 8),
                   AnimatedPageWrapper(
@@ -170,8 +198,8 @@ class SettingsPage extends ConsumerWidget {
                           _buildSettingsTile(
                             icon: Icons.cloud_upload_rounded,
                             iconColor: AppColors.accent,
-                            title: '导出数据',
-                            subtitle: '备份周期和打卡记录',
+                            title: s.exportData,
+                            subtitle: s.exportDataDesc,
                             trailing: const Icon(
                               Icons.chevron_right_rounded,
                               color: AppColors.textTertiary,
@@ -183,15 +211,15 @@ class SettingsPage extends ConsumerWidget {
                           _buildSettingsTile(
                             icon: Icons.delete_outline_rounded,
                             iconColor: AppColors.error,
-                            title: '清除所有数据',
-                            subtitle: '此操作不可撤销',
+                            title: s.clearAllData,
+                            subtitle: s.clearDataWarning,
                             trailing: const Icon(
                               Icons.chevron_right_rounded,
                               color: AppColors.textTertiary,
                               size: 20,
                             ),
                             onTap: () {
-                              _showDeleteConfirmation(context);
+                              _showDeleteConfirmation(context, ref);
                             },
                           ),
                         ],
@@ -212,7 +240,7 @@ class SettingsPage extends ConsumerWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '周期计划管理',
+                            s.cyclePlanManagement,
                             style: TextStyles.caption.copyWith(
                               color: AppColors.textTertiary,
                               fontSize: 10,
@@ -229,6 +257,18 @@ class SettingsPage extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  String _getLanguageName(Locale? locale, S s) {
+    if (locale == null) return s.languageZh;
+    switch (locale.languageCode) {
+      case 'zh':
+        return s.languageZh;
+      case 'en':
+        return s.languageEn;
+      default:
+        return s.languageZh;
+    }
   }
 
   Widget _buildSectionHeader(String title) {
@@ -265,38 +305,378 @@ class SettingsPage extends ConsumerWidget {
       trailing: trailing,
       onTap: onTap,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
       ),
     );
   }
 
-  void _showDeleteConfirmation(BuildContext context) {
+  Widget _buildCategorySection(BuildContext context, WidgetRef ref) {
+    final categoriesAsync = ref.watch(categoriesProvider);
+    final s = S.of(context)!;
+
+    return categoriesAsync.when(
+      data: (categories) {
+        return GlassCard(
+          borderRadius: 20,
+          padding: const EdgeInsets.all(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.surface.withValues(alpha: 0.75),
+              AppColors.card.withValues(alpha: 0.55),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(s.taskCategory, style: TextStyles.body1),
+                  GestureDetector(
+                    onTap: () => _showAddCategoryDialog(context, ref),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.add_rounded,
+                              size: 16, color: AppColors.primary),
+                          const SizedBox(width: 4),
+                          Text(s.add,
+                              style: TextStyles.body2
+                                  .copyWith(color: AppColors.primary)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (categories.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Center(
+                    child: Text(
+                      s.noCategory,
+                      style: TextStyles.body2
+                          .copyWith(color: AppColors.textTertiary),
+                    ),
+                  ),
+                )
+              else
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: categories.map((category) {
+                    final color = Color(category.color);
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: color.withValues(alpha: 0.25),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            category.name,
+                            style: TextStyles.body2.copyWith(color: color),
+                          ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () async {
+                              final repository =
+                                  ref.read(categoryRepositoryProvider);
+                              await repository.deleteCategory(category.id);
+                              ref.invalidate(categoriesProvider);
+                            },
+                            child: Icon(
+                              Icons.close_rounded,
+                              size: 14,
+                              color: color.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+            ],
+          ),
+        );
+      },
+      loading: () => const Center(
+        child:
+            CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  void _showLanguagePicker(BuildContext context, WidgetRef ref, Locale? currentLocale) {
+    final s = S.of(context)!;
+    final effectiveLocale = currentLocale ?? const Locale('zh');
+    final options = [
+      const Locale('zh'),
+      const Locale('en'),
+    ];
+    final labels = [s.languageZh, s.languageEn];
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('确认删除', style: TextStyles.heading4),
+      builder: (dialogContext) => SimpleDialog(
+        title: Text(s.language, style: TextStyles.heading4),
+        children: List.generate(options.length, (index) {
+          final isSelected = options[index].languageCode == effectiveLocale.languageCode;
+          return SimpleDialogOption(
+            onPressed: () {
+              ref.read(settingsProvider.notifier).updateLocale(options[index]);
+              Navigator.of(dialogContext).pop();
+            },
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    labels[index],
+                    style: TextStyles.body1.copyWith(
+                      color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                ),
+                if (isSelected)
+                  const Icon(Icons.check_rounded, size: 18, color: AppColors.primary),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  void _showAddCategoryDialog(BuildContext context, WidgetRef ref) {
+    final nameController = TextEditingController();
+    Color selectedColor = AppColors.primary;
+    final s = S.of(context)!;
+
+    final presetColors = [
+      AppColors.primary,
+      AppColors.accent,
+      AppColors.success,
+      AppColors.warmAccent,
+      AppColors.gold,
+      AppColors.error,
+      const Color(0xFF9C27B0),
+      const Color(0xFF00BCD4),
+      const Color(0xFF795548),
+      const Color(0xFF607D8B),
+    ];
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(s.addCategory, style: TextStyles.heading4),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    style: TextStyles.body1,
+                    decoration: InputDecoration(
+                      labelText: s.categoryName,
+                      hintText: s.categoryExample,
+                      hintStyle:
+                          TextStyles.body1.copyWith(color: AppColors.textHint),
+                    ),
+                    maxLength: 20,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(s.selectColor, style: TextStyles.label),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: presetColors.map((color) {
+                      final isSelected = color == selectedColor;
+                      return GestureDetector(
+                        onTap: () {
+                          setDialogState(() {
+                            selectedColor = color;
+                          });
+                        },
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: isSelected
+                                ? Border.all(
+                                    color: AppColors.textPrimary,
+                                    width: 2.5,
+                                  )
+                                : null,
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: color.withValues(alpha: 0.4),
+                                      blurRadius: 8,
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: isSelected
+                              ? const Icon(Icons.check_rounded,
+                                  size: 18, color: AppColors.backgroundDeep)
+                              : null,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: Text(
+                    s.cancel,
+                    style: TextStyles.body1
+                        .copyWith(color: AppColors.textSecondary),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    final name = nameController.text.trim();
+                    if (name.isEmpty) return;
+                    final repository = ref.read(categoryRepositoryProvider);
+                    await repository.createCategory(
+                      name: name,
+                      color: selectedColor,
+                    );
+                    ref.invalidate(categoriesProvider);
+                    if (dialogContext.mounted) {
+                      Navigator.of(dialogContext).pop();
+                    }
+                  },
+                  child: Text(
+                    s.add,
+                    style: TextStyles.body1.copyWith(color: AppColors.primary),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, WidgetRef ref) {
+    final s = S.of(context)!;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(s.confirmDelete, style: TextStyles.heading4),
         content: Text(
-          '确定要清除所有数据吗？此操作不可撤销。',
+          s.clearDataConfirm,
           style: TextStyles.body1,
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: Text(
-              '取消',
+              s.cancel,
               style: TextStyles.body1.copyWith(color: AppColors.textSecondary),
             ),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              final db = ref.read(databaseProvider);
+              await db.clearAllData();
+              ref.invalidate(cyclesProvider);
+              ref.invalidate(activeCycleProvider);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(s.allDataCleared),
+                    backgroundColor: AppColors.error,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
             },
             child: Text(
-              '删除',
+              s.delete,
               style: TextStyles.body1.copyWith(color: AppColors.error),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showCycleDaysPicker(
+      BuildContext context, WidgetRef ref, int currentDays) {
+    final s = S.of(context)!;
+    final options = [7, 14, 21, 30, 60, 90];
+    showDialog(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        title: Text(s.defaultCycleDays, style: TextStyles.heading4),
+        children: options.map((days) {
+          return SimpleDialogOption(
+            onPressed: () {
+              ref.read(settingsProvider.notifier).updateDefaultCycleDays(days);
+              Navigator.of(dialogContext).pop();
+            },
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '$days ${s.dayUnit}',
+                    style: TextStyles.body1.copyWith(
+                      color: days == currentDays
+                          ? AppColors.primary
+                          : AppColors.textPrimary,
+                      fontWeight: days == currentDays
+                          ? FontWeight.w600
+                          : FontWeight.w400,
+                    ),
+                  ),
+                ),
+                if (days == currentDays)
+                  const Icon(Icons.check_rounded,
+                      size: 18, color: AppColors.primary),
+              ],
+            ),
+          );
+        }).toList(),
       ),
     );
   }

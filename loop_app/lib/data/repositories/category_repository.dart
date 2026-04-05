@@ -1,42 +1,44 @@
 import 'package:drift/drift.dart';
+import 'package:uuid/uuid.dart';
+import 'package:flutter/material.dart';
 import '../database/app_database.dart';
 
 class CategoryRepository {
   final AppDatabase _database;
+  final _uuid = const Uuid();
 
   CategoryRepository(this._database);
 
-  Future<List<Category>> getAllCategories() async {
-    return await _database.select(_database.categories).get();
+  Future<List<Category>> getAllCategories() => _database.getAllCategories();
+
+  Stream<List<Category>> watchAllCategories() => _database.watchAllCategories();
+
+  Future<Category> createCategory({
+    required String name,
+    required Color color,
+    int sortOrder = 0,
+  }) async {
+    final now = DateTime.now();
+    final id = _uuid.v4();
+
+    await _database.insertCategory(
+      CategoriesCompanion(
+        id: Value(id),
+        name: Value(name),
+        color: Value(color.value),
+        sortOrder: Value(sortOrder),
+        createdAt: Value(now),
+      ),
+    );
+
+    return Category(
+      id: id,
+      name: name,
+      color: color.value,
+      sortOrder: sortOrder,
+      createdAt: now,
+    );
   }
 
-  Future<Category?> getCategoryById(String id) async {
-    return await (_database.select(_database.categories)
-          ..where((c) => c.id.equals(id)))
-        .getSingleOrNull();
-  }
-
-  Future<void> insertCategory(CategoriesCompanion category) async {
-    await _database.into(_database.categories).insert(category);
-  }
-
-  Future<void> updateCategory(CategoriesCompanion category) async {
-    await (_database.update(_database.categories)
-          ..where((c) => c.id.equals(category.id.value)))
-        .write(category);
-  }
-
-  Future<void> deleteCategory(String id) async {
-    await (_database.delete(_database.categories)..where((c) => c.id.equals(id))).go();
-  }
-
-  Future<int> getCategoryTaskCount(String categoryId) async {
-    final count = _database.tasks.id.count();
-    final query = _database.selectOnly(_database.tasks)
-      ..addColumns([count])
-      ..where(_database.tasks.categoryId.equals(categoryId));
-    
-    final result = await query.getSingle();
-    return result.read(count) ?? 0;
-  }
+  Future<void> deleteCategory(String id) => _database.deleteCategory(id);
 }

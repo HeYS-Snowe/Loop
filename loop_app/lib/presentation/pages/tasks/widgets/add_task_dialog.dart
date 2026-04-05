@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:loop_app/l10n/generated/app_localizations.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/validators.dart';
@@ -95,23 +96,23 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
             ),
           ),
           const SizedBox(height: 20),
-          Text('添加任务', style: TextStyles.heading3),
+          Text(S.of(context)!.addTask, style: TextStyles.heading3),
           const SizedBox(height: 24),
           TextFormField(
             controller: _nameController,
             style: TextStyles.body1,
             decoration: InputDecoration(
-              labelText: '任务名称',
+              labelText: S.of(context)!.taskName,
               prefixIcon: const Icon(Icons.edit_note_rounded, size: 20),
             ),
-            validator: TaskValidator.validateName,
+            validator: (value) => TaskValidator.validateName(S.of(context)!, value),
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _descriptionController,
             style: TextStyles.body1,
             decoration: InputDecoration(
-              labelText: '描述（可选）',
+              labelText: S.of(context)!.descOptional,
               prefixIcon: const Icon(Icons.description_rounded, size: 20),
             ),
             maxLines: 2,
@@ -124,11 +125,11 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                   controller: _targetAmountController,
                   style: TextStyles.body1,
                   decoration: InputDecoration(
-                    labelText: '目标数量',
+                    labelText: S.of(context)!.targetAmount,
                     prefixIcon: const Icon(Icons.flag_rounded, size: 20),
                   ),
                   keyboardType: TextInputType.number,
-                  validator: TaskValidator.validateTargetAmount,
+                  validator: (value) => TaskValidator.validateTargetAmount(S.of(context)!, value),
                 ),
               ),
               const SizedBox(width: 16),
@@ -137,7 +138,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                   controller: _unitController,
                   style: TextStyles.body1,
                   decoration: InputDecoration(
-                    labelText: '单位（可选）',
+                    labelText: S.of(context)!.unitOptional,
                     prefixIcon: const Icon(Icons.straighten_rounded, size: 20),
                   ),
                 ),
@@ -151,9 +152,9 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
               borderRadius: BorderRadius.circular(14),
             ),
             child: SwitchListTile(
-              title: Text('可重复', style: TextStyles.body1),
+              title: Text(S.of(context)!.repeatable, style: TextStyles.body1),
               subtitle: Text(
-                '在新周期中自动创建',
+                S.of(context)!.repeatableDesc,
                 style: TextStyles.body2,
               ),
               value: _isRepeatable,
@@ -171,7 +172,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(
-                  '取消',
+                  S.of(context)!.cancel,
                   style: TextStyles.body1.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -197,7 +198,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                     shadowColor: Colors.transparent,
                     elevation: 0,
                   ),
-                  child: const Text('添加'),
+                  child: Text(S.of(context)!.add),
                 ),
               ),
             ],
@@ -226,7 +227,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('任务创建成功',
+            content: Text(S.of(context)!.taskCreatedSuccess,
                 style: TextStyles.body2.copyWith(color: AppColors.textPrimary)),
           ),
         );

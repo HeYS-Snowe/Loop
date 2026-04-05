@@ -3,10 +3,6 @@ import '../../data/database/app_database.dart';
 import '../../data/repositories/task_repository.dart';
 import 'cycle_provider.dart';
 
-final taskRepositoryProvider = Provider<TaskRepository>((ref) {
-  return TaskRepository(ref.watch(databaseProvider));
-});
-
 final tasksByCycleProvider =
     FutureProvider.family<List<Task>, String>((ref, cycleId) async {
   final repository = ref.watch(taskRepositoryProvider);
@@ -92,7 +88,7 @@ class TaskNotifier extends StateNotifier<AsyncValue<List<Task>>> {
   Future<void> editTask(Task task) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      await _repository.editTask(task);
+      await _repository.updateTask(task);
       return _repository.getTasksByCycle(_cycleId);
     });
   }

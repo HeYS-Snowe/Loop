@@ -1,8 +1,5 @@
 import 'package:drift/drift.dart';
 
-import 'database_connection_stub.dart'
-    if (dart.library.io) 'database_connection.dart'
-    if (dart.library.js_interop) 'database_connection_web.dart';
 import 'tables/cycles.dart';
 import 'tables/tasks.dart';
 import 'tables/progress_records.dart';
@@ -11,6 +8,10 @@ import 'tables/categories.dart';
 import 'tables/cycle_summaries.dart';
 import 'tables/plan_templates.dart';
 import 'tables/plan_instances.dart';
+
+import 'database_connection_stub.dart'
+    if (dart.library.io) 'database_connection.dart'
+    if (dart.library.js_interop) 'database_connection_web.dart';
 
 part 'app_database.g.dart';
 
@@ -25,10 +26,10 @@ part 'app_database.g.dart';
   PlanInstances,
 ])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(openConnection());
+  AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration {
@@ -36,7 +37,12 @@ class AppDatabase extends _$AppDatabase {
       onCreate: (Migrator m) async {
         await m.createAll();
       },
-      onUpgrade: (Migrator m, int from, int to) async {},
+      onUpgrade: (Migrator m, int from, int to) async {
+        if (from < 2) {
+          await m.createTable(planTemplates);
+          await m.createTable(planInstances);
+        }
+      },
     );
   }
 
@@ -108,11 +114,6 @@ class AppDatabase extends _$AppDatabase {
         .get();
   }
 
-  Future<List<ProgressRecord>> getProgressRecordsByTask(String taskId) {
-    return (select(progressRecords)..where((p) => p.taskId.equals(taskId)))
-        .get();
-  }
-
   Future<String> insertProgressRecord(ProgressRecordsCompanion record) async {
     await into(progressRecords).insert(record);
     return record.id.value;
@@ -179,78 +180,31 @@ class AppDatabase extends _$AppDatabase {
     return summary.id.value;
   }
 
+  Future<void> clearAllData() async {
+    await delete(planInstances).go();
+    await delete(planTemplates).go();
+    await delete(progressRecords).go();
+    await delete(tasks).go();
+    await delete(checkInRecords).go();
+    await delete(cycleSummaries).go();
+    await delete(cycles).go();
+    await delete(categories).go();
+  }
+
   Future<List<PlanTemplate>> getAllPlanTemplates() {
-    return (select(planTemplates)
-          ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
+    return (select(planTemplates)..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
         .get();
+  }
+
+  Stream<List<PlanTemplate>> watchAllPlanTemplates() {
+    return (select(planTemplates)..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
+        .watch();
   }
 
   Future<PlanTemplate?> getPlanTemplateById(String id) {
     return (select(planTemplates)..where((t) => t.id.equals(id)))
         .getSingleOrNull();
   }
-
-  Future<String> insertPlanTemplate(PlanTemplatesCompanion template) async {
-    await into(planTemplates).insert(template);
-    return template.id.value;
-  }
-
-  Future<void> updatePlanTemplate(PlanTemplatesCompanion template) async {
-    await (update(planTemplates)..where((t) => t.id.equals(template.id.value)))
-        .write(template);
-  }
-
-  Future<void> deletePlanTemplate(String id) async {
-    await (delete(planTemplates)..where((t) => t.id.equals(id))).go();
-  }
-
-  Future<List<PlanInstance>> getPlanInstancesByDate(DateTime date) {
-    final startOfDay = DateTime(date.year, date.month, date.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
-    return (select(planInstances)
-          ..where((p) =>
-              p.date.isBiggerOrEqualValue(startOfDay) &
-              p.date.isSmallerThanValue(endOfDay)))
-        .get();
-  }
-
-  Future<List<PlanInstance>> getPlanInstancesByDateRange(
-      DateTime start, DateTime end) {
-    final startOfDay = DateTime(start.year, start.month, start.day);
-    final endOfDay =
-        DateTime(end.year, end.month, end.day).add(const Duration(days: 1));
-    return (select(planInstances)
-          ..where((p) =>
-              p.date.isBiggerOrEqualValue(startOfDay) &
-              p.date.isSmallerThanValue(endOfDay)))
-        .get();
-  }
-
-  Future<String> insertPlanInstance(PlanInstancesCompanion instance) async {
-    await into(planInstances).insert(instance);
-    return instance.id.value;
-  }
-
-  Future<void> updatePlanInstance(PlanInstancesCompanion instance) async {
-    await (update(planInstances)..where((p) => p.id.equals(instance.id.value)))
-        .write(instance);
-  }
-
-  Future<void> completePlanInstance(String id) async {
-    await (update(planInstances)..where((p) => p.id.equals(id))).write(
-      PlanInstancesCompanion(
-        isCompleted: const Value(true),
-        updatedAt: Value(DateTime.now()),
-      ),
-    );
-  }
-
-  Future<void> uncompletePlanInstance(String id) async {
-    await (update(planInstances)..where((p) => p.id.equals(id))).write(
-      PlanInstancesCompanion(
-        isCompleted: const Value(false),
-        updatedAt: Value(DateTime.now()),
-      ),
-    );
-  }
 }
+
+LazyDatabase _openConnection() => openConnection();

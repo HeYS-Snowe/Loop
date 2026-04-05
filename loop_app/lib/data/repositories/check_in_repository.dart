@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 import '../database/app_database.dart';
-import '../../core/utils/date_utils.dart';
+import '../../shared/extensions/date_extensions.dart';
 
 class CheckInRepository {
   final AppDatabase _database;
@@ -64,8 +64,8 @@ class CheckInRepository {
     final today = DateTime.now();
     final yesterday = today.subtract(const Duration(days: 1));
 
-    if (!AppDateUtils.isSameDay(lastRecord.date, today) &&
-        !AppDateUtils.isSameDay(lastRecord.date, yesterday)) {
+    if (!lastRecord.date.isSameDay(today) &&
+        !lastRecord.date.isSameDay(yesterday)) {
       return 0;
     }
 

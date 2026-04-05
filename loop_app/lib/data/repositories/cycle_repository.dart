@@ -1,8 +1,10 @@
 import 'package:drift/drift.dart';
+import 'package:uuid/uuid.dart';
 import '../database/app_database.dart';
 
 class CycleRepository {
   final AppDatabase _database;
+  final _uuid = const Uuid();
 
   CycleRepository(this._database);
 
@@ -20,52 +22,59 @@ class CycleRepository {
     required DateTime startDate,
     required DateTime endDate,
   }) async {
-    final id = _generateId();
-    await _database.insertCycle(CyclesCompanion(
-      id: Value(id),
-      name: Value(name),
-      description: Value(description),
-      startDate: Value(startDate),
-      endDate: Value(endDate),
-      status: const Value('active'),
-      isActive: const Value(true),
-    ));
-    final cycle = await _database.getCycleById(id);
-    return cycle!;
+    final now = DateTime.now();
+    final id = _uuid.v4();
+
+    await _database.insertCycle(
+      CyclesCompanion(
+        id: Value(id),
+        name: Value(name),
+        description: Value(description),
+        startDate: Value(startDate),
+        endDate: Value(endDate),
+        status: const Value('active'),
+        createdAt: Value(now),
+        updatedAt: Value(now),
+      ),
+    );
+
+    return Cycle(
+      id: id,
+      name: name,
+      description: description,
+      startDate: startDate,
+      endDate: endDate,
+      status: 'active',
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    );
   }
 
   Future<void> updateCycle(Cycle cycle) async {
-    await _database.updateCycle(CyclesCompanion(
-      id: Value(cycle.id),
-      name: Value(cycle.name),
-      description: Value(cycle.description),
-      startDate: Value(cycle.startDate),
-      endDate: Value(cycle.endDate),
-      status: Value(cycle.status),
-      isActive: Value(cycle.isActive),
-      createdAt: Value(cycle.createdAt),
-      updatedAt: Value(DateTime.now()),
-    ));
+    await _database.updateCycle(
+      CyclesCompanion(
+        id: Value(cycle.id),
+        name: Value(cycle.name),
+        description: Value(cycle.description),
+        startDate: Value(cycle.startDate),
+        endDate: Value(cycle.endDate),
+        status: Value(cycle.status),
+        createdAt: Value(cycle.createdAt),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
   }
 
   Future<void> completeCycle(String cycleId) async {
-    await _database.updateCycle(CyclesCompanion(
-      id: Value(cycleId),
-      status: const Value('completed'),
-      isActive: const Value(false),
-      updatedAt: Value(DateTime.now()),
-    ));
+    await _database.updateCycle(
+      CyclesCompanion(
+        id: Value(cycleId),
+        status: const Value('completed'),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
   }
 
   Future<void> deleteCycle(String id) => _database.deleteCycle(id);
-
-  String _generateId() {
-    final timestamp = DateTime.now().microsecondsSinceEpoch;
-    return '${timestamp.toRadixString(16).padLeft(8, '0')}-'
-        '${(timestamp ^ 0xFFFF).toRadixString(16).padLeft(4, '0')}-'
-        '4${(timestamp & 0x0FFF).toRadixString(16).padLeft(3, '0')}-'
-        '${(timestamp & 0x3FFF | 0x8000).toRadixString(16).padLeft(4, '0')}-'
-        '${(timestamp ^ 0xFFFFFFFF).toRadixString(16).padLeft(8, '0')}'
-        '${timestamp.toRadixString(16).padLeft(4, '0')}';
-  }
 }

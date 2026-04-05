@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:loop_app/l10n/generated/app_localizations.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/text_styles.dart';
 import '../../../../core/utils/validators.dart';
@@ -109,23 +110,23 @@ class _EditTaskDialogState extends ConsumerState<EditTaskDialog> {
             ),
           ),
           const SizedBox(height: 20),
-          Text('编辑任务', style: TextStyles.heading3),
+          Text(S.of(context)!.editTask, style: TextStyles.heading3),
           const SizedBox(height: 24),
           TextFormField(
             controller: _nameController,
             style: TextStyles.body1,
             decoration: InputDecoration(
-              labelText: '任务名称',
+              labelText: S.of(context)!.taskName,
               prefixIcon: const Icon(Icons.edit_note_rounded, size: 20),
             ),
-            validator: TaskValidator.validateName,
+            validator: (value) => TaskValidator.validateName(S.of(context)!, value),
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _descriptionController,
             style: TextStyles.body1,
             decoration: InputDecoration(
-              labelText: '描述（可选）',
+              labelText: S.of(context)!.descOptional,
               prefixIcon: const Icon(Icons.description_rounded, size: 20),
             ),
             maxLines: 2,
@@ -138,11 +139,11 @@ class _EditTaskDialogState extends ConsumerState<EditTaskDialog> {
                   controller: _targetAmountController,
                   style: TextStyles.body1,
                   decoration: InputDecoration(
-                    labelText: '目标数量',
+                    labelText: S.of(context)!.targetAmount,
                     prefixIcon: const Icon(Icons.flag_rounded, size: 20),
                   ),
                   keyboardType: TextInputType.number,
-                  validator: TaskValidator.validateTargetAmount,
+                  validator: (value) => TaskValidator.validateTargetAmount(S.of(context)!, value),
                 ),
               ),
               const SizedBox(width: 16),
@@ -151,7 +152,7 @@ class _EditTaskDialogState extends ConsumerState<EditTaskDialog> {
                   controller: _unitController,
                   style: TextStyles.body1,
                   decoration: InputDecoration(
-                    labelText: '单位（可选）',
+                    labelText: S.of(context)!.unitOptional,
                     prefixIcon: const Icon(Icons.straighten_rounded, size: 20),
                   ),
                 ),
@@ -165,9 +166,9 @@ class _EditTaskDialogState extends ConsumerState<EditTaskDialog> {
               borderRadius: BorderRadius.circular(14),
             ),
             child: SwitchListTile(
-              title: Text('可重复', style: TextStyles.body1),
+              title: Text(S.of(context)!.repeatable, style: TextStyles.body1),
               subtitle: Text(
-                '在新周期中自动创建',
+                S.of(context)!.repeatableDesc,
                 style: TextStyles.body2,
               ),
               value: _isRepeatable,
@@ -185,7 +186,7 @@ class _EditTaskDialogState extends ConsumerState<EditTaskDialog> {
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(
-                  '取消',
+                  S.of(context)!.cancel,
                   style: TextStyles.body1.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -220,7 +221,7 @@ class _EditTaskDialogState extends ConsumerState<EditTaskDialog> {
                             strokeWidth: 2,
                           ),
                         )
-                      : const Text('保存'),
+                      : Text(S.of(context)!.save),
                 ),
               ),
             ],
@@ -264,7 +265,7 @@ class _EditTaskDialogState extends ConsumerState<EditTaskDialog> {
           Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('任务已更新',
+              content: Text(S.of(context)!.taskUpdated,
                   style:
                       TextStyles.body2.copyWith(color: AppColors.textPrimary)),
             ),
@@ -274,7 +275,7 @@ class _EditTaskDialogState extends ConsumerState<EditTaskDialog> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('更新失败: $e'),
+              content: Text(S.of(context)!.updateFailed(e.toString())),
               backgroundColor: AppColors.error,
             ),
           );

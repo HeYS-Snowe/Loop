@@ -2,12 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loop_app/core/constants/route_constants.dart';
 import 'package:loop_app/core/theme/colors.dart';
+import 'package:loop_app/l10n/generated/app_localizations.dart';
 import 'package:loop_app/presentation/pages/home/home_page.dart';
 import 'package:loop_app/presentation/pages/tasks/task_list_page.dart';
 import 'package:loop_app/presentation/pages/tasks/task_detail_page.dart';
-import 'package:loop_app/presentation/pages/check_in/check_in_page.dart';
 import 'package:loop_app/presentation/pages/summary/summary_page.dart';
 import 'package:loop_app/presentation/pages/settings/settings_page.dart';
+import 'package:loop_app/presentation/pages/cycle/cycle_form_page.dart';
+import 'package:loop_app/presentation/pages/plan/daily_plan_page.dart';
+import 'package:loop_app/presentation/pages/plan/plan_form_page.dart';
+import 'package:loop_app/presentation/widgets/common/loop_bottom_nav.dart';
+import 'package:loop_app/data/database/app_database.dart';
 
 class LoopPageTransition extends CustomTransitionPage<void> {
   LoopPageTransition({
@@ -71,19 +76,67 @@ class _LoopTransition extends StatelessWidget {
   }
 }
 
+final _rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final appRouter = GoRouter(
   initialLocation: RouteConstants.home,
+  navigatorKey: _rootNavigatorKey,
   routes: [
-    GoRoute(
-      path: RouteConstants.home,
-      name: 'home',
-      pageBuilder: (context, state) => LoopPageTransition(
-        child: const HomePage(),
-      ),
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) {
+        return ScaffoldWithNavBar(navigationShell: navigationShell);
+      },
+      branches: [
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: RouteConstants.home,
+              name: 'home',
+              pageBuilder: (context, state) => const MaterialPage(
+                child: HomePage(),
+              ),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: RouteConstants.dailyPlan,
+              name: 'daily-plan',
+              pageBuilder: (context, state) => const MaterialPage(
+                child: DailyPlanPage(),
+              ),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: RouteConstants.summary,
+              name: 'summary',
+              pageBuilder: (context, state) => const MaterialPage(
+                child: SummaryPage(),
+              ),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: RouteConstants.settings,
+              name: 'settings',
+              pageBuilder: (context, state) => const MaterialPage(
+                child: SettingsPage(),
+              ),
+            ),
+          ],
+        ),
+      ],
     ),
     GoRoute(
       path: RouteConstants.tasks,
       name: 'tasks',
+      parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) => LoopPageTransition(
         child: const TaskListPage(),
       ),
@@ -91,6 +144,7 @@ final appRouter = GoRouter(
         GoRoute(
           path: RouteConstants.taskDetail,
           name: 'task-detail',
+          parentNavigatorKey: _rootNavigatorKey,
           pageBuilder: (context, state) {
             final taskId = state.pathParameters['taskId']!;
             return LoopPageTransition(
@@ -101,44 +155,87 @@ final appRouter = GoRouter(
       ],
     ),
     GoRoute(
-      path: RouteConstants.checkIn,
-      name: 'check-in',
+      path: RouteConstants.createCycle,
+      name: 'create-cycle',
+      parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) => LoopPageTransition(
-        child: const CheckInPage(),
+        child: const CycleFormPage(),
       ),
     ),
     GoRoute(
-      path: RouteConstants.summary,
-      name: 'summary',
+      path: RouteConstants.editCycle,
+      name: 'edit-cycle',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) {
+        final cycle = state.extra as Cycle;
+        return LoopPageTransition(
+          child: CycleFormPage(cycle: cycle),
+        );
+      },
+    ),
+    GoRoute(
+      path: RouteConstants.createPlan,
+      name: 'create-plan',
+      parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) => LoopPageTransition(
-        child: const SummaryPage(),
+        child: const PlanFormPage(),
       ),
     ),
     GoRoute(
-      path: RouteConstants.settings,
-      name: 'settings',
-      pageBuilder: (context, state) => LoopPageTransition(
-        child: const SettingsPage(),
-      ),
+      path: RouteConstants.editPlan,
+      name: 'edit-plan',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) {
+        final template = state.extra as PlanTemplate;
+        return LoopPageTransition(
+          child: PlanFormPage(template: template),
+        );
+      },
     ),
   ],
   errorBuilder: (context, state) => Scaffold(
     backgroundColor: AppColors.background,
     appBar: AppBar(
-      title: const Text('页面不存在'),
+      title: Text(S.of(context)!.pageNotFound),
     ),
     body: Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('页面不存在'),
+          Text(S.of(context)!.pageNotFound),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () => context.go(RouteConstants.home),
-            child: const Text('返回首页'),
+            child: Text(S.of(context)!.backToHome),
           ),
         ],
       ),
     ),
   ),
 );
+
+class ScaffoldWithNavBar extends StatelessWidget {
+  final StatefulNavigationShell navigationShell;
+
+  const ScaffoldWithNavBar({
+    super.key,
+    required this.navigationShell,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: navigationShell,
+      extendBody: true,
+      bottomNavigationBar: LoopBottomNav(
+        currentIndex: navigationShell.currentIndex,
+        onTap: (index) {
+          navigationShell.goBranch(
+            index,
+            initialLocation: index == navigationShell.currentIndex,
+          );
+        },
+      ),
+    );
+  }
+}

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:loop_app/l10n/generated/app_localizations.dart';
 import '../../../core/theme/colors.dart';
 
 class LoopBottomNav extends StatelessWidget {
@@ -12,14 +13,22 @@ class LoopBottomNav extends StatelessWidget {
   });
 
   static const List<_NavData> _items = [
-    _NavData(icon: Icons.home_rounded, activeIcon: Icons.home_rounded, label: '首页'),
-    _NavData(icon: Icons.calendar_month_rounded, activeIcon: Icons.calendar_month_rounded, label: '行程'),
-    _NavData(icon: Icons.bar_chart_rounded, activeIcon: Icons.bar_chart_rounded, label: '统计'),
-    _NavData(icon: Icons.settings_outlined, activeIcon: Icons.settings_rounded, label: '设置'),
+    _NavData(icon: Icons.home_rounded, activeIcon: Icons.home_rounded, labelKey: 'home'),
+    _NavData(icon: Icons.event_note_rounded, activeIcon: Icons.event_note_rounded, labelKey: 'dailyPlan'),
+    _NavData(icon: Icons.bar_chart_rounded, activeIcon: Icons.bar_chart_rounded, labelKey: 'statistics'),
+    _NavData(icon: Icons.settings_outlined, activeIcon: Icons.settings_rounded, labelKey: 'settings'),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context)!;
+    final labels = [
+      s.home,
+      s.dailyPlan,
+      s.statistics,
+      s.settings,
+    ];
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface.withValues(alpha: 0.92),
@@ -46,6 +55,7 @@ class LoopBottomNav extends StatelessWidget {
             children: List.generate(_items.length, (index) {
               return _NavItem(
                 item: _items[index],
+                label: labels[index],
                 isSelected: currentIndex == index,
                 onTap: () => onTap(index),
               );
@@ -59,11 +69,13 @@ class LoopBottomNav extends StatelessWidget {
 
 class _NavItem extends StatelessWidget {
   final _NavData item;
+  final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _NavItem({
     required this.item,
+    required this.label,
     required this.isSelected,
     required this.onTap,
   });
@@ -111,7 +123,7 @@ class _NavItem extends StatelessWidget {
                 color: isSelected ? AppColors.primary : AppColors.textTertiary,
                 height: 1.2,
               ),
-              child: Text(item.label),
+              child: Text(label),
             ),
           ],
         ),
@@ -123,11 +135,11 @@ class _NavItem extends StatelessWidget {
 class _NavData {
   final IconData icon;
   final IconData activeIcon;
-  final String label;
+  final String labelKey;
 
   const _NavData({
     required this.icon,
     required this.activeIcon,
-    required this.label,
+    required this.labelKey,
   });
 }

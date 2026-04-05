@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/colors.dart';
-import '../../../../core/theme/text_styles.dart';
-import '../../../../data/database/app_database.dart';
-import '../../../../data/extensions/model_extensions.dart';
-import '../../../widgets/common/glass_card.dart';
+import '../../../core/theme/colors.dart';
+import '../../../core/theme/text_styles.dart';
+import '../../../data/database/app_database.dart';
+import '../../../data/extensions/model_extensions.dart';
+import '../../widgets/common/glass_card.dart';
 
 class SummaryCard extends StatelessWidget {
   final Cycle cycle;
