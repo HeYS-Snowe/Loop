@@ -27,10 +27,6 @@ final checkInStatsProvider = FutureProvider<CheckInStats>((ref) async {
   return service.getCheckInStats();
 });
 
-final checkInNotifierProvider = StateNotifierProvider<CheckInNotifier, AsyncValue<CheckInState>>((ref) {
-  return CheckInNotifier(ref.watch(checkInServiceProvider));
-});
-
 class CheckInState {
   final bool checkedInToday;
   final int streakCount;
@@ -55,12 +51,13 @@ class CheckInState {
   }
 }
 
-class CheckInNotifier extends StateNotifier<AsyncValue<CheckInState>> {
-  final CheckInService _service;
-
-  CheckInNotifier(this._service) : super(const AsyncValue.loading()) {
-    loadState();
+class CheckInNotifier extends AsyncNotifier<CheckInState> {
+  @override
+  CheckInState build() {
+    return CheckInState();
   }
+
+  CheckInService get _service => ref.read(checkInServiceProvider);
 
   Future<void> checkIn() async {
     state = const AsyncValue.loading();
@@ -91,3 +88,8 @@ class CheckInNotifier extends StateNotifier<AsyncValue<CheckInState>> {
     });
   }
 }
+
+final checkInNotifierProvider =
+    AsyncNotifierProvider<CheckInNotifier, CheckInState>(
+  CheckInNotifier.new,
+);

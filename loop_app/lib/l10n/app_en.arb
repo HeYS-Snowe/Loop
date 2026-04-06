@@ -230,5 +230,116 @@
   "selectDateRange": "Please select start and end dates",
   "endDateBeforeStart": "End date cannot be before start date",
   "categoryNameRequired": "Please enter category name",
-  "categoryNameTooLong": "Category name must be under 20 characters"
+  "categoryNameTooLong": "Category name must be under 20 characters",
+
+  "timetableManagement": "Timetable",
+  "timetableList": "Timetables",
+  "noTimetable": "No timetables",
+  "importFromHtml": "Import from HTML",
+  "importFromHtmlDesc": "Import timetable from HTML exported by academic system",
+  "createTimetable": "Create Timetable",
+  "timetableName": "Timetable Name",
+  "timetableNameHint": "e.g., 2025-2026 Spring Semester",
+  "academicYear": "Academic Year",
+  "firstSemester": "1st Semester",
+  "secondSemester": "2nd Semester",
+  "thirdSemester": "3rd Semester",
+  "firstWeekMonday": "First Week Monday",
+  "totalWeeks": "Total Weeks",
+  "currentWeek": "Current Week",
+  "courseCount": "Courses: {count}",
+  "@courseCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "timetableDetail": "Timetable Detail",
+  "courseManagement": "Course Management",
+  "addCourse": "Add Course",
+  "courseName": "Course Name",
+  "courseNameHint": "e.g., Advanced Mathematics",
+  "teacherName": "Teacher",
+  "teacherNameHint": "e.g., John Smith",
+  "location": "Location",
+  "locationHint": "e.g., Building A-301",
+  "weekday": "Weekday",
+  "periodRange": "Period Range",
+  "startPeriod": "Start Period",
+  "endPeriod": "End Period",
+  "weekRanges": "Week Ranges",
+  "weekRangesHint": "e.g., 1-16",
+  "courseColor": "Course Color",
+  "courseCreated": "Course added",
+  "courseDeleted": "Course deleted",
+  "timetableCreated": "Timetable created",
+  "timetableDeleted": "Timetable deleted",
+  "importSuccess": "Import Success",
+  "importSuccessDesc": "Successfully imported {count} courses",
+  "@importSuccessDesc": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "selectHtmlFile": "Select HTML File",
+  "importing": "Importing...",
+  "importFailed": "Import Failed",
+  "importFailedDesc": "Cannot parse HTML file, please check format",
+  "timetableNameRequired": "Please enter timetable name",
+  "courseNameRequired": "Please enter course name",
+  "weekdayRequired": "Please select weekday",
+  "periodRequired": "Please select period range",
+  "weekRangesRequired": "Please enter week ranges",
+  "weekFormat": "Week {week}",
+  "@weekFormat": {
+    "placeholders": {
+      "week": {"type": "int"}
+    }
+  },
+  "periodFormat": "Period {start}-{end}",
+  "@periodFormat": {
+    "placeholders": {
+      "start": {"type": "int"},
+      "end": {"type": "int"}
+    }
+  },
+  "semesterFormat": "{year} Semester {semester}",
+  "@semesterFormat": {
+    "placeholders": {
+      "year": {"type": "String"},
+      "semester": {"type": "int"}
+    }
+  },
+  "timetableSource": "Source: {source}",
+  "@timetableSource": {
+    "placeholders": {
+      "source": {"type": "String"}
+    }
+  },
+  "sourceHtml": "HTML Import",
+  "sourceManual": "Manual",
+  "confirmDeleteTimetable": "Delete this timetable? All courses will be removed.",
+  "confirmDeleteCourse": "Delete this course?",
+  "editCourse": "Edit Course",
+  "courseUpdated": "Course updated",
+  "todayCourse": "Today's Courses",
+  "noCourseToday": "No classes today",
+  "selectFolder": "Select Folder",
+  "selectFolderDesc": "Select the folder generated when saving a complete webpage",
+  "selectFile": "Select HTML File",
+  "selectFileDesc": "Select a single .html file directly",
+  "importMode": "Import Mode",
+  "importModeHint": "Please select import mode",
+  "folderMode": "Folder Mode",
+  "fileMode": "Single File Mode",
+  "noHtmlInFolder": "No HTML files found in the selected folder",
+  "noCourseData": "No course data found in the HTML file. Please save the webpage in \"complete\" mode.",
+  "importFolderSuccess": "Imported from folder successfully",
+  "selectedFolder": "Selected folder",
+  "htmlFilesFound": "Found {count} HTML file(s)",
+  "@htmlFilesFound": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "folderModeNotSupported": "Folder mode not supported on this platform, switched to file mode"
 }

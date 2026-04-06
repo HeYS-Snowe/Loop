@@ -11,6 +11,10 @@ import 'package:loop_app/presentation/pages/settings/settings_page.dart';
 import 'package:loop_app/presentation/pages/cycle/cycle_form_page.dart';
 import 'package:loop_app/presentation/pages/plan/daily_plan_page.dart';
 import 'package:loop_app/presentation/pages/plan/plan_form_page.dart';
+import 'package:loop_app/presentation/pages/timetable/timetable_list_page.dart';
+import 'package:loop_app/presentation/pages/timetable/timetable_detail_page.dart';
+import 'package:loop_app/presentation/pages/timetable/timetable_import_page.dart';
+import 'package:loop_app/presentation/pages/timetable/course_form_page.dart';
 import 'package:loop_app/presentation/widgets/common/loop_bottom_nav.dart';
 import 'package:loop_app/data/database/app_database.dart';
 
@@ -189,6 +193,48 @@ final appRouter = GoRouter(
         final template = state.extra as PlanTemplate;
         return LoopPageTransition(
           child: PlanFormPage(template: template),
+        );
+      },
+    ),
+    GoRoute(
+      path: RouteConstants.timetables,
+      name: 'timetables',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => LoopPageTransition(
+        child: const TimetableListPage(),
+      ),
+    ),
+    GoRoute(
+      path: RouteConstants.timetableDetail,
+      name: 'timetable-detail',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) {
+        final id = state.uri.queryParameters['id']!;
+        return LoopPageTransition(
+          child: TimetableDetailPage(timetableId: id),
+        );
+      },
+    ),
+    GoRoute(
+      path: RouteConstants.timetableImport,
+      name: 'timetable-import',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => LoopPageTransition(
+        child: const TimetableImportPage(),
+      ),
+    ),
+    GoRoute(
+      path: RouteConstants.courseForm,
+      name: 'course-form',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) {
+        final timetableId = state.uri.queryParameters['timetableId']!;
+        final courseId = state.uri.queryParameters['courseId'];
+        return LoopPageTransition(
+          child: CourseFormPage(
+            timetableId: timetableId,
+            courseId: courseId,
+          ),
         );
       },
     ),

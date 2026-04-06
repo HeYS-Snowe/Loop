@@ -6,10 +6,10 @@ import '../../../core/constants/route_constants.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../data/database/app_database.dart';
-import '../../../data/extensions/model_extensions.dart';
 import '../../providers/cycle_provider.dart';
 import '../../providers/check_in_provider.dart';
 import '../../providers/plan_provider.dart';
+import '../../providers/timetable_provider.dart';
 import '../../widgets/common/gradient_decorations.dart';
 import '../../widgets/common/particle_background.dart';
 import '../../widgets/common/glass_card.dart';
@@ -85,6 +85,11 @@ class HomePage extends ConsumerWidget {
                       AnimatedPageWrapper(
                         index: 1,
                         child: const QuickStatsCard(),
+                      ),
+                      const SizedBox(height: 28),
+                      AnimatedPageWrapper(
+                        index: 2,
+                        child: _buildTodayCoursesSection(context, ref),
                       ),
                       const SizedBox(height: 28),
                       AnimatedPageWrapper(
@@ -204,6 +209,158 @@ class HomePage extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildTodayCoursesSection(BuildContext context, WidgetRef ref) {
+    final todayCoursesAsync = ref.watch(todayCoursesProvider);
+    final s = S.of(context)!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(s.todayCourse, style: TextStyles.heading4),
+            TextButton(
+              onPressed: () => context.push(RouteConstants.timetables),
+              child: Text(
+                s.timetableManagement,
+                style: TextStyles.label.copyWith(color: AppColors.primary),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        todayCoursesAsync.when(
+          data: (courses) {
+            if (courses.isEmpty) {
+              return GlassCard(
+                onTap: () => context.push(RouteConstants.timetables),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.schedule_rounded,
+                        color: AppColors.accent,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        s.noCourseToday,
+                        style: TextStyles.body2,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return Column(
+              children: courses.map((course) {
+                final color = course.colorHex != null
+                    ? _parseCourseColor(course.colorHex!)
+                    : AppColors.primary;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: GlassCard(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 4,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                course.courseName,
+                                style: TextStyles.body1.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  Text(
+                                    s.periodFormat(
+                                      course.startPeriod,
+                                      course.endPeriod,
+                                    ),
+                                    style: TextStyles.caption,
+                                  ),
+                                  if (course.location != null) ...[
+                                    const SizedBox(width: 8),
+                                    Icon(
+                                      Icons.location_on_rounded,
+                                      size: 10,
+                                      color: AppColors.textTertiary,
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      course.location!,
+                                      style: TextStyles.caption,
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            course.weekRanges,
+                            style: TextStyles.caption.copyWith(
+                              color: color,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            );
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+
+  Color _parseCourseColor(String hex) {
+    try {
+      return Color(int.parse(hex.replaceFirst('#', '0xFF')));
+    } catch (_) {
+      return AppColors.primary;
+    }
   }
 
   Widget _buildEmptyCycleCard(BuildContext context) {

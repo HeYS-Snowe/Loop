@@ -14,4 +14,8 @@ class RouteConstants {
   static const String createPlan = '/create-plan';
   static const String editPlan = '/edit-plan';
   static const String editTask = '/edit-task';
+  static const String timetables = '/timetables';
+  static const String timetableDetail = '/timetable-detail';
+  static const String timetableImport = '/timetable-import';
+  static const String courseForm = '/course-form';
 }

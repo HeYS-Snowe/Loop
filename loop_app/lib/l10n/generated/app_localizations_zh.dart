@@ -227,7 +227,7 @@ class SZh extends S {
   String get selectWeekdays => '选择要执行计划的星期';
 
   @override
-  String get weekday => '工作日';
+  String get weekday => '星期';
 
   @override
   String get everyday => '每天';
@@ -647,4 +647,237 @@ class SZh extends S {
 
   @override
   String get categoryNameTooLong => '分类名称不能超过20字符';
+
+  @override
+  String get timetableManagement => '课表管理';
+
+  @override
+  String get timetableList => '课表列表';
+
+  @override
+  String get noTimetable => '暂无课表';
+
+  @override
+  String get importFromHtml => '从HTML导入';
+
+  @override
+  String get importFromHtmlDesc => '从教务系统导出的HTML文件导入课表';
+
+  @override
+  String get createTimetable => '手动创建课表';
+
+  @override
+  String get timetableName => '课表名称';
+
+  @override
+  String get timetableNameHint => '例如: 2025-2026学年第二学期';
+
+  @override
+  String get academicYear => '学年';
+
+  @override
+  String get semester => '学期';
+
+  @override
+  String get firstSemester => '第一学期';
+
+  @override
+  String get secondSemester => '第二学期';
+
+  @override
+  String get thirdSemester => '第三学期';
+
+  @override
+  String get firstWeekMonday => '第一周周一日期';
+
+  @override
+  String get totalWeeks => '总周数';
+
+  @override
+  String get currentWeek => '当前周次';
+
+  @override
+  String courseCount(int count) {
+    return '课程数: $count';
+  }
+
+  @override
+  String get timetableDetail => '课表详情';
+
+  @override
+  String get courseManagement => '课程管理';
+
+  @override
+  String get addCourse => '添加课程';
+
+  @override
+  String get courseName => '课程名称';
+
+  @override
+  String get courseNameHint => '例如: 高等数学';
+
+  @override
+  String get teacherName => '教师姓名';
+
+  @override
+  String get teacherNameHint => '例如: 张三';
+
+  @override
+  String get location => '上课地点';
+
+  @override
+  String get locationHint => '例如: 教学楼A-301';
+
+  @override
+  String get periodRange => '节次范围';
+
+  @override
+  String get startPeriod => '开始节次';
+
+  @override
+  String get endPeriod => '结束节次';
+
+  @override
+  String get weekRanges => '上课周次';
+
+  @override
+  String get weekRangesHint => '例如: 1-16周';
+
+  @override
+  String get courseColor => '课程颜色';
+
+  @override
+  String get courseCreated => '课程已添加';
+
+  @override
+  String get courseDeleted => '课程已删除';
+
+  @override
+  String get timetableCreated => '课表已创建';
+
+  @override
+  String get timetableDeleted => '课表已删除';
+
+  @override
+  String get importSuccess => '导入成功';
+
+  @override
+  String importSuccessDesc(int count) {
+    return '成功导入 $count 门课程';
+  }
+
+  @override
+  String get selectHtmlFile => '选择HTML文件';
+
+  @override
+  String get importing => '正在导入...';
+
+  @override
+  String get importFailed => '导入失败';
+
+  @override
+  String get importFailedDesc => '无法解析HTML文件，请检查文件格式';
+
+  @override
+  String get timetableNameRequired => '请输入课表名称';
+
+  @override
+  String get courseNameRequired => '请输入课程名称';
+
+  @override
+  String get weekdayRequired => '请选择星期';
+
+  @override
+  String get periodRequired => '请选择节次范围';
+
+  @override
+  String get weekRangesRequired => '请输入上课周次';
+
+  @override
+  String weekFormat(int week) {
+    return '第$week周';
+  }
+
+  @override
+  String periodFormat(int start, int end) {
+    return '第$start-$end节';
+  }
+
+  @override
+  String semesterFormat(String year, int semester) {
+    return '$year学年 第$semester学期';
+  }
+
+  @override
+  String timetableSource(String source) {
+    return '来源: $source';
+  }
+
+  @override
+  String get sourceHtml => 'HTML导入';
+
+  @override
+  String get sourceManual => '手动创建';
+
+  @override
+  String get confirmDeleteTimetable => '确定要删除此课表吗？所有课程数据将被清除。';
+
+  @override
+  String get confirmDeleteCourse => '确定要删除此课程吗？';
+
+  @override
+  String get editCourse => '编辑课程';
+
+  @override
+  String get courseUpdated => '课程已更新';
+
+  @override
+  String get todayCourse => '今日课程';
+
+  @override
+  String get noCourseToday => '今天没有课';
+
+  @override
+  String get selectFolder => '选择文件夹';
+
+  @override
+  String get selectFolderDesc => '选择浏览器保存完整网页时生成的文件夹';
+
+  @override
+  String get selectFile => '选择HTML文件';
+
+  @override
+  String get selectFileDesc => '直接选择单个 .html 文件';
+
+  @override
+  String get importMode => '导入方式';
+
+  @override
+  String get importModeHint => '请选择导入方式';
+
+  @override
+  String get folderMode => '文件夹模式';
+
+  @override
+  String get fileMode => '单文件模式';
+
+  @override
+  String get noHtmlInFolder => '所选文件夹中未找到HTML文件';
+
+  @override
+  String get noCourseData => '未在HTML文件中找到课表数据，请确保保存网页时选择\"完整网页\"模式';
+
+  @override
+  String get importFolderSuccess => '从文件夹导入成功';
+
+  @override
+  String get selectedFolder => '已选择文件夹';
+
+  @override
+  String htmlFilesFound(int count) {
+    return '找到 $count 个HTML文件';
+  }
+
+  @override
+  String get folderModeNotSupported => '当前平台不支持文件夹选择，已切换为文件模式';
 }

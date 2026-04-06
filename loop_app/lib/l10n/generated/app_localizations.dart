@@ -520,7 +520,7 @@ abstract class S {
   /// No description provided for @weekday.
   ///
   /// In zh, this message translates to:
-  /// **'工作日'**
+  /// **'星期'**
   String get weekday;
 
   /// No description provided for @everyday.
@@ -1332,6 +1332,444 @@ abstract class S {
   /// In zh, this message translates to:
   /// **'分类名称不能超过20字符'**
   String get categoryNameTooLong;
+
+  /// No description provided for @timetableManagement.
+  ///
+  /// In zh, this message translates to:
+  /// **'课表管理'**
+  String get timetableManagement;
+
+  /// No description provided for @timetableList.
+  ///
+  /// In zh, this message translates to:
+  /// **'课表列表'**
+  String get timetableList;
+
+  /// No description provided for @noTimetable.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无课表'**
+  String get noTimetable;
+
+  /// No description provided for @importFromHtml.
+  ///
+  /// In zh, this message translates to:
+  /// **'从HTML导入'**
+  String get importFromHtml;
+
+  /// No description provided for @importFromHtmlDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'从教务系统导出的HTML文件导入课表'**
+  String get importFromHtmlDesc;
+
+  /// No description provided for @createTimetable.
+  ///
+  /// In zh, this message translates to:
+  /// **'手动创建课表'**
+  String get createTimetable;
+
+  /// No description provided for @timetableName.
+  ///
+  /// In zh, this message translates to:
+  /// **'课表名称'**
+  String get timetableName;
+
+  /// No description provided for @timetableNameHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'例如: 2025-2026学年第二学期'**
+  String get timetableNameHint;
+
+  /// No description provided for @academicYear.
+  ///
+  /// In zh, this message translates to:
+  /// **'学年'**
+  String get academicYear;
+
+  /// No description provided for @semester.
+  ///
+  /// In zh, this message translates to:
+  /// **'学期'**
+  String get semester;
+
+  /// No description provided for @firstSemester.
+  ///
+  /// In zh, this message translates to:
+  /// **'第一学期'**
+  String get firstSemester;
+
+  /// No description provided for @secondSemester.
+  ///
+  /// In zh, this message translates to:
+  /// **'第二学期'**
+  String get secondSemester;
+
+  /// No description provided for @thirdSemester.
+  ///
+  /// In zh, this message translates to:
+  /// **'第三学期'**
+  String get thirdSemester;
+
+  /// No description provided for @firstWeekMonday.
+  ///
+  /// In zh, this message translates to:
+  /// **'第一周周一日期'**
+  String get firstWeekMonday;
+
+  /// No description provided for @totalWeeks.
+  ///
+  /// In zh, this message translates to:
+  /// **'总周数'**
+  String get totalWeeks;
+
+  /// No description provided for @currentWeek.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前周次'**
+  String get currentWeek;
+
+  /// No description provided for @courseCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'课程数: {count}'**
+  String courseCount(int count);
+
+  /// No description provided for @timetableDetail.
+  ///
+  /// In zh, this message translates to:
+  /// **'课表详情'**
+  String get timetableDetail;
+
+  /// No description provided for @courseManagement.
+  ///
+  /// In zh, this message translates to:
+  /// **'课程管理'**
+  String get courseManagement;
+
+  /// No description provided for @addCourse.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加课程'**
+  String get addCourse;
+
+  /// No description provided for @courseName.
+  ///
+  /// In zh, this message translates to:
+  /// **'课程名称'**
+  String get courseName;
+
+  /// No description provided for @courseNameHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'例如: 高等数学'**
+  String get courseNameHint;
+
+  /// No description provided for @teacherName.
+  ///
+  /// In zh, this message translates to:
+  /// **'教师姓名'**
+  String get teacherName;
+
+  /// No description provided for @teacherNameHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'例如: 张三'**
+  String get teacherNameHint;
+
+  /// No description provided for @location.
+  ///
+  /// In zh, this message translates to:
+  /// **'上课地点'**
+  String get location;
+
+  /// No description provided for @locationHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'例如: 教学楼A-301'**
+  String get locationHint;
+
+  /// No description provided for @periodRange.
+  ///
+  /// In zh, this message translates to:
+  /// **'节次范围'**
+  String get periodRange;
+
+  /// No description provided for @startPeriod.
+  ///
+  /// In zh, this message translates to:
+  /// **'开始节次'**
+  String get startPeriod;
+
+  /// No description provided for @endPeriod.
+  ///
+  /// In zh, this message translates to:
+  /// **'结束节次'**
+  String get endPeriod;
+
+  /// No description provided for @weekRanges.
+  ///
+  /// In zh, this message translates to:
+  /// **'上课周次'**
+  String get weekRanges;
+
+  /// No description provided for @weekRangesHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'例如: 1-16周'**
+  String get weekRangesHint;
+
+  /// No description provided for @courseColor.
+  ///
+  /// In zh, this message translates to:
+  /// **'课程颜色'**
+  String get courseColor;
+
+  /// No description provided for @courseCreated.
+  ///
+  /// In zh, this message translates to:
+  /// **'课程已添加'**
+  String get courseCreated;
+
+  /// No description provided for @courseDeleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'课程已删除'**
+  String get courseDeleted;
+
+  /// No description provided for @timetableCreated.
+  ///
+  /// In zh, this message translates to:
+  /// **'课表已创建'**
+  String get timetableCreated;
+
+  /// No description provided for @timetableDeleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'课表已删除'**
+  String get timetableDeleted;
+
+  /// No description provided for @importSuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入成功'**
+  String get importSuccess;
+
+  /// No description provided for @importSuccessDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'成功导入 {count} 门课程'**
+  String importSuccessDesc(int count);
+
+  /// No description provided for @selectHtmlFile.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择HTML文件'**
+  String get selectHtmlFile;
+
+  /// No description provided for @importing.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在导入...'**
+  String get importing;
+
+  /// No description provided for @importFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入失败'**
+  String get importFailed;
+
+  /// No description provided for @importFailedDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法解析HTML文件，请检查文件格式'**
+  String get importFailedDesc;
+
+  /// No description provided for @timetableNameRequired.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入课表名称'**
+  String get timetableNameRequired;
+
+  /// No description provided for @courseNameRequired.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入课程名称'**
+  String get courseNameRequired;
+
+  /// No description provided for @weekdayRequired.
+  ///
+  /// In zh, this message translates to:
+  /// **'请选择星期'**
+  String get weekdayRequired;
+
+  /// No description provided for @periodRequired.
+  ///
+  /// In zh, this message translates to:
+  /// **'请选择节次范围'**
+  String get periodRequired;
+
+  /// No description provided for @weekRangesRequired.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入上课周次'**
+  String get weekRangesRequired;
+
+  /// No description provided for @weekFormat.
+  ///
+  /// In zh, this message translates to:
+  /// **'第{week}周'**
+  String weekFormat(int week);
+
+  /// No description provided for @periodFormat.
+  ///
+  /// In zh, this message translates to:
+  /// **'第{start}-{end}节'**
+  String periodFormat(int start, int end);
+
+  /// No description provided for @semesterFormat.
+  ///
+  /// In zh, this message translates to:
+  /// **'{year}学年 第{semester}学期'**
+  String semesterFormat(String year, int semester);
+
+  /// No description provided for @timetableSource.
+  ///
+  /// In zh, this message translates to:
+  /// **'来源: {source}'**
+  String timetableSource(String source);
+
+  /// No description provided for @sourceHtml.
+  ///
+  /// In zh, this message translates to:
+  /// **'HTML导入'**
+  String get sourceHtml;
+
+  /// No description provided for @sourceManual.
+  ///
+  /// In zh, this message translates to:
+  /// **'手动创建'**
+  String get sourceManual;
+
+  /// No description provided for @confirmDeleteTimetable.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要删除此课表吗？所有课程数据将被清除。'**
+  String get confirmDeleteTimetable;
+
+  /// No description provided for @confirmDeleteCourse.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要删除此课程吗？'**
+  String get confirmDeleteCourse;
+
+  /// No description provided for @editCourse.
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑课程'**
+  String get editCourse;
+
+  /// No description provided for @courseUpdated.
+  ///
+  /// In zh, this message translates to:
+  /// **'课程已更新'**
+  String get courseUpdated;
+
+  /// No description provided for @todayCourse.
+  ///
+  /// In zh, this message translates to:
+  /// **'今日课程'**
+  String get todayCourse;
+
+  /// No description provided for @noCourseToday.
+  ///
+  /// In zh, this message translates to:
+  /// **'今天没有课'**
+  String get noCourseToday;
+
+  /// No description provided for @selectFolder.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择文件夹'**
+  String get selectFolder;
+
+  /// No description provided for @selectFolderDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择浏览器保存完整网页时生成的文件夹'**
+  String get selectFolderDesc;
+
+  /// No description provided for @selectFile.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择HTML文件'**
+  String get selectFile;
+
+  /// No description provided for @selectFileDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'直接选择单个 .html 文件'**
+  String get selectFileDesc;
+
+  /// No description provided for @importMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入方式'**
+  String get importMode;
+
+  /// No description provided for @importModeHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'请选择导入方式'**
+  String get importModeHint;
+
+  /// No description provided for @folderMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'文件夹模式'**
+  String get folderMode;
+
+  /// No description provided for @fileMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'单文件模式'**
+  String get fileMode;
+
+  /// No description provided for @noHtmlInFolder.
+  ///
+  /// In zh, this message translates to:
+  /// **'所选文件夹中未找到HTML文件'**
+  String get noHtmlInFolder;
+
+  /// No description provided for @noCourseData.
+  ///
+  /// In zh, this message translates to:
+  /// **'未在HTML文件中找到课表数据，请确保保存网页时选择\"完整网页\"模式'**
+  String get noCourseData;
+
+  /// No description provided for @importFolderSuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'从文件夹导入成功'**
+  String get importFolderSuccess;
+
+  /// No description provided for @selectedFolder.
+  ///
+  /// In zh, this message translates to:
+  /// **'已选择文件夹'**
+  String get selectedFolder;
+
+  /// No description provided for @htmlFilesFound.
+  ///
+  /// In zh, this message translates to:
+  /// **'找到 {count} 个HTML文件'**
+  String htmlFilesFound(int count);
+
+  /// No description provided for @folderModeNotSupported.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前平台不支持文件夹选择，已切换为文件模式'**
+  String get folderModeNotSupported;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

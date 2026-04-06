@@ -287,5 +287,117 @@
   "selectDateRange": "请选择开始和结束日期",
   "endDateBeforeStart": "结束日期不能早于开始日期",
   "categoryNameRequired": "请输入分类名称",
-  "categoryNameTooLong": "分类名称不能超过20字符"
+  "categoryNameTooLong": "分类名称不能超过20字符",
+
+  "timetableManagement": "课表管理",
+  "timetableList": "课表列表",
+  "noTimetable": "暂无课表",
+  "importFromHtml": "从HTML导入",
+  "importFromHtmlDesc": "从教务系统导出的HTML文件导入课表",
+  "createTimetable": "手动创建课表",
+  "timetableName": "课表名称",
+  "timetableNameHint": "例如: 2025-2026学年第二学期",
+  "academicYear": "学年",
+  "semester": "学期",
+  "firstSemester": "第一学期",
+  "secondSemester": "第二学期",
+  "thirdSemester": "第三学期",
+  "firstWeekMonday": "第一周周一日期",
+  "totalWeeks": "总周数",
+  "currentWeek": "当前周次",
+  "courseCount": "课程数: {count}",
+  "@courseCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "timetableDetail": "课表详情",
+  "courseManagement": "课程管理",
+  "addCourse": "添加课程",
+  "courseName": "课程名称",
+  "courseNameHint": "例如: 高等数学",
+  "teacherName": "教师姓名",
+  "teacherNameHint": "例如: 张三",
+  "location": "上课地点",
+  "locationHint": "例如: 教学楼A-301",
+  "weekday": "星期",
+  "periodRange": "节次范围",
+  "startPeriod": "开始节次",
+  "endPeriod": "结束节次",
+  "weekRanges": "上课周次",
+  "weekRangesHint": "例如: 1-16周",
+  "courseColor": "课程颜色",
+  "courseCreated": "课程已添加",
+  "courseDeleted": "课程已删除",
+  "timetableCreated": "课表已创建",
+  "timetableDeleted": "课表已删除",
+  "importSuccess": "导入成功",
+  "importSuccessDesc": "成功导入 {count} 门课程",
+  "@importSuccessDesc": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "selectHtmlFile": "选择HTML文件",
+  "importing": "正在导入...",
+  "importFailed": "导入失败",
+  "importFailedDesc": "无法解析HTML文件，请检查文件格式",
+  "timetableNameRequired": "请输入课表名称",
+  "courseNameRequired": "请输入课程名称",
+  "weekdayRequired": "请选择星期",
+  "periodRequired": "请选择节次范围",
+  "weekRangesRequired": "请输入上课周次",
+  "weekFormat": "第{week}周",
+  "@weekFormat": {
+    "placeholders": {
+      "week": {"type": "int"}
+    }
+  },
+  "periodFormat": "第{start}-{end}节",
+  "@periodFormat": {
+    "placeholders": {
+      "start": {"type": "int"},
+      "end": {"type": "int"}
+    }
+  },
+  "semesterFormat": "{year}学年 第{semester}学期",
+  "@semesterFormat": {
+    "placeholders": {
+      "year": {"type": "String"},
+      "semester": {"type": "int"}
+    }
+  },
+  "timetableSource": "来源: {source}",
+  "@timetableSource": {
+    "placeholders": {
+      "source": {"type": "String"}
+    }
+  },
+  "sourceHtml": "HTML导入",
+  "sourceManual": "手动创建",
+  "confirmDeleteTimetable": "确定要删除此课表吗？所有课程数据将被清除。",
+  "confirmDeleteCourse": "确定要删除此课程吗？",
+  "editCourse": "编辑课程",
+  "courseUpdated": "课程已更新",
+  "todayCourse": "今日课程",
+  "noCourseToday": "今天没有课",
+  "selectFolder": "选择文件夹",
+  "selectFolderDesc": "选择浏览器保存完整网页时生成的文件夹",
+  "selectFile": "选择HTML文件",
+  "selectFileDesc": "直接选择单个 .html 文件",
+  "importMode": "导入方式",
+  "importModeHint": "请选择导入方式",
+  "folderMode": "文件夹模式",
+  "fileMode": "单文件模式",
+  "noHtmlInFolder": "所选文件夹中未找到HTML文件",
+  "noCourseData": "未在HTML文件中找到课表数据，请确保保存网页时选择\"完整网页\"模式",
+  "importFolderSuccess": "从文件夹导入成功",
+  "selectedFolder": "已选择文件夹",
+  "htmlFilesFound": "找到 {count} 个HTML文件",
+  "@htmlFilesFound": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "folderModeNotSupported": "当前平台不支持文件夹选择，已切换为文件模式"
 }

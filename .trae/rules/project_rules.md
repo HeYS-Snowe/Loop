@@ -55,7 +55,8 @@ Loop/
 │   │   ├── setup_project.ps1      # 新项目配置（每个新项目复制并运行）
 │   │   ├── build_apk.ps1          # APK 构建脚本
 │   │   └── rename_apk.ps1         # APK 重命名脚本
-│   └── build/             # 构建输出
+│   └── build/             # 构建输出（flutter clean 会删除）
+├── builds/                # 命名后产物持久化存放（不受 flutter clean 影响）
 └── .trae/
     └── rules/
         └── project_rules.md   # 本文件
@@ -138,7 +139,8 @@ cd loop_app\scripts
 
 1. **构建产物管理**
    - 每次构建后必须调用版本管家进行文件重命名
-   - 原始构建文件会自动备份到 `backup/` 目录
+   - 重命名后的产物移动到项目根目录的 `builds/`（不受 `flutter clean` 影响）
+   - 不再使用 `backup/` 目录备份，改为移动到 `builds/` 持久化存放
 
 2. **版本号更新**
    - 修改版本号后，同步更新 `pubspec.yaml`

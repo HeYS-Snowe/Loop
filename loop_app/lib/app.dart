@@ -22,13 +22,17 @@ class LoopApp extends ConsumerWidget {
     );
 
     final settingsState = ref.watch(settingsProvider);
+    final locale = settingsState.whenOrNull<Locale?>(
+          data: (s) => s.locale,
+        ) ??
+        const Locale('zh');
 
     return MaterialApp.router(
       title: 'Loop',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       routerConfig: appRouter,
-      locale: settingsState.locale,
+      locale: locale,
       localizationsDelegates: S.localizationsDelegates,
       supportedLocales: S.supportedLocales,
     );

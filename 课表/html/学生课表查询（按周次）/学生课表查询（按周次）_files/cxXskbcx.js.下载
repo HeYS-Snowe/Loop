@@ -1,0 +1,835 @@
+//显示字段
+var xszd = {'sj':true, 'cd': true, 'js':true, 'jszc': false, 'jxb': false};
+var xkkg=true;
+var jfckbkg=true;
+var kblen=1;
+var sjklen=1;
+var haveXX=1;
+var xsxx;
+$(function(){ 
+	function paramMapx(){
+		var map = {};	
+		map["xnm"] = $('#xnm').val();
+		map["xqm"] = $('#xqm').val();
+		if(jQuery("input[name=radio1]:checked").val()=='1'){
+			map["zs"] = jQuery('#zs').val();
+		}
+		map["kblx"]=jQuery("input[name=radio1]:checked").val();
+		map["doType"] = 'app';
+		map['xh'] = $("#xh").val()||'';
+		return map;
+	}
+	var map = paramMapx();
+	cxKbContent(map, xszd);
+	
+	$('button[data-toggle="tab"]').click(function(e) {
+		$('button[data-toggle="tab"]').removeClass("btn-primary");
+		$(this).addClass("btn-primary");
+		$('#shcPDF').attr('data-type', $(this).attr('data-type'));
+	});		
+	
+	$('#shcPDF').click(function(){
+//		if(haveXX==0){
+//			$.alert("无您的基本信息，请与管理员联系！");
+//			return false;
+//		}
+//		if(kblen==0 && xkkg && sjklen == 0){ //如果没有课表数据06-29日
+//			$.alert("该学年学期尚无您的课表！");
+//			return false;
+//		}
+//		if(!xkkg){
+//			$.alert("该学年学期的课表尚未开放！");
+//			return false;
+//		}
+//		if(!jfckbkg){
+//			$.alert("缴费后可查询！");
+//			return false;
+//		}
+		if(haveXX==0){
+			$.alert($.i18n.get("no-xsxx"));
+			return false;
+		}
+		if(kblen==0 && xkkg && jfckbkg && sjklen == 0 && jxhjkclen == 0){ //如果没有课表数据06-29日
+			$.alert($.i18n.get("no-kbxx"));
+			return false;
+		}
+		if(!xkkg){
+			$.alert($.i18n.get("no-kbkfxx"));
+			return false;
+		}
+		if(!jfckbkg){
+			$.alert($.i18n.get("jfhkcx"));
+			return false;
+		}
+	});
+	$.ajaxSetup({async:true});
+	$('.weui-navbar__item').on('click', function () {
+		$(this).addClass('weui-bar__item_on').siblings('.weui-bar__item_on').removeClass('weui-bar__item_on');
+		function paramMap3(){
+			var map = {};	
+			map["xnm"] = $('#xnm').val();
+			map["xqm"] = $('#xqm').val();
+			return map;
+		}
+		cxKbContent(paramMap3(),xszd);
+	});
+	$.ajaxSetup({async:false});
+	
+	//$('#zcview').hide();
+	
+	$.init();
+
+});
+
+function paramMap(){
+	var map = {};	
+	map["xnm"] = $('#xnm').val();
+	if(jQuery("input[name=radio1]:checked").val()=='1'){
+		map["zs"] = jQuery('#zs').val();
+	}
+	map["doType"]='app';
+	map["xqm"] = $('#xqm').val();
+	map["kblx"]=jQuery("input[name=radio1]:checked").val();
+	map['xh'] = $("#xh").val()||'';
+	return map;
+}
+
+
+	function cxKbContent(map, xszd){
+	$("#table1").empty();
+	$.ajax({
+		type: 'POST', 
+		url:_path+'/kbcx/xskbcxMobile_cxXsKb.html',
+		async: false,
+		data: map, 
+		success: function(data){
+			var xxdm=$("#xxdm").val();
+			var kblx = data.kblx; //获取课表类型
+			xkkg = data.xkkg; //选课开关
+			jfckbkg = data.jfckbkg; //选课开关
+			if(!$.defined(data.xsxx)){
+				haveXX=0;
+				$("#table1").append("<h2 class='align-center'><i class='weui_icon_info'><span style = 'font-size:20px;'>"+$.i18n.get("no-zcxx")+"</span></i></h2>");
+				$("#myTab").css("display","none");
+				return false;
+			}else{
+				haveXX=1;
+			}
+			if(!data.sjfwkg){
+				$("#table1").append("<h2 class='align-center'><i class='weui_icon_info'><span style = 'font-size:20px;'>不是您学生学院的学生，无法查看！</span></i></h2>");
+				$("#myTab").css("display","none");
+				return false;
+			}
+			var zckbsfxssj=data.zckbsfxssj;
+			xsxx = data.xsxx; //获取学生信息 姓名学院学年学期学号
+			var qsxqj=data.qsxqj;
+			var kbList = data.kbList||[]; //获取课表数据
+			var rqxx = data.rqazcList;
+			var sjkList = data.sjkList||[];//获取实践课数据
+			var xsxxdm = xsxx.XXDM||'';
+			kblen = kbList.length;
+			sjklen = sjkList.length;
+ 			if(kblen==0 && xkkg && jfckbkg && sjklen == 0){ //如果没有课表数据
+ 				$("#table1").append("<h2 class='align-center'><i class='weui_icon_info'><span style = 'font-size:20px;'>"+$.i18n.get("kbcxwk")+"</span></i></h2>");
+				$("#myTab").css("display","none");
+				return false;
+			}else if(!xkkg){
+				$("#table1").append("<h2 class='align-center'><i class='weui_icon_info'><span style = 'font-size:20px;'>"+$.i18n.get("no-kbkfxx")+"</span></i></h2>");
+				$("#myTab").css("display","none");
+				return false;
+			}else if(!jfckbkg){
+				$("#table1").append("<h3 class='align-center'><div class='nodata'><span>"+$.i18n.get("jfhkcx")+"</span></div></h3>");
+				$("#table2").append("<h3 class='align-center'><div class='nodata'><span>"+$.i18n.get("jfhkcx")+"</span></div></h3>");
+				return false;
+			}
+ 			var prop=$(".weui-bar__item_on").prop("id");
+ 			var html = '';
+
+ 			//课表不为空
+ 			var count = 1;
+			for(var i=0; i<kbList.length; i+=1){
+				var xqh_id = kbList[i].xqh_id; //校区号
+				if(!$.founded(xqh_id)){
+					continue;
+				}
+				$.ajax({
+					type: 'POST', 
+					url: _path+'/kbcx/xskbcxMobile_cxRsd.html',
+					async: false,
+					data: {"xnm":$('#xnm').val(), "xqm":$('#xqm').val(), "xqh_id": xqh_id},
+					datatype: 'json',
+					success: function(data){
+						if(!$.founded(data)){
+							return false;
+						}
+						var kbrsd = data; //获得日时段数据
+						var html_table = '';
+						var status = 1;
+						var rsdzjsCount = 0;
+						$.each(kbrsd, function(index, item){
+							var rsdzjs = item.rsdzjs;
+							rsdzjsCount += parseInt(rsdzjs);
+						});
+						$.ajax({
+							type: 'POST', 
+							url: _path+'/jzgl/skxxMobile_cxRsdjc.html',
+							async: false,
+							data: {"xnm":$('#xnm').val(), "xqm":$('#xqm').val(), "xqh_id": xqh_id},
+							datatype: 'json',
+							success: function(data){
+								if(!$.founded(data)){
+									return false;
+								}
+								sksj = data; //获得数据
+								var qsjc = 0;
+								if($("#zckbsfxsrsd").val()=='1' && jQuery("input[name=radio1]:checked").val()=='1'){
+									$.each(kbrsd, function(index, item){
+										var rsdzjs = item.rsdzjs;
+										var rsdmc = item.rsdmc;
+										for(var k = 1; k <= rsdzjs; k++){
+											html_table+="<tr>";
+											if(k==1){
+												html_table+="<td rowspan='"+rsdzjs+"'><span class='time'>"+rsdmc+"</span></td>";
+											}
+											//var jcmcStr = $.founded(sksj[qsjc].rsdjcmc)?sksj[qsjc].rsdjcmc:sksj[qsjc].jcmc;
+											var jcmcStr = $.founded(sksj[qsjc].rsdjcmc)?sksj[qsjc].rsdjcmc+(rsdzjs>1?k:''):sksj[qsjc].jcmc;
+											if(zckbsfxssj=='1'){
+												html_table+='<td >'+jcmcStr+'</br>'+sksj[qsjc].qssj+'</br>'+sksj[qsjc].jssj+'</td>';
+											}else{
+												html_table+='<td >'+jcmcStr+'</br>'+'</td>';
+											}	
+											if(kblx==7 && qsxqj==7){
+												html_table+="<td rowspan=1 id = '"+'td_'+"7"+"-"+sksj[qsjc].jcmc+"' data = '"+sksj[qsjc].jcmc+"'></td>";
+												for(var i = 1;i<=6;i++){
+													html_table+="<td  id = '"+'td_'+i+"-"+sksj[qsjc].jcmc+"' data = '"+sksj[qsjc].jcmc+"'></td>";
+												}
+											}else{
+												for(var i = 1;i<=kblx;i++){
+													html_table+="<td rowspan=1 id = '"+'td_'+i+"-"+sksj[qsjc].jcmc+"' data = '"+sksj[qsjc].jcmc+"'></td>";
+												}
+											}
+											qsjc += 1;
+											html_table+="</tr>";
+										}
+										
+										
+										/*for(var r = 1; r <= rsdzjs; r++){
+											for(var s = 0;s<sksj.length;s++){
+												if(sksj[s].jcmc==status){
+													html_table+='<tr >';
+													if(r==1){
+														html_table+="<td rowspan='"+rsdzjs+"'><span class='time'>"+rsdmc+"</span></td>";
+													}
+													if(zckbsfxssj=='1'){
+														html_table+='<td >'+status+'</br>'+sksj[s].qssj+'</br>'+sksj[s].jssj+'</td>';
+													}else{
+														html_table+='<td >'+status+'</br>'+'</td>';
+													}	
+												}
+											}
+											if(kblx==7 && qsxqj==7){
+												html_table+="<td rowspan=1 id = '"+'td_'+"7"+"-"+status+"' data = '"+status+"'></td>";
+												for(var i = 1;i<=6;i++){
+													html_table+="<td rowspan=1 id = '"+'td_'+i+"-"+status+"' data = '"+status+"'></td>";
+												}
+											}else{
+												for(var i = 1;i<=kblx;i++){
+													html_table+="<td rowspan=1 id = '"+'td_'+i+"-"+status+"' data = '"+status+"'></td>";
+												}
+											}
+											html_table+='</tr>';
+											status+= 1;
+										}*/
+										
+									});
+								}else { //日时段不显示	上下午列是否显示
+									/*for(var r = 1;r<=rsdzjsCount;r++){
+										for(var s = 0;s<sksj.length;s++){
+											if(sksj[s].jcmc==status){
+												html_table+='<tr >';
+												if(zckbsfxssj=='1'){
+													html_table+='<td >'+status+'</br>'+sksj[s].qssj+'</br>'+sksj[s].jssj+'</td>';
+												}else{
+													html_table+='<td >'+status+'</br>'+'</td>';
+												}	
+											}
+										}
+										if(kblx==7 && qsxqj==7){
+											html_table+="<td rowspan=1 id = '"+'td_'+"7"+"-"+r+"' data = '"+status+"'></td>";
+											for(var i = 1;i<=6;i++){
+												html_table+="<td  id = '"+'td_'+i+"-"+r+"' data = '"+status+"'></td>";
+											}
+										}else{
+											for(var i = 1;i<=kblx;i++){
+												html_table+="<td rowspan=1 id = '"+'td_'+i+"-"+r+"' data = '"+status+"'></td>";
+											}
+										}
+										html_table+='</tr>';
+										status+= 1;
+									}*/
+									$.each(kbrsd, function(index, item){
+										var rsdzjs = item.rsdzjs;
+										for(var k = 1; k <= rsdzjs; k++){
+											html_table+="<tr>";
+											//var jcmcStr = $.founded(sksj[qsjc].rsdjcmc)?sksj[qsjc].rsdjcmc:sksj[qsjc].jcmc;
+											var jcmcStr = $.founded(sksj[qsjc].rsdjcmc)?sksj[qsjc].rsdjcmc+(rsdzjs>1?k:''):sksj[qsjc].jcmc;
+											if(zckbsfxssj=='1'){
+												html_table+='<td >'+jcmcStr+'</br>'+sksj[qsjc].qssj+'</br>'+sksj[qsjc].jssj+'</td>';
+											}else{
+												html_table+='<td >'+jcmcStr+'</br>'+'</td>';
+											}	
+											if(kblx==7 && qsxqj==7){
+												html_table+="<td rowspan=1 id = '"+'td_'+"7"+"-"+sksj[qsjc].jcmc+"' data = '"+sksj[qsjc].jcmc+"'></td>";
+												for(var i = 1;i<=6;i++){
+													html_table+="<td  id = '"+'td_'+i+"-"+sksj[qsjc].jcmc+"' data = '"+sksj[qsjc].jcmc+"'></td>";
+												}
+											}else{
+												for(var i = 1;i<=kblx;i++){
+													html_table+="<td rowspan=1 id = '"+'td_'+i+"-"+sksj[qsjc].jcmc+"' data = '"+sksj[qsjc].jcmc+"'></td>";
+												}
+											}
+											qsjc += 1;
+											html_table+="</tr>";
+										}
+									});
+									
+								}
+								if($.founded(html_table)){
+									//星期日期对照Map
+									var rqxxTemp = [{},{"rq":'',"xqjmc":$.i18n.get("xq1")},{"rq":'',"xqjmc":$.i18n.get("xq2")},{"rq":'',"xqjmc":$.i18n.get("xq3")},
+									    {"rq":'',"xqjmc":$.i18n.get("xq4")},{"rq":'',"xqjmc":$.i18n.get("xq5")},{"rq":'',"xqjmc":$.i18n.get("xq6")},{"rq":'',"xqjmc":$.i18n.get("xq7")}];
+									for(var z =0; z<rqxx.length;z++){
+										rqxxTemp[rqxx[z].xqj].rq = rqxx[z].rq;
+									}
+				                    var xqWidth;
+				                    var html_myTab ='';
+									if($("#zckbsfxsrsd").val()=='1' && jQuery("input[name=radio1]:checked").val()=='1'){
+										xqWidth = Math.floor(875/kblx)/10;
+										html_myTab = '<tbody id="table_tb"><tr><td width="5%"></td><td width="7.5%">'+$.i18n.jwglxt["jc"]+'</td>';
+									}else{
+										xqWidth = Math.floor(925/kblx)/10;
+										html_myTab = '<tbody id="table_tb"><tr><td width="7.5%">'+$.i18n.jwglxt["jc"]+'</td>';
+									}
+									if((xxdm == '14765'|| xxdm == '10491'|| xxdm == '12668')&& jQuery("input[name=radio1]:checked").val()=='1' ){
+										if(kblx==7 && qsxqj==7){
+											html_myTab += '<td width="'+xqWidth+'%">'+rqxxTemp[7].xqjmc+'('+rqxxTemp[7].rq+')'+'</td>';
+											for(var i = 1;i<=6;i++){
+												html_myTab += '<td  width="'+xqWidth+'%">'+rqxxTemp[i].xqjmc+'('+rqxxTemp[i].rq+')'+'</td>';
+											}
+										}else{
+											for(var i = 1;i<=kblx;i++){
+												html_myTab += '<td  width="'+xqWidth+'%">'+rqxxTemp[i].xqjmc+'('+rqxxTemp[i].rq+')'+'</td>';
+											}
+										}
+									}else{
+										if(kblx==7 && qsxqj==7){
+											html_myTab += '<td width="'+xqWidth+'%">'+rqxxTemp[7].xqjmc+'</td>';
+											for(var i = 1;i<=6;i++){
+												html_myTab += '<td  width="'+xqWidth+'%">'+rqxxTemp[i].xqjmc+'</td>';
+											}
+										}else{
+											for(var i = 1;i<=kblx;i++){
+												html_myTab += '<td  width="'+xqWidth+'%">'+rqxxTemp[i].xqjmc+'</td>';
+											}
+										}
+									}
+									html_myTab += '</tr></tbody>';
+									$("#myTab").empty().html(html_myTab);
+									$("#table_tb").append(html_table);
+									count += 1;
+								}
+							}
+						});
+					}
+				});
+				if(count > 1){
+					break;//已加载课表结构，退出循环
+				}
+			};
+ 			//课表不为空
+			for(var i=0; i<kbList.length; i+=1){
+				var item = kbList[i];
+				var xqj = item.xqj; //星期
+				var jcs = item.jcs; //'+$.i18n.jwglxt["jc"]+'
+				var xslxbj = xslxbj==undefined?'':xslxbj; //学生类型标记
+				var startF;
+				var endF;
+/*				var kbrsd; //获取日时段信息,得到'+$.i18n.jwglxt["jc"]+'结构,及上下午列是否显示
+				$.ajaxSetup({async:true});
+				$.ajax({
+					type: 'POST', 
+					url: _path+'/kbcx/xskbcxMobile_cxRsd.html',
+					async: false,
+					data: {"xnm":$('#xnm').val(), "xqm":$('#xqm').val(), "xqh_id": xqh_id},
+					datatype: 'json',
+					success: function(data){
+						kbrsd = data; //获得数据
+						var html_table = '';
+						var status = 1;
+						var xq_status = 1;
+						var rsdzjsCount = 0;
+						$.each(kbrsd, function(index, item){
+							var rsdzjs = item.rsdzjs;
+							var rsdmc = item.rsdmc;
+							rsdzjsCount += parseInt(rsdzjs);
+						})
+						$.ajaxSetup({async:true});
+						$.ajax({
+							type: 'POST', 
+							url: _path+'/jzgl/skxxMobile_cxRsdjc.html',
+							async: false,
+							data: {"xnm":$('#xnm').val(), "xqm":$('#xqm').val(), "xqh_id": xqh_id},
+							datatype: 'json',
+							success: function(data){
+							sksj = data; //获得数据s
+						if($("#zckbsfxsrsd").val()=='1' && jQuery("input[name=radio1]:checked").val()=='1'){
+							$.each(kbrsd, function(index, item){
+								var rsdzjs = item.rsdzjs;
+								var rsdmc = item.rsdmc;
+								for(var r = 1; r <= rsdzjs; r++){
+									for(var s = 0;s<sksj.length;s++){
+										if(sksj[s].jcmc==status){
+											html_table+='<tr >';
+											if(r==1){
+												html_table+="<td rowspan='"+rsdzjs+"'><span class='time'>"+rsdmc+"</span></td>";
+											}
+											if(zckbsfxssj=='1'){
+												html_table+='<td >'+status+'</br>'+sksj[s].qssj+'</br>'+sksj[s].jssj+'</td>';
+											}else{
+												html_table+='<td >'+status+'</br>'+'</td>';
+											}	
+										}
+									}
+									if(kblx==7 && qsxqj==7){
+										html_table+="<td  id = '"+'td_'+"7"+"-"+status+"' data = '"+status+"'></td>";
+										for(var i = 1;i<=kblx-1;i++){
+											html_table+="<td  id = '"+'td_'+i+"-"+status+"' data = '"+status+"'></td>";
+										}
+									}else{
+										for(var i = 1;i<=kblx;i++){
+											html_table+="<td  id = '"+'td_'+i+"-"+status+"' data = '"+status+"'></td>";
+										}
+									}
+									html_table+='</tr>';
+									status+= 1;
+								}
+							});
+						}else{
+							for(var r = 1;r<=rsdzjsCount;r++){
+								for(var s = 0;s<sksj.length;s++){
+									if(sksj[s].jcmc==status){
+										html_table+='<tr >';
+										if(zckbsfxssj=='1'){
+											html_table+='<td >'+status+'</br>'+sksj[s].qssj+'</br>'+sksj[s].jssj+'</td>';
+										}else{
+											html_table+='<td >'+status+'</br>'+'</td>';
+										}
+									}
+									
+								}
+								if(kblx==7 && qsxqj==7){
+									html_table+="<td  id = '"+'td_'+"7"+"-"+r+"' data = '"+status+"'></td>";
+									for(var i = 1;i<=kblx-1;i++){
+										html_table+="<td  id = '"+'td_'+i+"-"+r+"' data = '"+status+"'></td>";
+									}
+								}else{
+									for(var i = 1;i<=kblx;i++){
+										html_table+="<td  id = '"+'td_'+i+"-"+r+"' data = '"+status+"'></td>";
+									}
+								}
+									html_table+='</tr>';
+									status+= 1;
+							}
+						}
+								//deal null
+								var rqxxTemp = [{},{},{},{},{},{},{}];
+								for(var x = 0; x < rqxxTemp.length; x++){
+									rqxxTemp[x].rq ='';
+								}
+								for(var z =0; z<rqxx.length;z++){
+									if(kblx==7 && qsxqj==7){
+										if(rqxx.length == 7){
+											rqxxTemp[z] = rqxx[z];
+										}else{
+											rqxxTemp[rqxx[z].xqj] = rqxx[z];
+										}
+									}else if(kblx ==5){
+										if(rqxx.length == 5){
+											rqxxTemp[z] = rqxx[z];
+										}else{
+											rqxxTemp[rqxx[z].xqj-1] = rqxx[z];
+										}
+									}else {
+										if(rqxx.length == 7){
+											rqxxTemp[z] = rqxx[z];
+										}else{
+											rqxxTemp[rqxx[z].xqj-1] = rqxx[z];
+										}
+									}
+									
+								}
+								rqxx = rqxxTemp;
+						if(count==1){
+							if($("#zckbsfxsrsd").val()=='1' && jQuery("input[name=radio1]:checked").val()=='1'){
+								$("#myTab").html('');
+								 var html_myTab ='';
+								if(xxdm == '14765'){
+									if(kblx==7 && qsxqj==7){
+										html_myTab += '<tbody id = "table_tb"><tr><td width="5%"></td><td  width="7.5%">'+$.i18n.jwglxt["jc"]+'</td><td width="12.5%" >'+$.i18n.get("xq7")+'('+rqxx[0].rq+')'+'</td><td  width="12.5%">'+$.i18n.get("xq1")+'('+rqxx[1].rq+')'+'</td><td width="12.5%" >'+$.i18n.get("xq2")+'('+rqxx[2].rq+')'+'</td><td width="12.5%" >'+$.i18n.get("xq3")+'('+rqxx[3].rq+')'+'</td>';
+										html_myTab += '<td width="12.5%" >'+$.i18n.get("xq4")+'('+rqxx[4].rq+')'+'</td><td width="12.5%" >'+$.i18n.get("xq5")+'('+rqxx[5].rq+')'+'</td><td width="12.5%" >'+$.i18n.get("xq6")+'('+rqxx[6].rq+')'+'</td></tr></tbody>';
+									}else if(kblx ==5){
+										html_myTab += '<tbody id = "table_tb"><tr><td width="10%"></td><td width="10%">'+$.i18n.jwglxt["jc"]+'</td><td  width="16%">'+$.i18n.get("xq1")+'('+rqxx[0].rq+')'+'</td><td width="16%" >'+$.i18n.get("xq2")+'('+rqxx[1].rq+')'+'</td><td width="16%" >'+$.i18n.get("xq3")+'('+rqxx[2].rq+')'+'</td>';
+										html_myTab += '<td width="16%" >'+$.i18n.get("xq4")+'('+rqxx[3].rq+')'+'</td><td width="16%" >'+$.i18n.get("xq5")+'('+rqxx[4].rq+')'+'</td></tr></tbody>';
+									}else {
+										html_myTab += '<tbody id = "table_tb"><tr><td width="5%"></td><td width="7.5%">'+$.i18n.jwglxt["jc"]+'</td><td  width="12.5%">'+$.i18n.get("xq1")+'('+rqxx[0].rq+')'+'</td><td width="12.5%" >'+$.i18n.get("xq2")+'('+rqxx[1].rq+')'+'</td><td width="12.5%" >'+$.i18n.get("xq3")+'('+rqxx[2].rq+')'+'</td>';
+										html_myTab += '<td width="12.5%" >'+$.i18n.get("xq4")+'('+rqxx[3].rq+')'+'</td><td width="12.5%" >'+$.i18n.get("xq5")+'('+rqxx[4].rq+')'+'</td><td width="12.5%" >'+$.i18n.get("xq6")+'('+rqxx[5].rq+')'+'</td><td width="12.5%" >'+$.i18n.get("xq7")+'('+rqxx[6].rq+')'+'</td></tr></tbody>';
+									}
+								}else {
+									if (kblx == 7 && qsxqj == 7) {
+										html_myTab += '<tbody id = "table_tb"><tr><td width="5%"></td><td  width="7.5%">'+$.i18n.jwglxt["jc"]+'</td><td width="12.5%" >'+$.i18n.get("xq7")+'</td><td  width="12.5%">'+$.i18n.get("xq1")+'</td><td width="12.5%" >'+$.i18n.get("xq2")+'</td><td width="12.5%" >'+$.i18n.get("xq3")+'</td>';
+										html_myTab += '<td width="12.5%" >'+$.i18n.get("xq4")+'</td><td width="12.5%" >'+$.i18n.get("xq5")+'</td><td width="12.5%" >'+$.i18n.get("xq6")+'</td></tr></tbody>';
+									} else {
+										html_myTab += '<tbody id = "table_tb"><tr><td width="5%"></td><td width="7.5%">'+$.i18n.jwglxt["jc"]+'</td><td  width="12.5%">'+$.i18n.get("xq1")+'</td><td width="12.5%" >'+$.i18n.get("xq2")+'</td><td width="12.5%" >'+$.i18n.get("xq3")+'</td>';
+										html_myTab += '<td width="12.5%" >'+$.i18n.get("xq4")+'</td><td width="12.5%" >'+$.i18n.get("xq5")+'</td><td width="12.5%" >'+$.i18n.get("xq6")+'</td><td width="12.5%" >'+$.i18n.get("xq7")+'</td></tr></tbody>';
+									}
+								}
+								$("#myTab").html(html_myTab);
+								$("#table_tb").append(html_table);
+							}else{
+								$("#myTab").html('');
+								 var html_myTab ='';
+//								var html_myTab = '<tbody id = "table_tb"><tr><td  width="12.5%"></td><td  width="12.5%">'+$.i18n.get("xq1")+'</td><td width="12.5%" >'+$.i18n.get("xq2")+'</td><td width="12.5%" >'+$.i18n.get("xq3")+'</td>';
+//								 html_myTab += '<td width="12.5%" >'+$.i18n.get("xq4")+'</td><td width="12.5%" >'+$.i18n.get("xq5")+'</td><td width="12.5%" >'+$.i18n.get("xq6")+'</td><td width="12.5%" >'+$.i18n.get("xq7")+'</td></tr></tbody>';
+								if((xxdm == '14765'||xxdm =='10491') && jQuery("input[name=radio1]:checked").val()=='1'){
+									if(kblx==7 && qsxqj==7){
+										html_myTab += '<tbody id = "table_tb"><tr><td  width="12.5%">'+$.i18n.jwglxt["jc"]+'</td><td width="12.5%" >'+$.i18n.get("xq7")+'('+rqxx[0].rq+')'+'</td><td  width="12.5%">'+$.i18n.get("xq1")+'('+rqxx[1].rq+')'+'</td><td width="12.5%" >'+$.i18n.get("xq2")+'('+rqxx[2].rq+')'+'</td><td width="12.5%" >'+$.i18n.get("xq3")+'('+rqxx[3].rq+')'+'</td>';
+										html_myTab += '<td width="12.5%" >'+$.i18n.get("xq4")+'('+rqxx[4].rq+')'+'</td><td width="12.5%" >'+$.i18n.get("xq5")+'('+rqxx[5].rq+')'+'</td><td width="12.5%" >'+$.i18n.get("xq6")+'('+rqxx[6].rq+')'+'</td></tr></tbody>';
+									}else if(kblx==5){
+										html_myTab += '<tbody id = "table_tb"><tr><td width="10%">'+$.i18n.jwglxt["jc"]+'</td><td  width="18%">'+$.i18n.get("xq1")+'('+rqxx[0].rq+')'+'</td><td width="18%" >'+$.i18n.get("xq2")+'('+rqxx[1].rq+')'+'</td><td width="18%" >'+$.i18n.get("xq3")+'('+rqxx[2].rq+')'+'</td>';
+										html_myTab += '<td width="18%" >'+$.i18n.get("xq4")+'('+rqxx[3].rq+')'+'</td><td width="18%" >'+$.i18n.get("xq5")+'('+rqxx[4].rq+')'+'</td></tr></tbody>';
+									}else{
+										html_myTab += '<tbody id = "table_tb"><tr><td width="12.5%">'+$.i18n.jwglxt["jc"]+'</td><td  width="12.5%">'+$.i18n.get("xq1")+'('+rqxx[0].rq+')'+'</td><td width="12.5%" >'+$.i18n.get("xq2")+'('+rqxx[1].rq+')'+'</td><td width="12.5%" >'+$.i18n.get("xq3")+'('+rqxx[2].rq+')'+'</td>';
+										html_myTab += '<td width="12.5%" >'+$.i18n.get("xq4")+'('+rqxx[3].rq+')'+'</td><td width="12.5%" >'+$.i18n.get("xq5")+'('+rqxx[4].rq+')'+'</td><td width="12.5%" >'+$.i18n.get("xq6")+'('+rqxx[5].rq+')'+'</td><td width="12.5%" >'+$.i18n.get("xq7")+'('+rqxx[6].rq+')'+'</td></tr></tbody>';
+									}
+								}else {
+									if (kblx == 7 && qsxqj == 7) {
+										html_myTab += '<tbody id = "table_tb"><tr><td  width="12.5%">'+$.i18n.jwglxt["jc"]+'</td><td width="12.5%" >'+$.i18n.get("xq7")+'</td><td  width="12.5%">'+$.i18n.get("xq1")+'</td><td width="12.5%" >'+$.i18n.get("xq2")+'</td><td width="12.5%" >'+$.i18n.get("xq3")+'</td>';
+										html_myTab += '<td width="12.5%" >'+$.i18n.get("xq4")+'</td><td width="12.5%" >'+$.i18n.get("xq5")+'</td><td width="12.5%" >'+$.i18n.get("xq6")+'</td></tr></tbody>';
+									} else {
+										html_myTab += '<tbody id = "table_tb"><tr><td  width="12.5%">'+$.i18n.jwglxt["jc"]+'</td><td  width="12.5%">'+$.i18n.get("xq1")+'</td><td width="12.5%" >'+$.i18n.get("xq2")+'</td><td width="12.5%" >'+$.i18n.get("xq3")+'</td>';
+										html_myTab += '<td width="12.5%" >'+$.i18n.get("xq4")+'</td><td width="12.5%" >'+$.i18n.get("xq5")+'</td><td width="12.5%" >'+$.i18n.get("xq6")+'</td><td width="12.5%" >'+$.i18n.get("xq7")+'</td></tr></tbody>';
+									}
+								}
+								 $("#myTab").html(html_myTab);
+								$("#table_tb").append(html_table);
+							}
+						}
+							}
+						});
+					}
+				});
+				count+= 1
+				$.ajaxSetup({async:false});*/
+				if(item.sxbj=="1"){
+					startF = "<font color='blue'>";
+					endF = "</font>";
+				}else{
+					startF = "<font color='red'><i>";
+					endF = "</i></font>";
+				}
+				var _html = '';
+				var first = item.jcor.split("-")[0];
+				var second = item.jcor.split("-")[1];
+				var together = parseInt(second)-parseInt(first)+1;
+				var  x = parseInt(together);
+				var  y = parseInt(first);
+				var  c = parseInt(item.rk);
+				var color = ['red','blue','brown','green','gray','purple','steelblue','plum','purple','red','salmon','purple','green',
+				             'sienna','silver','coral','red','blue','brown','green','gray','purple','purple','red'];
+				var index = Math.floor((Math.random()*color.length));
+				if($("#zckbsfxsrsd").val()=='1' && jQuery("input[name=radio1]:checked").val()=='1'){
+					_html+='<div class="lesson" data-xnm="'+item.xnm+'" data-xqm="'+item.xqm+'" data-zcd="'+item.zcd+'" data-cdbh="'+item.cdbh+'" data-jcor="'+item.jcor+'" data-xqh_id="'+item.xqh_id+'" data-xqj="'+item.xqj+'" data-cdmc="'+item.cdmc+'" data-kcmc="'+item.kcmc+'" data-jsxm="'+item.xm+'">';
+					_html+='<table>';
+					if(xxdm=='10344' && item.sfyyzlb=='1' && item.sfdqrq !='2'){
+						_html+='<thead><tr><th width="9999" style="border:0px solid #d4d4d4;"><p><img align="right" src="'+_systemPath+'/images/live_icon2.png" style="position: relative;right: 0;"></p></th></tr></thead><tbody>'
+					}
+					_html+='<tr><td><p class="weui-grid__label" style="font-size: small;color:black;white-space: normal">'+item.kcmc+xslxbj+'</p></td></tr>';
+					_html+='<tr><td><p class="weui-grid__label" style="font-size: small;color:black;white-space: normal">'+item.jxbmc+'</p></td></tr>';
+					if($("#sfkckcd").val()!='0'){
+						if(xxdm=='13976' || xxdm == '10486'){
+							_html+='<tr><td><p class="weui-grid__label" style="font-size: small;color:black;white-space: normal">'+item.cdmc+'</p></td></tr>';
+						}else{
+							_html+='<tr><td><p class="weui-grid__label" style="font-size: small;color:black;white-space: normal">'+item.xqmc+' '+item.cdmc+'</p></td></tr>';						
+						}
+					}
+					_html+='<tr><td><p class="weui-grid__label" style="font-size: small;color:black;white-space: normal">'+item.xm+'</p></td></tr>';
+					if(xxdm !='ycswgcgz'){
+						_html+='<tr><td><p class="weui-grid__label" style="font-size: small;color:black;white-space: normal">'+item.zcd+'</p></td></tr>';
+					}
+					if(xxdm=='12213' && jQuery("input[name=radio1]:checked").val()=='1'){
+						var pkbz = $.defined(item.pkbz)?item.pkbz:"";
+						_html+='<tr><td><p class="weui-grid__label" style="font-size: small;color:black;white-space: normal">'+pkbz+'</p></td></tr>';
+					}
+					_html+='</tbody></table></div>';
+				}else{
+					_html+='<div class="lesson" data-xnm="'+item.xnm+'" data-xqm="'+item.xqm+'" data-zcd="'+item.zcd+'" data-cdbh="'+item.cdbh+'" data-jcor="'+item.jcor+'" data-xqh_id="'+item.xqh_id+'" data-xqj="'+item.xqj+'" data-cdmc="'+item.cdmc+'" data-kcmc="'+item.kcmc+'" data-jsxm="'+item.xm+'" style="background-color:'+color[c]+';">';
+					_html+='<table>';
+					if(xxdm=='10344' && item.sfyyzlb=='1' && item.sfdqrq !='2'){
+						_html+='<thead><tr><th width="9999" style="border:0px solid #d4d4d4;"><p><img align="right" src="'+_systemPath+'/images/live_icon2.png" style="position: relative;right: 0;"></p></th></tr></thead><tbody>'
+					}
+					_html+='<tr><td><p class="weui-grid__label" style="font-size: small;white-space: normal">'+item.kcmc+xslxbj+'</p></td></tr>';
+					_html+='<tr><td><p class="weui-grid__label" style="font-size: small;white-space: normal">'+item.jxbmc+'</p></td></tr>';
+					if($("#sfkckcd").val()!='0'){
+						if(xxdm=='13976' || xxdm == '10486'){
+							_html+='<tr><td><p class="weui-grid__label" style="font-size: small;white-space: normal">'+item.cdmc+'</p></td></tr>';
+						}else{
+							_html+='<tr><td><p class="weui-grid__label" style="font-size: small;white-space: normal">'+item.xqmc+' '+item.cdmc+'</p></td></tr>';	
+						}
+					}
+					_html+='<tr><td><p class="weui-grid__label" style="font-size: small;white-space: normal">'+item.xm+'</p></td></tr>';
+					if(xxdm !='ycswgcgz' || jQuery("input[name=radio1]:checked").val()=='2'){
+						_html+='<tr><td><p class="weui-grid__label" style="font-size: small;white-space: normal">'+item.zcd+'</p></td></tr>';
+					}
+					if(xxdm=='12213' && jQuery("input[name=radio1]:checked").val()=='1'){
+						var pkbz = $.defined(item.pkbz)?item.pkbz:"";
+						_html+='<tr><td><p class="weui-grid__label" style="font-size: small;white-space: normal">'+pkbz+'</p></td></tr>';
+					}
+					_html+='</tbody></table></div>';
+				}
+				
+				/*var data = $("#td_"+xqj+'-'+first+"").attr("data");
+				var z = 0;
+				var status1 = 0;
+				if(data != first){
+					for(var a = parseInt(xqj);a>0;a--){
+						if($("#td_"+a+'-'+data+"").attr("data") != data){
+							console.log("debug.....");
+							status1++;
+						}
+					}
+				}*/
+				//var xqj_new = parseInt(xqj)-status1;
+				/*if(xqj == 7 && qsxqj==7){
+					if(data!=first){
+						$("#td_"+xqj_new+'-'+data+"").append(_html);
+						//$("#td_"+xqj_new+'-'+first+"").attr("class","lsn-type"+color[c]);
+					}else{
+						$("#td_"+xqj_new+'-'+first+"").attr("rowspan",together);
+						$("#td_"+xqj_new+'-'+first+"").append(_html);
+						//$("#td_"+xqj_new+'-'+first+"").attr("class","lsn-type"+color[c]);
+						for(var j = 1;j<x;j++){
+							z = j+y
+							$("#td_"+xqj+'-'+z+"").attr("data",first);
+						}
+						for(var j = first*1+1; j <= second*1; j+=1){
+							$("#td_"+xqj+'-'+j+"").remove();
+						}
+					}
+				}else{
+					if(data!=first){
+						$("#td_"+xqj_new+'-'+data+"").append(_html);
+						//$("#td_"+xqj_new+'-'+first+"").attr("class","lsn-type"+color[c]);
+					}else{
+						$("#td_"+xqj_new+'-'+first+"").attr("rowspan",together);
+						$("#td_"+xqj_new+'-'+first+"").append(_html);
+						//$("#td_"+xqj_new+'-'+first+"").attr("class","lsn-type"+color[c]);
+						for(var j = 1;j<x;j++){
+							z = j+y
+							$("#td_"+xqj+'-'+z+"").attr("data",first);
+						}
+						for(var j = first*1+1; j <= second*1; j+=1){
+							$("#td_"+xqj+'-'+j+"").remove();
+						}
+					}
+				}*/
+				
+				$("#td_"+xqj+'-'+first+"").attr("rowspan",together);
+				$("#td_"+xqj+'-'+first+"").append(_html);
+				for(var j = first*1+1; j <= second*1; j+=1){
+					$("#td_"+xqj+'-'+j+"").remove();
+				}
+				html+=_html;
+			
+		}	
+		if(html==''){
+			$("#myTab").css("display","none");
+			$("#table1").append("<h2 class='align-center'><i class='weui_icon_info'><span style = 'font-size:20px;'>今天无课！</span></i></h2>");
+		}else{
+			$("#myTab").css("display","");
+		}
+			
+		}});
+	$('#table_tb td').each(function(i,e){
+		var elen=$(e).find('.lesson').length;
+		if(elen==1){
+			$(e).find('.lesson').css('height','100%')
+			$(e).css('height',$(e).find('.lesson').height()*1 + 10 + 'px')
+
+		}else if(elen==2){
+			$(e).find('.lesson').css('height','50%')
+			$(e).css('height',$(e).find('.lesson').height()*2 + 10 + 'px')
+
+		}else if(elen==3){
+			$(e).find('.lesson').css('height','33.33%')
+			$(e).css('height',$(e).find('.lesson').height()*3 + 10 + 'px')
+		}else if(elen==4){
+			$(e).find('.lesson').css('height','25%')
+			$(e).css('height',$(e).find('.lesson').height()*4 + 10 + 'px')
+
+		}else if(elen==5){
+			$(e).find('.lesson').css('height','20%')
+			$(e).css('height',$(e).find('.lesson').height()*5 + 10 + 'px')
+
+		}
+		
+	})
+	
+	
+	if($("#table1").html()==''){
+			$(".sccon").css("display",'');
+
+			if($('#fzymnrxx').find('.sccon').length == 0){
+				$('.kbsec').wrap($('<div class="sccon"></div>'))
+			}else{
+				$('#fzymnrxx').find('.sccon .fixleft').remove()
+				$('#fzymnrxx').find('.sccon .fixtop').remove()
+				$('#fzymnrxx').find('.sccon .fsttd').remove()
+			}
+			
+			$('#fzymnrxx').find('.sccon').outerHeight($('body').outerHeight() - $('.row').outerHeight() - $('.weui-search-bar').outerHeight()-$('#table_tb tr td:first').outerHeight() );
+			$('#fzymnrxx').find('.sccon').append($('<div class="fsttd"><table class="weui-table weui-border-tb" style="width:100%; min-width:0;"><tbody><tr></tr></tbody></table></div>'));
+			$('#fzymnrxx').find('.sccon').append($('<div class="fixleft"><table class="weui-table weui-border-tb"><tbody></tbody></table></div>'));
+			/*$('#table_tb>tr').each(function(i,e){
+				if($("#zckbsfxsrsd").val()=='0' || ($("#zckbsfxsrsd").val()=='1' && jQuery("input[name=radio1]:checked").val()=='2')){
+					//$('#fzymnrxx').find('.sccon .fixleft table tbody').append('<tr><td>'+ $(e).find('td:first').html() +'</td></tr>');	
+				}
+			})*/
+			$('#fzymnrxx').find('.sccon .fsttd tr').append('<td>'+ $('.kbsec').find('tr:eq(0) td:first').html() +'</td>');
+			$('#fzymnrxx').find('.sccon .fsttd').outerWidth($('#table_tb tr td:first').outerWidth());
+			$('#fzymnrxx').find('.sccon .fsttd td').outerHeight($('#table_tb tr td:first').outerHeight())
+			
+			$('#fzymnrxx').find('.sccon .fixleft').outerWidth($('#table_tb tr td:first').outerWidth());
+			$('#fzymnrxx').find('.sccon .fixleft table').css({'width':'100%','min-width':'0'});
+			var allhh = 0;
+			$('#fzymnrxx').find('.sccon .fixleft td').each(function(i,e){
+				allhh = allhh + $('#table_tb>tr').eq(i).find('td:first').outerHeight()
+				$(e).outerHeight($('#table_tb>tr').eq(i).find('td:first').outerHeight())
+			})
+			$('#fzymnrxx').find('.sccon .fixleft').outerHeight(allhh);
+			
+			$('#fzymnrxx').find('.sccon').append($('<div class="fixtop"><table class="weui-table weui-border-tb"><tbody><tr></tr></tbody></table></div>'));
+			$('#table_tb>tr:first td').each(function(i,e){
+				$('#fzymnrxx').find('.sccon .fixtop table tbody tr').append('<td>'+ $(e).html() +'</td>')
+			})
+			var allww = 0;
+			$('#fzymnrxx').find('.sccon .fixtop td').each(function(i,e){
+				allww = allww + $('#table_tb>tr td').eq(i).outerWidth()
+				$(e).outerWidth($('#table_tb>tr td').eq(i).outerWidth())
+				
+			})
+
+			$('#fzymnrxx').find('.sccon .fixtop').outerWidth(allww + 1);
+			
+			$('#fzymnrxx').find('.sccon .kbsec').on('scroll',function(e){
+				e.preventDefault()
+				var top=$(this).scrollTop();
+				var left=$(this).scrollLeft();
+				$('#fzymnrxx').find('.sccon .fixleft').css('top',-top);
+				$('#fzymnrxx').find('.sccon .fixtop').css('left',-left);
+			})	
+	}else{
+		$(".sccon").css("display",'none');
+	}
+	
+}
+	
+	$("#xnm,#xqm").change(function(){
+		$.ajaxSetup({async:false});
+		$.post(_path+"/kbcx/xskbcxZccx_cxZcByXnxq.html",{"xnm":$("#xnm").val(),"xqm":$("#xqm").val()},function(data){
+			var html = [];	
+			/*html.push('<option value="">--请选择--</option>');*/
+				if($.founded(data)){
+					$.each(data||[],function(i,rowObj){
+						html.push('<option value="'+rowObj["zs"]+'" >'+rowObj["zcrq"]+'</option>');
+					});
+				}
+				$("#zs").empty().append(html.join(""));
+				$("#zs").trigger("chosen:updated");				
+		},'json');
+		$.ajaxSetup({async:true});
+		jQuery("#to-search").click();
+	});
+	
+
+	$("#zs").change(function(){
+		jQuery("#to-search").click();
+	});
+
+
+	
+	$("input[name=radio1]").click(function(){
+	    var kblx = $(this).val();
+		if(kblx=='1'){
+			$('#zcview').show();
+		}else if(kblx=='2'){
+			$('#zcview').hide();
+		}
+		searchResult()
+	});
+	
+	//查询
+	function searchResult(){
+		index=0;
+		jQuery("#cx-block").slideUp(500);
+		function paramMap3(){
+    		var map = {};	
+    		map["xnm"] = jQuery('#xnm').val();
+    		if(jQuery("input[name=radio1]:checked").val()=='1'){
+    			map["zs"] = jQuery('#zs').val();
+    		}
+    		map["doType"]='app';
+    		map["xqm"] = jQuery('#xqm').val();
+    		map["kblx"]=jQuery("input[name=radio1]:checked").val();
+    		map['xh'] = $("#xh").val()||'';
+    		return map;
+    	}
+		cxKbContent(paramMap3(),xszd);	
+		
+	}
+
+
+$("body").on("click",".lesson",function(){
+	if ($("#xxdm").val() == '00000'){
+		location.href="/jwglxt/jxdmgl/kqsys_cxSskqIndex.html?gnmkdm=N254395&layout=default&hasHeader=true";
+	}else if($("#xxdm").val()=='10344' && jQuery("input[name=radio1]:checked").val()=='1'){
+		
+		var xnm = $(this).attr("data-xnm");
+		var xqh_id = $(this).attr("data-xqh_id");
+		var xqm = $(this).attr("data-xqm");
+		var zcd = $('#zs').val();
+		var jcor = $(this).attr("data-jcor");
+		var cdbh = $(this).attr("data-cdbh");
+		var xqj = $(this).attr("data-xqj");
+		var jsxm = $(this).attr("data-jsxm");
+		var cdmc = $(this).attr("data-cdmc");
+		var kcmc = $(this).attr("data-kcmc");
+		if(!$.founded(cdbh)){
+    		$.alert("场地不存在");
+    		return false;
+    	}
+    	sessionStorage.setItem("xnm",xnm);
+	    sessionStorage.setItem("xqm",xqm);
+	    sessionStorage.setItem("xqh_id",xqh_id);
+	    sessionStorage.setItem("cdbh",cdbh);
+	    sessionStorage.setItem("jcor",jcor);
+	    sessionStorage.setItem("zcd",zcd);
+	    sessionStorage.setItem("xqj",xqj);
+	    sessionStorage.setItem("cdmc",cdmc);
+	    sessionStorage.setItem("jsxm",jsxm);
+	    sessionStorage.setItem("kcmc",kcmc);
+	    var url = _path+"/kbcx/xskbcxZccx_cxLiveVideoPcView.html"+'?xqh_id='+xqh_id+'&xnm='+xnm+'&xqm='+xqm+'&cdbh='+cdbh+'&zcd='+zcd+'&xqj='+xqj+'&jcor='+jcor;
+	    //window.location.href = url;
+	    window.open(url,'_blank');
+	}
+}
+);

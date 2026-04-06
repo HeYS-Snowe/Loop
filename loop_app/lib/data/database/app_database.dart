@@ -8,6 +8,8 @@ import 'tables/categories.dart';
 import 'tables/cycle_summaries.dart';
 import 'tables/plan_templates.dart';
 import 'tables/plan_instances.dart';
+import 'tables/timetables.dart';
+import 'tables/timetable_courses.dart';
 
 import 'database_connection_stub.dart'
     if (dart.library.io) 'database_connection.dart'
@@ -24,12 +26,14 @@ part 'app_database.g.dart';
   CycleSummaries,
   PlanTemplates,
   PlanInstances,
+  Timetables,
+  TimetableCourses,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
@@ -41,6 +45,10 @@ class AppDatabase extends _$AppDatabase {
         if (from < 2) {
           await m.createTable(planTemplates);
           await m.createTable(planInstances);
+        }
+        if (from < 3) {
+          await m.createTable(timetables);
+          await m.createTable(timetableCourses);
         }
       },
     );
@@ -183,6 +191,8 @@ class AppDatabase extends _$AppDatabase {
   Future<void> clearAllData() async {
     await delete(planInstances).go();
     await delete(planTemplates).go();
+    await delete(timetableCourses).go();
+    await delete(timetables).go();
     await delete(progressRecords).go();
     await delete(tasks).go();
     await delete(checkInRecords).go();
@@ -204,6 +214,75 @@ class AppDatabase extends _$AppDatabase {
   Future<PlanTemplate?> getPlanTemplateById(String id) {
     return (select(planTemplates)..where((t) => t.id.equals(id)))
         .getSingleOrNull();
+  }
+
+  Future<List<Timetable>> getAllTimetables() => select(timetables).get();
+
+  Stream<List<Timetable>> watchAllTimetables() => select(timetables).watch();
+
+  Future<Timetable?> getTimetableById(String id) {
+    return (select(timetables)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+  }
+
+  Future<Timetable?> getActiveTimetable() {
+    return (select(timetables)..limit(1)).getSingleOrNull();
+  }
+
+  Future<String> insertTimetable(TimetablesCompanion timetable) async {
+    await into(timetables).insert(timetable);
+    return timetable.id.value;
+  }
+
+  Future<void> updateTimetable(TimetablesCompanion timetable) async {
+    await (update(timetables)..where((t) => t.id.equals(timetable.id.value)))
+        .write(timetable);
+  }
+
+  Future<void> deleteTimetable(String id) async {
+    await (delete(timetableCourses)..where((c) => c.timetableId.equals(id)))
+        .go();
+    await (delete(timetables)..where((t) => t.id.equals(id))).go();
+  }
+
+  Future<List<TimetableCourse>> getCoursesByTimetable(String timetableId) {
+    return (select(timetableCourses)
+          ..where((c) => c.timetableId.equals(timetableId)))
+        .get();
+  }
+
+  Stream<List<TimetableCourse>> watchCoursesByTimetable(String timetableId) {
+    return (select(timetableCourses)
+          ..where((c) => c.timetableId.equals(timetableId)))
+        .watch();
+  }
+
+  Future<List<TimetableCourse>> getCoursesByWeekday(
+      String timetableId, int weekday) {
+    return (select(timetableCourses)
+          ..where(
+              (c) => c.timetableId.equals(timetableId) & c.weekday.equals(weekday)))
+        .get();
+  }
+
+  Future<String> insertCourse(TimetableCoursesCompanion course) async {
+    await into(timetableCourses).insert(course);
+    return course.id.value;
+  }
+
+  Future<void> insertCourses(List<TimetableCoursesCompanion> courses) async {
+    await batch((b) {
+      b.insertAll(timetableCourses, courses);
+    });
+  }
+
+  Future<void> updateCourse(TimetableCoursesCompanion course) async {
+    await (update(timetableCourses)..where((c) => c.id.equals(course.id.value)))
+        .write(course);
+  }
+
+  Future<void> deleteCourse(String id) async {
+    await (delete(timetableCourses)..where((c) => c.id.equals(id))).go();
   }
 }
 

@@ -590,7 +590,7 @@ flutter test
 flutter pub run build_runner build --delete-conflicting-outputs
 ```
 
-### 8.2 产物命名
+### 8.2 产物命名与输出
 
 ```
 格式: Loop_{status}_{version}_{date}_{seq}.apk
@@ -599,6 +599,15 @@ flutter pub run build_runner build --delete-conflicting-outputs
 Loop_正式版_1.0.0_20260430_01.apk
 Loop_测试版_1.0.0_20260415_01.apk
 Loop_开发版_1.0.0_20260401_01.apk
+```
+
+**产物输出目录**: 项目根目录下的 `builds/`（不在 `build/` 内，不受 `flutter clean` 影响）
+
+```
+构建流程:
+  build/app/outputs/flutter-apk/app-release.apk  (Flutter 原始输出)
+  → 重命名为 Loop_正式版_0.0.2_20260406_02.apk
+  → 移动到 D:\Code\Project\Loop\builds\           (持久化存放)
 ```
 
 ### 8.3 版本管理
@@ -728,8 +737,7 @@ class AppColors {
 - [ ] 运行完整测试
 - [ ] 构建 Release APK
 - [ ] 真机测试
-- [ ] 重命名 APK
-- [ ] 备份构建产物
+- [ ] 重命名 APK 并移动到 `builds/` 目录
 
 ---
 

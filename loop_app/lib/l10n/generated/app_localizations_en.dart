@@ -228,7 +228,7 @@ class SEn extends S {
   String get selectWeekdays => 'Select weekdays for the plan';
 
   @override
-  String get weekday => 'Weekdays';
+  String get weekday => 'Weekday';
 
   @override
   String get everyday => 'Every Day';
@@ -650,4 +650,242 @@ class SEn extends S {
 
   @override
   String get categoryNameTooLong => 'Category name must be under 20 characters';
+
+  @override
+  String get timetableManagement => 'Timetable';
+
+  @override
+  String get timetableList => 'Timetables';
+
+  @override
+  String get noTimetable => 'No timetables';
+
+  @override
+  String get importFromHtml => 'Import from HTML';
+
+  @override
+  String get importFromHtmlDesc =>
+      'Import timetable from HTML exported by academic system';
+
+  @override
+  String get createTimetable => 'Create Timetable';
+
+  @override
+  String get timetableName => 'Timetable Name';
+
+  @override
+  String get timetableNameHint => 'e.g., 2025-2026 Spring Semester';
+
+  @override
+  String get academicYear => 'Academic Year';
+
+  @override
+  String get semester => '学期';
+
+  @override
+  String get firstSemester => '1st Semester';
+
+  @override
+  String get secondSemester => '2nd Semester';
+
+  @override
+  String get thirdSemester => '3rd Semester';
+
+  @override
+  String get firstWeekMonday => 'First Week Monday';
+
+  @override
+  String get totalWeeks => 'Total Weeks';
+
+  @override
+  String get currentWeek => 'Current Week';
+
+  @override
+  String courseCount(int count) {
+    return 'Courses: $count';
+  }
+
+  @override
+  String get timetableDetail => 'Timetable Detail';
+
+  @override
+  String get courseManagement => 'Course Management';
+
+  @override
+  String get addCourse => 'Add Course';
+
+  @override
+  String get courseName => 'Course Name';
+
+  @override
+  String get courseNameHint => 'e.g., Advanced Mathematics';
+
+  @override
+  String get teacherName => 'Teacher';
+
+  @override
+  String get teacherNameHint => 'e.g., John Smith';
+
+  @override
+  String get location => 'Location';
+
+  @override
+  String get locationHint => 'e.g., Building A-301';
+
+  @override
+  String get periodRange => 'Period Range';
+
+  @override
+  String get startPeriod => 'Start Period';
+
+  @override
+  String get endPeriod => 'End Period';
+
+  @override
+  String get weekRanges => 'Week Ranges';
+
+  @override
+  String get weekRangesHint => 'e.g., 1-16';
+
+  @override
+  String get courseColor => 'Course Color';
+
+  @override
+  String get courseCreated => 'Course added';
+
+  @override
+  String get courseDeleted => 'Course deleted';
+
+  @override
+  String get timetableCreated => 'Timetable created';
+
+  @override
+  String get timetableDeleted => 'Timetable deleted';
+
+  @override
+  String get importSuccess => 'Import Success';
+
+  @override
+  String importSuccessDesc(int count) {
+    return 'Successfully imported $count courses';
+  }
+
+  @override
+  String get selectHtmlFile => 'Select HTML File';
+
+  @override
+  String get importing => 'Importing...';
+
+  @override
+  String get importFailed => 'Import Failed';
+
+  @override
+  String get importFailedDesc => 'Cannot parse HTML file, please check format';
+
+  @override
+  String get timetableNameRequired => 'Please enter timetable name';
+
+  @override
+  String get courseNameRequired => 'Please enter course name';
+
+  @override
+  String get weekdayRequired => 'Please select weekday';
+
+  @override
+  String get periodRequired => 'Please select period range';
+
+  @override
+  String get weekRangesRequired => 'Please enter week ranges';
+
+  @override
+  String weekFormat(int week) {
+    return 'Week $week';
+  }
+
+  @override
+  String periodFormat(int start, int end) {
+    return 'Period $start-$end';
+  }
+
+  @override
+  String semesterFormat(String year, int semester) {
+    return '$year Semester $semester';
+  }
+
+  @override
+  String timetableSource(String source) {
+    return 'Source: $source';
+  }
+
+  @override
+  String get sourceHtml => 'HTML Import';
+
+  @override
+  String get sourceManual => 'Manual';
+
+  @override
+  String get confirmDeleteTimetable =>
+      'Delete this timetable? All courses will be removed.';
+
+  @override
+  String get confirmDeleteCourse => 'Delete this course?';
+
+  @override
+  String get editCourse => 'Edit Course';
+
+  @override
+  String get courseUpdated => 'Course updated';
+
+  @override
+  String get todayCourse => 'Today\'s Courses';
+
+  @override
+  String get noCourseToday => 'No classes today';
+
+  @override
+  String get selectFolder => 'Select Folder';
+
+  @override
+  String get selectFolderDesc =>
+      'Select the folder generated when saving a complete webpage';
+
+  @override
+  String get selectFile => 'Select HTML File';
+
+  @override
+  String get selectFileDesc => 'Select a single .html file directly';
+
+  @override
+  String get importMode => 'Import Mode';
+
+  @override
+  String get importModeHint => 'Please select import mode';
+
+  @override
+  String get folderMode => 'Folder Mode';
+
+  @override
+  String get fileMode => 'Single File Mode';
+
+  @override
+  String get noHtmlInFolder => 'No HTML files found in the selected folder';
+
+  @override
+  String get noCourseData =>
+      'No course data found in the HTML file. Please save the webpage in \"complete\" mode.';
+
+  @override
+  String get importFolderSuccess => 'Imported from folder successfully';
+
+  @override
+  String get selectedFolder => 'Selected folder';
+
+  @override
+  String htmlFilesFound(int count) {
+    return 'Found $count HTML file(s)';
+  }
+
+  @override
+  String get folderModeNotSupported =>
+      'Folder mode not supported on this platform, switched to file mode';
 }

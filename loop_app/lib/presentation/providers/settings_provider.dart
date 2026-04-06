@@ -7,16 +7,6 @@ final sharedPreferencesProvider =
   return await SharedPreferences.getInstance();
 });
 
-final settingsProvider =
-    StateNotifierProvider<SettingsNotifier, SettingsState>((ref) {
-  final notifier = SettingsNotifier();
-  ref.onDispose(() {});
-  SharedPreferences.getInstance().then((prefs) {
-    notifier.loadSettings(prefs);
-  });
-  return notifier;
-});
-
 class SettingsState {
   final bool enableNotifications;
   final TimeOfDay notificationTime;
@@ -49,14 +39,14 @@ class SettingsState {
   }
 }
 
-class SettingsNotifier extends StateNotifier<SettingsState> {
-  SettingsNotifier() : super(const SettingsState());
-
-  Future<void> loadSettings(SharedPreferences prefs) async {
+class SettingsNotifier extends AsyncNotifier<SettingsState> {
+  @override
+  Future<SettingsState> build() async {
+    final prefs = await SharedPreferences.getInstance();
     final hour = prefs.getInt('reminder_hour') ?? 20;
     final minute = prefs.getInt('reminder_minute') ?? 0;
     final localeCode = prefs.getString('locale');
-    state = SettingsState(
+    return SettingsState(
       enableNotifications: prefs.getBool('notifications_enabled') ?? true,
       notificationTime: TimeOfDay(hour: hour, minute: minute),
       defaultCycleDays: prefs.getInt('default_cycle_days') ?? 30,
@@ -68,31 +58,41 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   Future<void> updateNotifications(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('notifications_enabled', enabled);
-    state = state.copyWith(enableNotifications: enabled);
+    final current = state.value ?? const SettingsState();
+    state = AsyncValue.data(current.copyWith(enableNotifications: enabled));
   }
 
   Future<void> updateReminderTime(TimeOfDay time) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('reminder_hour', time.hour);
     await prefs.setInt('reminder_minute', time.minute);
-    state = state.copyWith(notificationTime: time);
+    final current = state.value ?? const SettingsState();
+    state = AsyncValue.data(current.copyWith(notificationTime: time));
   }
 
   Future<void> updateDefaultCycleDays(int days) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('default_cycle_days', days);
-    state = state.copyWith(defaultCycleDays: days);
+    final current = state.value ?? const SettingsState();
+    state = AsyncValue.data(current.copyWith(defaultCycleDays: days));
   }
 
   Future<void> updateAutoExtend(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('auto_extend_cycle', enabled);
-    state = state.copyWith(autoExtendCycle: enabled);
+    final current = state.value ?? const SettingsState();
+    state = AsyncValue.data(current.copyWith(autoExtendCycle: enabled));
   }
 
   Future<void> updateLocale(Locale locale) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('locale', locale.languageCode);
-    state = state.copyWith(locale: locale);
+    final current = state.value ?? const SettingsState();
+    state = AsyncValue.data(current.copyWith(locale: locale));
   }
 }
+
+final settingsProvider =
+    AsyncNotifierProvider<SettingsNotifier, SettingsState>(
+  SettingsNotifier.new,
+);

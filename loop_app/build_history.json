@@ -1,0 +1,24 @@
+{
+  "project": "Loop",
+  "namingFormat": "{app_name}_{status}_{version}_{date}_{seq}.{ext}",
+  "builds": [
+    {
+      "version": "0.0.2",
+      "buildNumber": 2,
+      "status": "release",
+      "date": "20260406",
+      "sequence": 1,
+      "filename": "Loop_release_0.0.2_20260406_01.apk",
+      "originalName": "app-release.apk",
+      "filePath": "build/app/outputs/flutter-apk/Loop_release_0.0.2_20260406_01.apk",
+      "backupPath": "build/app/outputs/flutter-apk/backup/app-release.apk_20260406_123001.original",
+      "fileSize": 130780694,
+      "fileSizeHuman": "124.72 MB",
+      "sha256": "89694E8D50809F37AAD51267246FBF56C395F873F1E0E8FD53CDF8D7607D0D01",
+      "buildType": "apk",
+      "platform": "android",
+      "timestamp": "2026-04-06T12:30:00",
+      "configSource": "pubspec.yaml"
+    }
+  ]
+}

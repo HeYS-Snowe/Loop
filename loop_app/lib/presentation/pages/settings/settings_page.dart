@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/constants/route_constants.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../providers/settings_provider.dart';
@@ -15,9 +17,28 @@ class SettingsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
+    final settingsAsync = ref.watch(settingsProvider);
     final s = S.of(context)!;
 
+    return settingsAsync.when(
+      loading: () => Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(title: Text(s.settings, style: TextStyles.heading3)),
+        body: const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      ),
+      error: (error, _) => Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(title: Text(s.settings, style: TextStyles.heading3)),
+        body: Center(child: Text(error.toString())),
+      ),
+      data: (settings) => _buildSettingsContent(context, ref, settings, s),
+    );
+  }
+
+  Widget _buildSettingsContent(
+      BuildContext context, WidgetRef ref, SettingsState settings, S s) {
     return Scaffold(
       backgroundColor: AppColors.background,
       extendBodyBehindAppBar: true,
@@ -159,6 +180,43 @@ class SettingsPage extends ConsumerWidget {
                                     .updateAutoExtend(value);
                               },
                             ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  AnimatedPageWrapper(
+                    index: 4,
+                    child: _buildSectionHeader(s.timetableManagement),
+                  ),
+                  const SizedBox(height: 8),
+                  AnimatedPageWrapper(
+                    index: 5,
+                    child: GlassCard(
+                      borderRadius: 20,
+                      padding: EdgeInsets.zero,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.surface.withValues(alpha: 0.75),
+                          AppColors.card.withValues(alpha: 0.55),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          _buildSettingsTile(
+                            icon: Icons.schedule_rounded,
+                            iconColor: AppColors.accent,
+                            title: s.timetableList,
+                            subtitle: s.importFromHtmlDesc,
+                            trailing: const Icon(
+                              Icons.chevron_right_rounded,
+                              color: AppColors.textTertiary,
+                              size: 20,
+                            ),
+                            onTap: () => context.push(RouteConstants.timetables),
                           ),
                         ],
                       ),

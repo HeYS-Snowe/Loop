@@ -1,106 +1,70 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest.dart' as tz_data;
 
 class NotificationService {
-  static final NotificationService _instance = NotificationService._internal();
-  final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
-
+  static final NotificationService _instance = NotificationService._();
   factory NotificationService() => _instance;
+  NotificationService._();
 
-  NotificationService._internal();
+  final FlutterLocalNotificationsPlugin _plugin =
+      FlutterLocalNotificationsPlugin();
 
   Future<void> initialize() async {
-    tz_data.initializeTimeZones();
-    
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const linuxSettings = LinuxInitializationSettings(
+      defaultActionName: 'Open',
     );
-    
-    final initSettings = InitializationSettings(
+    const settings = InitializationSettings(
       android: androidSettings,
-      iOS: iosSettings,
+      linux: linuxSettings,
     );
-
-    await _notificationsPlugin.initialize(initSettings);
+    await _plugin.initialize(settings: settings);
   }
 
   Future<void> showDailyReminder({
-    required int id,
+    required int hour,
+    required int minute,
     required String title,
-    String? body,
+    required String body,
   }) async {
-    const androidDetails = AndroidNotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
       'daily_reminder',
-      '每日提醒',
-      channelDescription: '每日任务提醒通知',
-      importance: Importance.max,
+      'Daily Reminder',
+      channelDescription: 'Daily reminder for cycle tasks',
+      importance: Importance.high,
       priority: Priority.high,
     );
-    const iosDetails = DarwinNotificationDetails();
-    
-    final notificationDetails = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
+    final details = NotificationDetails(android: androidDetails);
 
-    await _notificationsPlugin.show(
-      id,
-      title,
-      body,
-      notificationDetails,
+    await _plugin.zonedSchedule(
+      id: 0,
+      title: title,
+      body: body,
+      scheduledDate: _nextInstanceOfTime(hour, minute),
+      notificationDetails: details,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
     );
   }
 
-  Future<void> scheduleDailyReminder({
-    required int id,
-    required String title,
-    String? body,
-    required int hour,
-    required int minute,
-  }) async {
-    final now = DateTime.now();
-    var scheduledDate = DateTime(now.year, now.month, now.day, hour, minute);
-    
+  Future<void> cancelAll() async {
+    await _plugin.cancelAll();
+  }
+
+  tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
+    final now = tz.TZDateTime.now(tz.local);
+    var scheduledDate = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
-
-    final tzScheduledDate = tz.TZDateTime.from(scheduledDate, tz.local);
-
-    const androidDetails = AndroidNotificationDetails(
-      'daily_reminder',
-      '每日提醒',
-      channelDescription: '每日任务提醒通知',
-      importance: Importance.max,
-      priority: Priority.high,
-    );
-    const iosDetails = DarwinNotificationDetails();
-    
-    final notificationDetails = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-
-    await _notificationsPlugin.zonedSchedule(
-      id,
-      title,
-      body,
-      tzScheduledDate,
-      notificationDetails,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-    );
-  }
-
-  Future<void> cancelNotification(int id) async {
-    await _notificationsPlugin.cancel(id);
-  }
-
-  Future<void> cancelAllNotifications() async {
-    await _notificationsPlugin.cancelAll();
+    return scheduledDate;
   }
 }
