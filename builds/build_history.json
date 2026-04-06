@@ -1,0 +1,60 @@
+{
+  "project": "Loop",
+  "description": "Loop - \u5468\u671f\u8ba1\u5212\u7ba1\u7406\u5e94\u7528",
+  "namingRule": "{\u7a0b\u5e8f\u540d}_{\u72b6\u6001\u7c7b\u578b}_{\u7248\u672c\u53f7}_{\u6784\u5efa\u65e5\u671f}_{\u6784\u5efa\u5e8f\u53f7}.{\\u6269\u5c55\u540d}",
+  "builds": [
+    {
+      "version": "0.0.1+1",
+      "status": "alpha",
+      "date": "20260331",
+      "sequence": 1,
+      "filename": "Loop_alpha_0.0.1_20260331_01.apk",
+      "timestamp": "2026-03-31T00:00:00"
+    },
+    {
+      "version": "0.0.2+2",
+      "status": "alpha",
+      "date": "20260406",
+      "sequence": 1,
+      "filename": "Loop_alpha_0.0.2_20260406_01.apk",
+      "timestamp": "2026-04-06T00:00:00"
+    },
+    {
+      "version": "0.0.2+2",
+      "status": "release",
+      "date": "20260406",
+      "sequence": 2,
+      "filename": "Loop_release_0.0.2_20260406_02.apk",
+      "timestamp": "2026-04-06T00:00:00"
+    },
+    {
+      "version": "0.0.2+2",
+      "status": "alpha",
+      "date": "20260406",
+      "sequence": 2,
+      "filename": "Loop_alpha_0.0.2_20260406_02.apk",
+      "timestamp": "2026-04-06T18:34:20",
+      "fileSize": 130883094,
+      "fileSizeFormatted": "124.8 MB",
+      "sourcePath": "D:\\Code\\Project\\Loop\\loop_app\\build\\app\\outputs\\flutter-apk\\app-release.apk",
+      "targetPath": "D:\\Code\\Project\\Loop\\builds\\Loop_alpha_0.0.2_20260406_02.apk",
+      "verificationPassed": true
+    },
+    {
+      "version": "0.0.3+3",
+      "status": "alpha",
+      "statusLabel": "内测版",
+      "date": "20260406",
+      "sequence": 1,
+      "filename": "Loop_内测版_0.0.3_20260406_01.apk",
+      "timestamp": "2026-04-06T23:07:21",
+      "fileSize": 130883214,
+      "fileSizeFormatted": "124.82 MB",
+      "sha256": "E035355E677156109655701C5BD87A6BBBE8F23A6C389F2F40B143B59CA6442C",
+      "sourcePath": "D:\\Code\\Project\\Loop\\loop_app\\build\\app\\outputs\\flutter-apk\\app-release.apk",
+      "targetPath": "D:\\Code\\Project\\Loop\\builds\\Loop_内测版_0.0.3_20260406_01.apk",
+      "backupPath": "D:\\Code\\Project\\Loop\\loop_app\\build\\backup\\2026\\04\\06\\app-release.apk.original",
+      "verificationPassed": true
+    }
+  ]
+}

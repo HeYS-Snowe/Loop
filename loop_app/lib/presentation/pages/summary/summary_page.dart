@@ -85,10 +85,48 @@ class _SummaryPageState extends ConsumerState<SummaryPage>
                         data: (state) =>
                             _buildCheckInButton(context, ref, state),
                         loading: () => const GlassCard(
-                          child: SizedBox(height: 160),
+                          child: SizedBox(
+                            height: 160,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.primary,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                          ),
                         ),
-                        error: (_, __) => const GlassCard(
-                          child: SizedBox(height: 160),
+                        error: (_, __) => GlassCard(
+                          child: SizedBox(
+                            height: 160,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.error_outline_rounded,
+                                  color: AppColors.error,
+                                  size: 32,
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  S.of(context)!.loadFailedShort,
+                                  style: TextStyles.body2.copyWith(
+                                    color: AppColors.error,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 12),
+                                IconButton(
+                                  onPressed: () => ref
+                                      .read(checkInNotifierProvider.notifier)
+                                      .loadState(),
+                                  icon: Icon(
+                                    Icons.refresh_rounded,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),

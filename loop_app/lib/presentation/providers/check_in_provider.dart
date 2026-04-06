@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/database/app_database.dart';
 import '../../domain/services/check_in_service.dart';
@@ -53,39 +54,44 @@ class CheckInState {
 
 class CheckInNotifier extends AsyncNotifier<CheckInState> {
   @override
-  CheckInState build() {
-    return CheckInState();
+  Future<CheckInState> build() async {
+    return _loadFromService();
   }
 
   CheckInService get _service => ref.read(checkInServiceProvider);
 
+  Future<CheckInState> _loadFromService() async {
+    final checkedInToday = await _service.hasCheckedInToday();
+    final streakCount = await _service.getCurrentStreak();
+    final records = await _service.getAllCheckIns();
+    return CheckInState(
+      checkedInToday: checkedInToday,
+      streakCount: streakCount,
+      records: records,
+    );
+  }
+
   Future<void> checkIn() async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
+    try {
       await _service.checkIn();
-      final checkedInToday = await _service.hasCheckedInToday();
-      final streakCount = await _service.getCurrentStreak();
-      final records = await _service.getAllCheckIns();
-      return CheckInState(
-        checkedInToday: checkedInToday,
-        streakCount: streakCount,
-        records: records,
-      );
-    });
+      state = AsyncValue.data(await _loadFromService());
+    } catch (e, st) {
+      debugPrint('[CheckInNotifier.checkIn] ERROR: $e');
+      debugPrint('[CheckInNotifier.checkIn] STACK: $st');
+      state = AsyncValue.error(e, st);
+    }
   }
 
   Future<void> loadState() async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final checkedInToday = await _service.hasCheckedInToday();
-      final streakCount = await _service.getCurrentStreak();
-      final records = await _service.getAllCheckIns();
-      return CheckInState(
-        checkedInToday: checkedInToday,
-        streakCount: streakCount,
-        records: records,
-      );
-    });
+    try {
+      state = AsyncValue.data(await _loadFromService());
+    } catch (e, st) {
+      debugPrint('[CheckInNotifier.loadState] ERROR: $e');
+      debugPrint('[CheckInNotifier.loadState] STACK: $st');
+      state = AsyncValue.error(e, st);
+    }
   }
 }
 

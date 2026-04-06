@@ -26,6 +26,12 @@ class CheckInRepository {
 
   Future<CheckInRecord> checkIn({String? note}) async {
     final now = DateTime.now();
+
+    final existingRecord = await getCheckInByDate(now);
+    if (existingRecord != null) {
+      return existingRecord;
+    }
+
     final yesterday = now.subtract(const Duration(days: 1));
 
     final yesterdayRecord = await getCheckInByDate(yesterday);

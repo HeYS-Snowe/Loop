@@ -137,14 +137,16 @@ class AppDatabase extends _$AppDatabase {
         .watch();
   }
 
-  Future<CheckInRecord?> getCheckInByDate(DateTime date) {
+  Future<CheckInRecord?> getCheckInByDate(DateTime date) async {
     final startOfDay = DateTime(date.year, date.month, date.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
-    return (select(checkInRecords)
+    final rows = await (select(checkInRecords)
           ..where((c) =>
               c.date.isBiggerOrEqualValue(startOfDay) &
-              c.date.isSmallerThanValue(endOfDay)))
-        .getSingleOrNull();
+              c.date.isSmallerThanValue(endOfDay))
+          ..limit(1))
+        .get();
+    return rows.firstOrNull;
   }
 
   Future<CheckInRecord?> getLastCheckIn() {
