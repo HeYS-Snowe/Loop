@@ -12,8 +12,9 @@ import 'package:loop_app/shared/extensions/date_extensions.dart';
 
 class PlanFormPage extends ConsumerStatefulWidget {
   final PlanTemplate? template;
+  final DateTime? currentDate;
 
-  const PlanFormPage({super.key, this.template});
+  const PlanFormPage({super.key, this.template, this.currentDate});
 
   @override
   ConsumerState<PlanFormPage> createState() => _PlanFormPageState();
@@ -41,6 +42,7 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
   late int _selectedColorValue;
 
   bool get _isEditMode => widget.template != null;
+  bool get _isEditFromInstance => _isEditMode && widget.currentDate != null;
 
   static const List<int> _presetColors = [
     0xFF2196F3,
@@ -854,31 +856,44 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
 
       if (_isEditMode) {
         final t = widget.template!;
-        await ref.read(planTemplateNotifierProvider.notifier).updateTemplate(
-              PlanTemplate(
-                id: t.id,
-                name: _nameController.text.trim(),
-                description: _descController.text.trim().isEmpty ? null : _descController.text.trim(),
-                categoryId: t.categoryId,
-                dailyTargetAmount: dailyTargetAmount,
-                unit: _unitController.text.trim().isEmpty ? null : _unitController.text.trim(),
-                enableQuantityTracking: _enableQuantityTracking,
-                repeatType: _repeatType,
-                repeatInterval: repeatInterval,
-                activeDays: activeDays,
-                startHour: _startHour,
-                startMinute: _startMinute,
-                endHour: _endHour,
-                endMinute: _endMinute,
-                colorValue: _selectedColorValue,
-                startDate: _startDate,
-                endDate: _endDate,
-                isActive: true,
-                sortOrder: t.sortOrder,
-                createdAt: t.createdAt,
-                updatedAt: DateTime.now(),
-              ),
-            );
+        final updatedTemplate = PlanTemplate(
+          id: t.id,
+          name: _nameController.text.trim(),
+          description: _descController.text.trim().isEmpty ? null : _descController.text.trim(),
+          categoryId: t.categoryId,
+          dailyTargetAmount: dailyTargetAmount,
+          unit: _unitController.text.trim().isEmpty ? null : _unitController.text.trim(),
+          enableQuantityTracking: _enableQuantityTracking,
+          repeatType: _repeatType,
+          repeatInterval: repeatInterval,
+          activeDays: activeDays,
+          startHour: _startHour,
+          startMinute: _startMinute,
+          endHour: _endHour,
+          endMinute: _endMinute,
+          colorValue: _selectedColorValue,
+          startDate: _startDate,
+          endDate: _endDate,
+          isActive: true,
+          sortOrder: t.sortOrder,
+          createdAt: t.createdAt,
+          updatedAt: DateTime.now(),
+        );
+
+        if (_isEditFromInstance) {
+          final scope = await _showEditScopeDialog();
+          if (scope == null) {
+            if (mounted) setState(() => _isSubmitting = false);
+            return;
+          }
+          await ref.read(planTemplateNotifierProvider.notifier).updateTemplateWithScope(
+                template: updatedTemplate,
+                scope: scope,
+                currentDate: widget.currentDate!,
+              );
+        } else {
+          await ref.read(planTemplateNotifierProvider.notifier).updateTemplate(updatedTemplate);
+        }
       } else {
         await ref.read(planTemplateNotifierProvider.notifier).createTemplate(
               name: _nameController.text.trim(),
@@ -914,5 +929,118 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  Future<PlanEditScope?> _showEditScopeDialog() async {
+    final s = S.of(context)!;
+    return showModalBottomSheet<PlanEditScope>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(s.selectEditScope, style: TextStyles.heading4),
+                const SizedBox(height: 16),
+                _buildScopeOption(
+                  context: context,
+                  scope: PlanEditScope.thisOnly,
+                  title: s.editScopeThisOnly,
+                  subtitle: s.editScopeThisOnlyDesc,
+                  icon: Icons.edit_outlined,
+                ),
+                _buildScopeOption(
+                  context: context,
+                  scope: PlanEditScope.future,
+                  title: s.editScopeFuture,
+                  subtitle: s.editScopeFutureDesc,
+                  icon: Icons.next_plan_outlined,
+                ),
+                _buildScopeOption(
+                  context: context,
+                  scope: PlanEditScope.past,
+                  title: s.editScopePast,
+                  subtitle: s.editScopePastDesc,
+                  icon: Icons.history_outlined,
+                ),
+                _buildScopeOption(
+                  context: context,
+                  scope: PlanEditScope.all,
+                  title: s.editScopeAll,
+                  subtitle: s.editScopeAllDesc,
+                  icon: Icons.select_all_outlined,
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildScopeOption({
+    required BuildContext context,
+    required PlanEditScope scope,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+  }) {
+    return InkWell(
+      onTap: () => Navigator.pop(context, scope),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceLight,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.5), width: 0.5),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 20, color: AppColors.primary),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: TextStyles.body1.copyWith(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: TextStyles.caption.copyWith(color: AppColors.textTertiary)),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, size: 20, color: AppColors.textTertiary),
+          ],
+        ),
+      ),
+    );
   }
 }

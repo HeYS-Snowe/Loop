@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loop_app/core/constants/route_constants.dart';
 import 'package:loop_app/core/theme/colors.dart';
 import 'package:loop_app/core/theme/text_styles.dart';
 import 'package:loop_app/data/database/app_database.dart';
 import 'package:loop_app/l10n/generated/app_localizations.dart';
 import 'package:loop_app/presentation/providers/plan_provider.dart';
+import 'package:loop_app/presentation/providers/timetable_provider.dart';
 
 class DailyPlanPage extends ConsumerStatefulWidget {
   const DailyPlanPage({super.key});
@@ -24,6 +26,30 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   static const int _startHour = 6;
   static const int _endHour = 23;
   static const double _timeLabelWidth = 48.0;
+
+  static const List<Map<String, int>> _periodTimeSlots = [
+    {'startHour': 8, 'startMinute': 0, 'endHour': 8, 'endMinute': 45},
+    {'startHour': 8, 'startMinute': 55, 'endHour': 9, 'endMinute': 40},
+    {'startHour': 10, 'startMinute': 0, 'endHour': 10, 'endMinute': 45},
+    {'startHour': 10, 'startMinute': 55, 'endHour': 11, 'endMinute': 40},
+    {'startHour': 14, 'startMinute': 0, 'endHour': 14, 'endMinute': 45},
+    {'startHour': 14, 'startMinute': 55, 'endHour': 15, 'endMinute': 40},
+    {'startHour': 16, 'startMinute': 0, 'endHour': 16, 'endMinute': 45},
+    {'startHour': 16, 'startMinute': 55, 'endHour': 17, 'endMinute': 40},
+    {'startHour': 19, 'startMinute': 0, 'endHour': 19, 'endMinute': 45},
+    {'startHour': 19, 'startMinute': 55, 'endHour': 20, 'endMinute': 40},
+  ];
+
+  static const List<Color> _courseColors = [
+    Color(0xFF4A90D9),
+    Color(0xFF00BFA5),
+    Color(0xFFFF7043),
+    Color(0xFFAB47BC),
+    Color(0xFF42A5F5),
+    Color(0xFFFFCA28),
+    Color(0xFF66BB6A),
+    Color(0xFFEF5350),
+  ];
 
   final ScrollController _scrollController = ScrollController();
   final PageController _weekPageController = PageController(initialPage: 5200);
@@ -282,6 +308,8 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
     Map<String, PlanTemplate> templateMap,
     double totalHeight,
   ) {
+    final coursesAsync = ref.watch(coursesForDateProvider(_selectedDate));
+
     return SizedBox(
       height: totalHeight,
       child: Stack(
@@ -308,6 +336,44 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
               ),
             );
           }),
+          ...coursesAsync.whenOrNull(
+                data: (courses) => courses.map((course) {
+                  final startPeriod = course.startPeriod;
+                  final endPeriod = course.endPeriod;
+                  if (startPeriod < 1 || startPeriod > _periodTimeSlots.length) {
+                    return const SizedBox.shrink();
+                  }
+                  final effectiveEnd =
+                      endPeriod.clamp(1, _periodTimeSlots.length);
+                  final startTime =
+                      _periodTimeSlots[startPeriod - 1];
+                  final endTime =
+                      _periodTimeSlots[effectiveEnd - 1];
+
+                  final startOffset = _getTimeOffset(
+                      startTime['startHour']!, startTime['startMinute']!);
+                  final endOffset = _getTimeOffset(
+                      endTime['endHour']!, endTime['endMinute']!);
+                  final cardHeight = (endOffset - startOffset).clamp(40.0, totalHeight);
+
+                  final colorIndex =
+                      course.courseName.hashCode.abs() % _courseColors.length;
+                  final color = _courseColors[colorIndex];
+
+                  return Positioned(
+                    top: startOffset,
+                    left: 4,
+                    right: 8,
+                    height: cardHeight,
+                    child: _CourseCard(
+                      course: course,
+                      color: color,
+                      onTap: () => _showCourseDetail(course, color),
+                    ),
+                  );
+                }).toList(),
+              ) ??
+              [],
           _buildCurrentTimeIndicator(totalHeight),
         ],
       ),
@@ -406,6 +472,22 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
                   Expanded(
                     child: Text(template.name, style: TextStyles.heading4),
                   ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      _navigateToEditPlan(template);
+                    },
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      margin: const EdgeInsets.only(right: 12),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                      ),
+                      child: const Icon(Icons.edit_outlined, size: 16, color: AppColors.primary),
+                    ),
+                  ),
                   _buildCompletionToggle(instance),
                 ],
               ),
@@ -427,6 +509,13 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
           ),
         );
       },
+    );
+  }
+
+  void _navigateToEditPlan(PlanTemplate template) {
+    context.push(
+      RouteConstants.editPlan,
+      extra: (template: template, currentDate: _selectedDate),
     );
   }
 
@@ -533,6 +622,57 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
+
+  void _showCourseDetail(TimetableCourse course, Color color) {
+    final startTime = _periodTimeSlots[course.startPeriod - 1];
+    final endTime = _periodTimeSlots[course.endPeriod.clamp(1, _periodTimeSlots.length) - 1];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(course.courseName, style: TextStyles.heading4),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildDetailRow(
+                S.of(context)!.time,
+                '${startTime['startHour'].toString().padLeft(2, '0')}:${startTime['startMinute'].toString().padLeft(2, '0')} - ${endTime['endHour'].toString().padLeft(2, '0')}:${endTime['endMinute'].toString().padLeft(2, '0')}',
+              ),
+              if (course.teacherName != null && course.teacherName!.isNotEmpty)
+                _buildDetailRow(S.of(context)!.teacherName, course.teacherName!),
+              if (course.location != null && course.location!.isNotEmpty)
+                _buildDetailRow(S.of(context)!.location, course.location!),
+              _buildDetailRow(S.of(context)!.weekRanges, course.weekRanges),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _PlanCard extends StatelessWidget {
@@ -624,6 +764,77 @@ class _PlanCard extends StatelessWidget {
                     ],
                   ),
                 ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CourseCard extends StatelessWidget {
+  final TimetableCourse course;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _CourseCard({
+    required this.course,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.school_outlined, size: 14, color: color),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    course.courseName,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: color,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            if (course.location != null && course.location!.isNotEmpty) ...[
+              const SizedBox(height: 3),
+              Row(
+                children: [
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Text(
+                      course.location!,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: color.withValues(alpha: 0.75),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
             ],
           ],

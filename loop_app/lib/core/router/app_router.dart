@@ -190,9 +190,19 @@ final appRouter = GoRouter(
       name: 'edit-plan',
       parentNavigatorKey: _rootNavigatorKey,
       pageBuilder: (context, state) {
-        final template = state.extra as PlanTemplate;
+        final extra = state.extra;
+        PlanTemplate template;
+        DateTime? currentDate;
+        if (extra is PlanTemplate) {
+          template = extra;
+        } else if (extra is ({PlanTemplate template, DateTime? currentDate})) {
+          template = extra.template;
+          currentDate = extra.currentDate;
+        } else {
+          throw ArgumentError('Invalid extra type for edit-plan route');
+        }
         return LoopPageTransition(
-          child: PlanFormPage(template: template),
+          child: PlanFormPage(template: template, currentDate: currentDate),
         );
       },
     ),

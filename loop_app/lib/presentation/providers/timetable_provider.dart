@@ -68,6 +68,28 @@ final coursesByWeekdayProvider = FutureProvider.family<List<TimetableCourse>,
   return repository.getCoursesByWeekday(params.timetableId, params.weekday);
 });
 
+final coursesForDateProvider =
+    FutureProvider.family<List<TimetableCourse>, DateTime>((ref, date) async {
+  final repository = ref.read(timetableRepositoryProvider);
+  final timetable = await repository.getActiveTimetable();
+  if (timetable == null) return [];
+
+  final weekday = date.weekday;
+  final courses = await repository.getCoursesByWeekday(timetable.id, weekday);
+
+  final firstMonday = timetable.firstWeekMonday;
+  final diff = date.difference(DateTime(
+    firstMonday.year,
+    firstMonday.month,
+    firstMonday.day,
+  )).inDays;
+  if (diff < 0) return [];
+  final weekNumber = diff ~/ 7 + 1;
+  if (weekNumber > timetable.totalWeeks) return [];
+
+  return _filterByCurrentWeek(courses, weekNumber);
+});
+
 class TimetableNotifier extends AsyncNotifier<List<Timetable>> {
   @override
   Future<List<Timetable>> build() async {

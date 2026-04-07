@@ -11,8 +11,15 @@ import 'package:loop_app/presentation/providers/timetable_provider.dart';
 import 'package:loop_app/presentation/widgets/common/glass_card.dart';
 import 'package:loop_app/presentation/widgets/common/gradient_decorations.dart';
 import 'package:loop_app/presentation/widgets/common/animated_widgets.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 enum _ImportMode { folder, file }
+
+class _DirScanResult {
+  final bool found;
+  final String? error;
+  _DirScanResult({required this.found, this.error});
+}
 
 class TimetableImportPage extends ConsumerStatefulWidget {
   const TimetableImportPage({super.key});
@@ -510,14 +517,37 @@ class _TimetableImportPageState extends ConsumerState<TimetableImportPage> {
 
   Future<void> _pickFolder() async {
     try {
+      if (Platform.isAndroid) {
+        final manageStatus = await Permission.manageExternalStorage.status;
+        debugPrint(
+            '[TimetableImport] manageExternalStorage status: $manageStatus');
+        if (!manageStatus.isGranted) {
+          final result = await Permission.manageExternalStorage.request();
+          debugPrint('[TimetableImport] request result: $result');
+          if (!result.isGranted) {
+            setState(() {
+              _errorMessage = '需要"所有文件访问"权限才能扫描文件夹，请在设置中授予权限';
+            });
+            await openAppSettings();
+            return;
+          }
+        }
+      }
+
       final folderPath = await FilePicker.getDirectoryPath(
         dialogTitle: S.of(context)?.selectFolder ?? 'Select Folder',
       );
       if (folderPath == null) return;
 
       final dir = Directory(folderPath);
-      final hasHtml = await _dirContainsHtml(dir);
-      if (!hasHtml) {
+      final result = await _dirContainsHtml(dir);
+      if (result.error != null) {
+        setState(() {
+          _errorMessage = result.error;
+        });
+        return;
+      }
+      if (!result.found) {
         setState(() {
           _errorMessage =
               S.of(context)?.noHtmlInFolder ?? 'No HTML files found';
@@ -541,20 +571,55 @@ class _TimetableImportPageState extends ConsumerState<TimetableImportPage> {
     }
   }
 
-  Future<bool> _dirContainsHtml(Directory dir) async {
-    try {
-      await for (final entity in dir.list()) {
-        if (entity is File) {
-          final name = entity.path.toLowerCase();
-          if (name.endsWith('.html') || name.endsWith('.htm')) {
-            return true;
-          }
+  _DirScanResult _checkHtmlInList(List<FileSystemEntity> entities) {
+    for (final entity in entities) {
+      if (entity is File) {
+        final name = entity.path.toLowerCase();
+        if (name.endsWith('.html') || name.endsWith('.htm')) {
+          return _DirScanResult(found: true);
         }
       }
-    } catch (_) {
-      return false;
     }
-    return false;
+    return _DirScanResult(found: false);
+  }
+
+  Future<_DirScanResult> _dirContainsHtml(Directory dir) async {
+    try {
+      debugPrint('[TimetableImport] Scanning dir: ${dir.path}');
+      final entities = dir.listSync();
+      debugPrint('[TimetableImport] Found ${entities.length} entities');
+      for (final e in entities) {
+        debugPrint(
+            '[TimetableImport]   - ${e.path} (${e is File ? "FILE" : "DIR"})');
+      }
+      final directResult = _checkHtmlInList(entities);
+      if (directResult.found) {
+        debugPrint('[TimetableImport] Found HTML in root');
+        return directResult;
+      }
+
+      for (final entity in entities) {
+        if (entity is Directory) {
+          try {
+            final subEntities = entity.listSync();
+            final subResult = _checkHtmlInList(subEntities);
+            if (subResult.found) {
+              debugPrint(
+                  '[TimetableImport] Found HTML in subdir: ${entity.path}');
+              return subResult;
+            }
+          } catch (_) {}
+        }
+      }
+      debugPrint('[TimetableImport] No HTML found');
+      return _DirScanResult(found: false);
+    } catch (e) {
+      debugPrint('[TimetableImport] Error scanning: $e');
+      return _DirScanResult(
+        found: false,
+        error: '无法访问文件夹: ${e.toString()}',
+      );
+    }
   }
 
   Future<void> _importFile(S s) async {

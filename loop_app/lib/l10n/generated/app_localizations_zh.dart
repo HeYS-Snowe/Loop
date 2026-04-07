@@ -880,4 +880,37 @@ class SZh extends S {
 
   @override
   String get folderModeNotSupported => '当前平台不支持文件夹选择，已切换为文件模式';
+
+  @override
+  String get editPlanInstance => '编辑计划';
+
+  @override
+  String get selectEditScope => '选择修改范围';
+
+  @override
+  String get editScopeThisOnly => '仅修改本次';
+
+  @override
+  String get editScopeThisOnlyDesc => '只修改当前这一条计划';
+
+  @override
+  String get editScopeFuture => '修改以后计划';
+
+  @override
+  String get editScopeFutureDesc => '修改当前及之后的所有计划';
+
+  @override
+  String get editScopePast => '修改以前计划';
+
+  @override
+  String get editScopePastDesc => '修改当前及之前的所有计划';
+
+  @override
+  String get editScopeAll => '修改全部计划';
+
+  @override
+  String get editScopeAllDesc => '修改所有关联的计划';
+
+  @override
+  String get planInstanceUpdated => '计划已更新';
 }

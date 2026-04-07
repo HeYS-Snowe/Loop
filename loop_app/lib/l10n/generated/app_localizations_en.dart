@@ -888,4 +888,37 @@ class SEn extends S {
   @override
   String get folderModeNotSupported =>
       'Folder mode not supported on this platform, switched to file mode';
+
+  @override
+  String get editPlanInstance => 'Edit Plan';
+
+  @override
+  String get selectEditScope => 'Select Edit Scope';
+
+  @override
+  String get editScopeThisOnly => 'This Only';
+
+  @override
+  String get editScopeThisOnlyDesc => 'Only modify this plan instance';
+
+  @override
+  String get editScopeFuture => 'Future Plans';
+
+  @override
+  String get editScopeFutureDesc => 'Modify this and all future plans';
+
+  @override
+  String get editScopePast => 'Past Plans';
+
+  @override
+  String get editScopePastDesc => 'Modify this and all past plans';
+
+  @override
+  String get editScopeAll => 'All Plans';
+
+  @override
+  String get editScopeAllDesc => 'Modify all associated plans';
+
+  @override
+  String get planInstanceUpdated => 'Plan updated';
 }

@@ -399,5 +399,17 @@
       "count": {"type": "int"}
     }
   },
-  "folderModeNotSupported": "当前平台不支持文件夹选择，已切换为文件模式"
+  "folderModeNotSupported": "当前平台不支持文件夹选择，已切换为文件模式",
+
+  "editPlanInstance": "编辑计划",
+  "selectEditScope": "选择修改范围",
+  "editScopeThisOnly": "仅修改本次",
+  "editScopeThisOnlyDesc": "只修改当前这一条计划",
+  "editScopeFuture": "修改以后计划",
+  "editScopeFutureDesc": "修改当前及之后的所有计划",
+  "editScopePast": "修改以前计划",
+  "editScopePastDesc": "修改当前及之前的所有计划",
+  "editScopeAll": "修改全部计划",
+  "editScopeAllDesc": "修改所有关联的计划",
+  "planInstanceUpdated": "计划已更新"
 }

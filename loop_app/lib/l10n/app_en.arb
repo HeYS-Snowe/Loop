@@ -341,5 +341,17 @@
       "count": {"type": "int"}
     }
   },
-  "folderModeNotSupported": "Folder mode not supported on this platform, switched to file mode"
+  "folderModeNotSupported": "Folder mode not supported on this platform, switched to file mode",
+
+  "editPlanInstance": "Edit Plan",
+  "selectEditScope": "Select Edit Scope",
+  "editScopeThisOnly": "This Only",
+  "editScopeThisOnlyDesc": "Only modify this plan instance",
+  "editScopeFuture": "Future Plans",
+  "editScopeFutureDesc": "Modify this and all future plans",
+  "editScopePast": "Past Plans",
+  "editScopePastDesc": "Modify this and all past plans",
+  "editScopeAll": "All Plans",
+  "editScopeAllDesc": "Modify all associated plans",
+  "planInstanceUpdated": "Plan updated"
 }

@@ -83,4 +83,68 @@ class PlanInstanceRepository {
       completedAmount: Value(0),
     ));
   }
+
+  Future<void> updateInstancesByTemplateAndDateRange({
+    required String templateId,
+    required DateTime rangeStart,
+    required DateTime rangeEnd,
+    required int targetAmount,
+  }) async {
+    final normalizedStart = DateTime(rangeStart.year, rangeStart.month, rangeStart.day);
+    final normalizedEnd = DateTime(rangeEnd.year, rangeEnd.month, rangeEnd.day)
+        .add(const Duration(days: 1));
+    await (_database.update(_database.planInstances)
+          ..where((t) =>
+              t.planTemplateId.equals(templateId) &
+              t.date.isBiggerOrEqualValue(normalizedStart) &
+              t.date.isSmallerThanValue(normalizedEnd)))
+        .write(PlanInstancesCompanion(
+      targetAmount: Value(targetAmount),
+      updatedAt: Value(DateTime.now()),
+    ));
+  }
+
+  Future<void> updateInstancesByTemplateExcludeDate({
+    required String templateId,
+    required DateTime excludeDate,
+    required int targetAmount,
+  }) async {
+    final normalizedExclude = DateTime(excludeDate.year, excludeDate.month, excludeDate.day);
+    await (_database.update(_database.planInstances)
+          ..where((t) =>
+              t.planTemplateId.equals(templateId) &
+              t.date.isBiggerThanValue(normalizedExclude)))
+        .write(PlanInstancesCompanion(
+      targetAmount: Value(targetAmount),
+      updatedAt: Value(DateTime.now()),
+    ));
+  }
+
+  Future<void> updateInstancesByTemplateBeforeDate({
+    required String templateId,
+    required DateTime beforeDate,
+    required int targetAmount,
+  }) async {
+    final normalizedBefore = DateTime(beforeDate.year, beforeDate.month, beforeDate.day);
+    await (_database.update(_database.planInstances)
+          ..where((t) =>
+              t.planTemplateId.equals(templateId) &
+              t.date.isSmallerThanValue(normalizedBefore)))
+        .write(PlanInstancesCompanion(
+      targetAmount: Value(targetAmount),
+      updatedAt: Value(DateTime.now()),
+    ));
+  }
+
+  Future<void> updateAllInstancesByTemplate({
+    required String templateId,
+    required int targetAmount,
+  }) async {
+    await (_database.update(_database.planInstances)
+          ..where((t) => t.planTemplateId.equals(templateId)))
+        .write(PlanInstancesCompanion(
+      targetAmount: Value(targetAmount),
+      updatedAt: Value(DateTime.now()),
+    ));
+  }
 }

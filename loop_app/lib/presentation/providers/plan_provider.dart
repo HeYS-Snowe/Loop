@@ -4,6 +4,13 @@ import '../../data/repositories/plan_template_repository.dart';
 import '../../data/repositories/plan_instance_repository.dart';
 import 'cycle_provider.dart';
 
+enum PlanEditScope {
+  thisOnly,
+  future,
+  past,
+  all,
+}
+
 final planTemplateRepositoryProvider = Provider<PlanTemplateRepository>((ref) {
   return PlanTemplateRepository(ref.watch(databaseProvider));
 });
@@ -88,6 +95,42 @@ class PlanTemplateNotifier extends AsyncNotifier<List<PlanTemplate>> {
 
   Future<void> updateTemplate(PlanTemplate template) async {
     await _templateRepo.updateTemplate(template);
+    ref.invalidateSelf();
+  }
+
+  Future<void> updateTemplateWithScope({
+    required PlanTemplate template,
+    required PlanEditScope scope,
+    required DateTime currentDate,
+  }) async {
+    await _templateRepo.updateTemplate(template);
+
+    final instanceRepo = ref.read(planInstanceRepositoryProvider);
+    switch (scope) {
+      case PlanEditScope.thisOnly:
+        break;
+      case PlanEditScope.future:
+        await instanceRepo.updateInstancesByTemplateExcludeDate(
+          templateId: template.id,
+          excludeDate: currentDate,
+          targetAmount: template.dailyTargetAmount,
+        );
+        break;
+      case PlanEditScope.past:
+        await instanceRepo.updateInstancesByTemplateBeforeDate(
+          templateId: template.id,
+          beforeDate: currentDate,
+          targetAmount: template.dailyTargetAmount,
+        );
+        break;
+      case PlanEditScope.all:
+        await instanceRepo.updateAllInstancesByTemplate(
+          templateId: template.id,
+          targetAmount: template.dailyTargetAmount,
+        );
+        break;
+    }
+
     ref.invalidateSelf();
   }
 

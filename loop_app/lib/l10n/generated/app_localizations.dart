@@ -1770,6 +1770,72 @@ abstract class S {
   /// In zh, this message translates to:
   /// **'当前平台不支持文件夹选择，已切换为文件模式'**
   String get folderModeNotSupported;
+
+  /// No description provided for @editPlanInstance.
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑计划'**
+  String get editPlanInstance;
+
+  /// No description provided for @selectEditScope.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择修改范围'**
+  String get selectEditScope;
+
+  /// No description provided for @editScopeThisOnly.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅修改本次'**
+  String get editScopeThisOnly;
+
+  /// No description provided for @editScopeThisOnlyDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'只修改当前这一条计划'**
+  String get editScopeThisOnlyDesc;
+
+  /// No description provided for @editScopeFuture.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改以后计划'**
+  String get editScopeFuture;
+
+  /// No description provided for @editScopeFutureDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改当前及之后的所有计划'**
+  String get editScopeFutureDesc;
+
+  /// No description provided for @editScopePast.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改以前计划'**
+  String get editScopePast;
+
+  /// No description provided for @editScopePastDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改当前及之前的所有计划'**
+  String get editScopePastDesc;
+
+  /// No description provided for @editScopeAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改全部计划'**
+  String get editScopeAll;
+
+  /// No description provided for @editScopeAllDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改所有关联的计划'**
+  String get editScopeAllDesc;
+
+  /// No description provided for @planInstanceUpdated.
+  ///
+  /// In zh, this message translates to:
+  /// **'计划已更新'**
+  String get planInstanceUpdated;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {
