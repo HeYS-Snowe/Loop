@@ -6,6 +6,7 @@ import 'package:loop_app/core/theme/text_styles.dart';
 import 'package:loop_app/data/database/app_database.dart';
 import 'package:loop_app/l10n/generated/app_localizations.dart';
 import 'package:loop_app/presentation/providers/plan_provider.dart';
+import 'package:loop_app/presentation/providers/timetable_provider.dart';
 import 'package:loop_app/presentation/widgets/common/gradient_decorations.dart';
 import 'package:loop_app/presentation/widgets/common/loop_time_picker.dart';
 import 'package:loop_app/shared/extensions/date_extensions.dart';
@@ -65,6 +66,19 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
     'weekly',
     'monthly',
     'interval',
+  ];
+
+  static const List<Map<String, int>> _periodTimeSlots = [
+    {'startHour': 8, 'startMinute': 0, 'endHour': 8, 'endMinute': 45},
+    {'startHour': 8, 'startMinute': 55, 'endHour': 9, 'endMinute': 40},
+    {'startHour': 10, 'startMinute': 0, 'endHour': 10, 'endMinute': 45},
+    {'startHour': 10, 'startMinute': 55, 'endHour': 11, 'endMinute': 40},
+    {'startHour': 14, 'startMinute': 0, 'endHour': 14, 'endMinute': 45},
+    {'startHour': 14, 'startMinute': 55, 'endHour': 15, 'endMinute': 40},
+    {'startHour': 16, 'startMinute': 0, 'endHour': 16, 'endMinute': 45},
+    {'startHour': 16, 'startMinute': 55, 'endHour': 17, 'endMinute': 40},
+    {'startHour': 19, 'startMinute': 0, 'endHour': 19, 'endMinute': 45},
+    {'startHour': 19, 'startMinute': 55, 'endHour': 20, 'endMinute': 40},
   ];
 
   @override
@@ -221,68 +235,67 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
                 _buildSectionCard(
                   title: s.timeSlot,
                   subtitle: s.timeSlotDesc,
-                  child: Row(
+                  child: Column(
                     children: [
-                      Expanded(
-                        child: _buildTimePickerTile(
-                          label: s.startTime,
-                          hour: _startHour,
-                          minute: _startMinute,
-                          onTap: () => _pickTime(isStart: true),
-                        ),
+                      _buildTimePickerTile(
+                        label: s.startTime,
+                        hour: _startHour,
+                        minute: _startMinute,
+                        onTap: () => _pickTime(isStart: true),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 16),
-                            Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    AppColors.primary.withValues(alpha: 0.3),
-                                    AppColors.accent.withValues(alpha: 0.3),
-                                  ],
-                                ),
-                                border: Border.all(
-                                  color: AppColors.primary.withValues(alpha: 0.2),
-                                  width: 0.5,
-                                ),
-                              ),
-                              child: const Icon(
-                                Icons.arrow_forward_rounded,
-                                size: 16,
-                                color: AppColors.primary,
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 24,
+                            height: 1.5,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppColors.primary.withValues(alpha: 0.3),
+                                  AppColors.accent.withValues(alpha: 0.3),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Text(
                               _buildDurationText(),
                               style: const TextStyle(
-                                fontSize: 10,
+                                fontSize: 11,
                                 color: AppColors.textTertiary,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                          Container(
+                            width: 24,
+                            height: 1.5,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppColors.accent.withValues(alpha: 0.3),
+                                  AppColors.warmAccent.withValues(alpha: 0.3),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      Expanded(
-                        child: _buildTimePickerTile(
-                          label: s.endTime,
-                          hour: _endHour,
-                          minute: _endMinute,
-                          onTap: () => _pickTime(isStart: false),
-                        ),
+                      const SizedBox(height: 12),
+                      _buildTimePickerTile(
+                        label: s.endTime,
+                        hour: _endHour,
+                        minute: _endMinute,
+                        onTap: () => _pickTime(isStart: false),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 16),
+                _buildTimeConflictWarning(),
                 const SizedBox(height: 16),
                 _buildSectionCard(
                   title: s.cardColor,
@@ -753,6 +766,79 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
     );
   }
 
+  Future<List<String>> _checkTimeConflicts() async {
+    final timetable = ref.read(activeTimetableProvider).value;
+    if (timetable == null) return [];
+
+    final planStartMinutes = _startHour * 60 + _startMinute;
+    final planEndMinutes = _endHour * 60 + _endMinute;
+
+    final activeDays = _repeatType == 'daily'
+        ? {1, 2, 3, 4, 5, 6, 7}
+        : _selectedDays;
+
+    final repo = ref.read(timetableRepositoryProvider);
+    final conflictingCourses = <String>[];
+
+    for (final weekday in activeDays) {
+      final courses = await repo.getCoursesByWeekday(timetable.id, weekday);
+      for (final course in courses) {
+        final startPeriod = course.startPeriod - 1;
+        final endPeriod = course.endPeriod - 1;
+
+        if (startPeriod < 0 || startPeriod >= _periodTimeSlots.length) continue;
+        if (endPeriod >= _periodTimeSlots.length) continue;
+
+        final courseStart = _periodTimeSlots[startPeriod]['startHour']! * 60 +
+            _periodTimeSlots[startPeriod]['startMinute']!;
+        final courseEnd = _periodTimeSlots[endPeriod]['endHour']! * 60 +
+            _periodTimeSlots[endPeriod]['endMinute']!;
+
+        if (planStartMinutes < courseEnd && planEndMinutes > courseStart) {
+          if (!conflictingCourses.contains(course.courseName)) {
+            conflictingCourses.add(course.courseName);
+          }
+        }
+      }
+    }
+
+    return conflictingCourses;
+  }
+
+  Widget _buildTimeConflictWarning() {
+    return FutureBuilder<List<String>>(
+      future: _checkTimeConflicts(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        final courses = snapshot.data!;
+        final s = S.of(context)!;
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.error.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, size: 18, color: AppColors.error),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  s.timeConflictDesc(courses.join('、')),
+                  style: const TextStyle(fontSize: 12, color: AppColors.error, height: 1.4),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildSubmitButton() {
     final s = S.of(context)!;
     return SizedBox(
@@ -838,6 +924,28 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
         SnackBar(content: Text(s.pleaseSelectActiveDate)),
       );
       return;
+    }
+
+    final conflicts = await _checkTimeConflicts();
+    if (conflicts.isNotEmpty && mounted) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(s.timeConflictWarning),
+          content: Text(s.timeConflictDesc(conflicts.join('、'))),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(s.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(s.timeConflictConfirm, style: const TextStyle(color: AppColors.error)),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
     }
 
     setState(() => _isSubmitting = true);

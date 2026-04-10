@@ -138,10 +138,14 @@ coverage/
 # =============================================================================
 
 *.apk
+*.apk.original
 *.aab
 *.ipa
 *.dSYM.zip
 *.dSYM
+
+# Build outputs (persistent storage, not for VCS)
+builds/
 
 # =============================================================================
 # Project specific

@@ -26,6 +26,10 @@ class TimetableDetailPage extends ConsumerWidget {
       backgroundColor: AppColors.background,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => context.go(RouteConstants.home),
+        ),
         title: Text(s.timetableDetail, style: TextStyles.heading3),
         actions: [
           IconButton(

@@ -409,6 +409,24 @@ abstract class S {
   /// **'设置计划在课程表中的显示时间'**
   String get timeSlotDesc;
 
+  /// No description provided for @timeConflictWarning.
+  ///
+  /// In zh, this message translates to:
+  /// **'时间段与课程冲突'**
+  String get timeConflictWarning;
+
+  /// No description provided for @timeConflictDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前设置的时间段与以下课程存在时间重叠：{courses}'**
+  String timeConflictDesc(String courses);
+
+  /// No description provided for @timeConflictConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'仍要保存'**
+  String get timeConflictConfirm;
+
   /// No description provided for @startTime.
   ///
   /// In zh, this message translates to:
@@ -1620,6 +1638,12 @@ abstract class S {
   /// In zh, this message translates to:
   /// **'第{week}周'**
   String weekFormat(int week);
+
+  /// No description provided for @weekFormatNotCurrent.
+  ///
+  /// In zh, this message translates to:
+  /// **'第{week}周（非本周）'**
+  String weekFormatNotCurrent(int week);
 
   /// No description provided for @periodFormat.
   ///

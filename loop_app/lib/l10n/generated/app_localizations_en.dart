@@ -174,6 +174,17 @@ class SEn extends S {
   String get timeSlotDesc => 'Set display time in schedule';
 
   @override
+  String get timeConflictWarning => 'Time Conflict with Course';
+
+  @override
+  String timeConflictDesc(String courses) {
+    return 'Current time slot overlaps with the following course(s): $courses';
+  }
+
+  @override
+  String get timeConflictConfirm => 'Save Anyway';
+
+  @override
   String get startTime => 'Start Time';
 
   @override
@@ -800,6 +811,11 @@ class SEn extends S {
   @override
   String weekFormat(int week) {
     return 'Week $week';
+  }
+
+  @override
+  String weekFormatNotCurrent(int week) {
+    return 'Week $week (Not Current)';
   }
 
   @override

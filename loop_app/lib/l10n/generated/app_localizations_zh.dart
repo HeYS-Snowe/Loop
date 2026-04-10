@@ -173,6 +173,17 @@ class SZh extends S {
   String get timeSlotDesc => '设置计划在课程表中的显示时间';
 
   @override
+  String get timeConflictWarning => '时间段与课程冲突';
+
+  @override
+  String timeConflictDesc(String courses) {
+    return '当前设置的时间段与以下课程存在时间重叠：$courses';
+  }
+
+  @override
+  String get timeConflictConfirm => '仍要保存';
+
+  @override
   String get startTime => '开始时间';
 
   @override
@@ -796,6 +807,11 @@ class SZh extends S {
   @override
   String weekFormat(int week) {
     return '第$week周';
+  }
+
+  @override
+  String weekFormatNotCurrent(int week) {
+    return '第$week周（非本周）';
   }
 
   @override

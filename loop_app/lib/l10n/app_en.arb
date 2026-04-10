@@ -63,6 +63,14 @@
   "enableQuantityValidationDesc": "Require entering completion amount",
   "timeSlot": "Time Slot",
   "timeSlotDesc": "Set display time in schedule",
+  "timeConflictWarning": "Time Conflict with Course",
+  "timeConflictDesc": "Current time slot overlaps with the following course(s): {courses}",
+  "@timeConflictDesc": {
+    "placeholders": {
+      "courses": {"type": "String"}
+    }
+  },
+  "timeConflictConfirm": "Save Anyway",
   "startTime": "Start Time",
   "endTime": "End Time",
   "tapToEdit": "Tap to edit",
@@ -291,6 +299,12 @@
   "weekRangesRequired": "Please enter week ranges",
   "weekFormat": "Week {week}",
   "@weekFormat": {
+    "placeholders": {
+      "week": {"type": "int"}
+    }
+  },
+  "weekFormatNotCurrent": "Week {week} (Not Current)",
+  "@weekFormatNotCurrent": {
     "placeholders": {
       "week": {"type": "int"}
     }

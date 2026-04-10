@@ -270,7 +270,7 @@ final appRouter = GoRouter(
   ),
 );
 
-class ScaffoldWithNavBar extends StatelessWidget {
+class ScaffoldWithNavBar extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
 
   const ScaffoldWithNavBar({
@@ -279,16 +279,60 @@ class ScaffoldWithNavBar extends StatelessWidget {
   });
 
   @override
+  State<ScaffoldWithNavBar> createState() => _ScaffoldWithNavBarState();
+}
+
+class _ScaffoldWithNavBarState extends State<ScaffoldWithNavBar> {
+  static const double _edgeWidth = 28.0;
+  static const double _minVelocity = 300.0;
+  double? _startDx;
+
+  void _handlePanStart(DragStartDetails details) {
+    _startDx = details.globalPosition.dx;
+  }
+
+  void _handlePanEnd(DragEndDetails details) {
+    if (_startDx == null) return;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isLeftEdge = _startDx! < _edgeWidth;
+    final isRightEdge = _startDx! > screenWidth - _edgeWidth;
+
+    if (!isLeftEdge && !isRightEdge) {
+      _startDx = null;
+      return;
+    }
+
+    final velocity = details.velocity.pixelsPerSecond.dx;
+    if (velocity.abs() < _minVelocity) {
+      _startDx = null;
+      return;
+    }
+
+    final currentIndex = widget.navigationShell.currentIndex;
+    if (isLeftEdge && velocity > 0 && currentIndex > 0) {
+      widget.navigationShell.goBranch(currentIndex - 1);
+    } else if (isRightEdge && velocity < 0 && currentIndex < 3) {
+      widget.navigationShell.goBranch(currentIndex + 1);
+    }
+    _startDx = null;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: navigationShell,
+      body: GestureDetector(
+        onPanStart: _handlePanStart,
+        onPanEnd: _handlePanEnd,
+        behavior: HitTestBehavior.translucent,
+        child: widget.navigationShell,
+      ),
       extendBody: true,
       bottomNavigationBar: LoopBottomNav(
-        currentIndex: navigationShell.currentIndex,
+        currentIndex: widget.navigationShell.currentIndex,
         onTap: (index) {
-          navigationShell.goBranch(
+          widget.navigationShell.goBranch(
             index,
-            initialLocation: index == navigationShell.currentIndex,
+            initialLocation: index == widget.navigationShell.currentIndex,
           );
         },
       ),

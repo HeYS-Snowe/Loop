@@ -183,6 +183,11 @@ class PlanInstanceNotifier extends AsyncNotifier<List<PlanInstance>> {
     );
     ref.invalidateSelf();
   }
+
+  Future<List<PlanInstance>> getInstancesForDate(DateTime date) async {
+    await _instanceRepo.ensureInstancesForDate(date);
+    return _instanceRepo.getInstancesByDate(date);
+  }
 }
 
 final planInstanceNotifierProvider =

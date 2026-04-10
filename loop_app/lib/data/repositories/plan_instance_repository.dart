@@ -40,12 +40,37 @@ class PlanInstanceRepository {
 
     for (final template in templates) {
       if (existingTemplateIds.contains(template.id)) continue;
+      if (!template.isActive) continue;
 
-      final activeDays = template.activeDays
-          .split(',')
-          .map(int.parse)
-          .toList();
-      if (!activeDays.contains(weekday)) continue;
+      final normalizedStart = DateTime(
+        template.startDate.year,
+        template.startDate.month,
+        template.startDate.day,
+      );
+      if (normalizedDate.isBefore(normalizedStart)) continue;
+
+      if (template.endDate != null) {
+        final normalizedEnd = DateTime(
+          template.endDate!.year,
+          template.endDate!.month,
+          template.endDate!.day,
+        );
+        if (normalizedDate.isAfter(normalizedEnd)) continue;
+      }
+
+      if (template.repeatType == 'interval') {
+        final diffDays = normalizedDate.difference(normalizedStart).inDays;
+        if (diffDays < 0) continue;
+        final interval = template.repeatInterval;
+        if (interval <= 0) continue;
+        if (diffDays % (interval + 1) != 0) continue;
+      } else {
+        final activeDays = template.activeDays
+            .split(',')
+            .map(int.parse)
+            .toList();
+        if (!activeDays.contains(weekday)) continue;
+      }
 
       final now = DateTime.now();
       await _database.into(_database.planInstances).insert(

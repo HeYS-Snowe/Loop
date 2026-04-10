@@ -19,13 +19,19 @@ class DailyPlanPage extends ConsumerStatefulWidget {
 
 class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   late DateTime _selectedDate;
-  bool _hasScrolledToCurrentTime = false;
-  int _weekOffset = 0;
+  double _scale = 1.0;
 
-  static const double _hourHeight = 72.0;
-  static const int _startHour = 6;
-  static const int _endHour = 23;
+  static const double _baseHourHeight = 72.0;
+  static const int _startHour = 5;
+  static const int _endHour = 24;
   static const double _timeLabelWidth = 48.0;
+  static const int _dayPageCenter = 36500;
+  static const double _scrollPaddingTop = 120.0;
+  static const double _scrollPaddingBottom = 100.0;
+  static const double _minScale = 0.5;
+  static const double _maxScale = 2.0;
+
+  double get _hourHeight => _baseHourHeight * _scale;
 
   static const List<Map<String, int>> _periodTimeSlots = [
     {'startHour': 8, 'startMinute': 0, 'endHour': 8, 'endMinute': 45},
@@ -51,46 +57,65 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
     Color(0xFFEF5350),
   ];
 
-  final ScrollController _scrollController = ScrollController();
   final PageController _weekPageController = PageController(initialPage: 5200);
+  final PageController _dayPageController =
+      PageController(initialPage: _dayPageCenter);
+  bool _isSyncingDayPage = false;
+  bool _isSyncingWeekPage = false;
 
   @override
   void initState() {
     super.initState();
     _selectedDate = DateTime.now();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(planInstanceNotifierProvider.notifier).loadForDate(_selectedDate);
+      ref
+          .read(planInstanceNotifierProvider.notifier)
+          .loadForDate(_selectedDate);
     });
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
     _weekPageController.dispose();
+    _dayPageController.dispose();
     super.dispose();
   }
 
-  void _scrollToCurrentTime() {
-    if (!_scrollController.hasClients) return;
-    final now = DateTime.now();
-    final hour = now.hour;
-    if (hour >= _startHour && hour < _endHour) {
-      final offset = (hour - _startHour) * _hourHeight - 40;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollController.hasClients) {
-          _scrollController.animateTo(
-            offset.clamp(0.0, _scrollController.position.maxScrollExtent),
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeOut,
-          );
-        }
-      });
+  void _changeDate(DateTime date,
+      {bool syncDayPage = false, bool syncWeekPage = false}) {
+    setState(() => _selectedDate = date);
+    ref.read(planInstanceNotifierProvider.notifier).loadForDate(date);
+
+    if (syncDayPage && !_isSyncingDayPage) {
+      _isSyncingDayPage = true;
+      final dayOffset = date.difference(DateTime.now()).inDays;
+      final targetPage = _dayPageCenter + dayOffset;
+      if (_dayPageController.hasClients &&
+          (_dayPageController.page?.round() ?? _dayPageCenter) != targetPage) {
+        _dayPageController.jumpToPage(targetPage);
+      }
+      _isSyncingDayPage = false;
+    }
+
+    if (syncWeekPage && !_isSyncingWeekPage) {
+      _isSyncingWeekPage = true;
+      final now = DateTime.now();
+      final currentWeekStart = _getWeekStart(now, 0);
+      final targetWeekStart = _getWeekStart(date, 0);
+      final weekDiff = targetWeekStart.difference(currentWeekStart).inDays ~/ 7;
+      final targetWeekPage = 5200 + weekDiff;
+      if (_weekPageController.hasClients &&
+          (_weekPageController.page?.round() ?? 5200) != targetWeekPage) {
+        _weekPageController.jumpToPage(targetWeekPage);
+      }
+      _isSyncingWeekPage = false;
     }
   }
 
-  void _changeDate(DateTime date) {
-    setState(() => _selectedDate = date);
-    ref.read(planInstanceNotifierProvider.notifier).loadForDate(date);
+  DateTime _getDateFromDayPage(int page) {
+    final now = DateTime.now();
+    final diff = page - _dayPageCenter;
+    return DateTime(now.year, now.month, now.day).add(Duration(days: diff));
   }
 
   @override
@@ -110,7 +135,9 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
             onPressed: () async {
               await context.push('/create-plan');
               if (mounted) {
-                ref.read(planInstanceNotifierProvider.notifier).loadForDate(_selectedDate);
+                ref
+                    .read(planInstanceNotifierProvider.notifier)
+                    .loadForDate(_selectedDate);
               }
             },
           ),
@@ -127,15 +154,19 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
         child: SafeArea(
           child: Column(
             children: [
+              _buildWeekIndicator(),
               _buildWeekSelector(),
               Expanded(
                 child: instancesAsync.when(
-                  data: (instances) => _buildTimeTable(instances),
+                  data: (instances) => _buildDayPageView(instances),
                   loading: () => const Center(
-                    child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2),
+                    child: CircularProgressIndicator(
+                        color: AppColors.primary, strokeWidth: 2),
                   ),
                   error: (e, _) => Center(
-                    child: Text(S.of(context)!.loadFailed(e.toString()), style: TextStyles.body2.copyWith(color: AppColors.error)),
+                    child: Text(S.of(context)!.loadFailed(e.toString()),
+                        style:
+                            TextStyles.body2.copyWith(color: AppColors.error)),
                   ),
                 ),
               ),
@@ -143,6 +174,65 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildDayPageView(List<PlanInstance> instances) {
+    return PageView.builder(
+      controller: _dayPageController,
+      onPageChanged: (page) {
+        if (_isSyncingDayPage) return;
+        final date = _getDateFromDayPage(page);
+        _changeDate(date, syncWeekPage: true);
+      },
+      itemBuilder: (context, page) {
+        return _buildTimeTable(instances);
+      },
+    );
+  }
+
+  Widget _buildWeekIndicator() {
+    final timetableAsync = ref.watch(activeTimetableProvider);
+    final s = S.of(context)!;
+
+    return timetableAsync.when(
+      data: (timetable) {
+        if (timetable == null) return const SizedBox.shrink();
+
+        final firstMonday = DateTime(
+          timetable.firstWeekMonday.year,
+          timetable.firstWeekMonday.month,
+          timetable.firstWeekMonday.day,
+        );
+        final diff = _selectedDate.difference(firstMonday).inDays;
+        if (diff < 0) return const SizedBox.shrink();
+
+        final weekNumber = diff ~/ 7 + 1;
+        if (weekNumber > timetable.totalWeeks) return const SizedBox.shrink();
+
+        final isCurrentWeek = weekNumber == timetable.currentWeek;
+        final weekText = isCurrentWeek
+            ? s.weekFormat(weekNumber)
+            : s.weekFormatNotCurrent(weekNumber);
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              weekText,
+              style: TextStyles.caption.copyWith(
+                color:
+                    isCurrentWeek ? AppColors.primary : AppColors.textTertiary,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
     );
   }
 
@@ -161,14 +251,24 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
       child: PageView.builder(
         controller: _weekPageController,
         onPageChanged: (page) {
+          if (_isSyncingWeekPage) return;
           final newOffset = page - 5200;
           final weekStart = _getWeekStart(now, newOffset);
-          final targetDate = DateTime(weekStart.year, weekStart.month, weekStart.day);
+          final weekday = _selectedDate.weekday;
+          final targetDate = weekStart.add(Duration(days: weekday - 1));
           setState(() {
-            _weekOffset = newOffset;
             _selectedDate = targetDate;
           });
-          ref.read(planInstanceNotifierProvider.notifier).loadForDate(targetDate);
+          ref
+              .read(planInstanceNotifierProvider.notifier)
+              .loadForDate(targetDate);
+          _isSyncingDayPage = true;
+          final dayOffset = targetDate.difference(now).inDays;
+          final targetDayPage = _dayPageCenter + dayOffset;
+          if (_dayPageController.hasClients) {
+            _dayPageController.jumpToPage(targetDayPage);
+          }
+          _isSyncingDayPage = false;
         },
         itemBuilder: (context, page) {
           final offset = page - 5200;
@@ -182,9 +282,10 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
 
               return Expanded(
                 child: GestureDetector(
-                  onTap: () => _changeDate(date),
+                  onTap: () => _changeDate(date, syncDayPage: true),
                   child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? AppColors.primary
@@ -215,7 +316,9 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
                           style: TextStyle(
                             fontFamily: 'MiSans',
                             fontSize: 16,
-                            fontWeight: isSelected || isToday ? FontWeight.w700 : FontWeight.w400,
+                            fontWeight: isSelected || isToday
+                                ? FontWeight.w700
+                                : FontWeight.w400,
                             color: isSelected
                                 ? AppColors.backgroundDeep
                                 : isToday
@@ -248,33 +351,43 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
     return templatesFuture.when(
       data: (templates) {
         final templateMap = {for (final t in templates) t.id: t};
-        if (!_hasScrolledToCurrentTime) {
-          _hasScrolledToCurrentTime = true;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _scrollToCurrentTime();
-          });
-        }
 
         final totalHeight = (_endHour - _startHour) * _hourHeight;
 
-        return SingleChildScrollView(
-          controller: _scrollController,
-          child: SizedBox(
-            height: totalHeight,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildTimeLabels(totalHeight),
-                Expanded(
-                  child: _buildPlanGrid(instances, templateMap, totalHeight),
+        return GestureDetector(
+            onScaleStart: (_) {},
+            onScaleUpdate: (details) {
+              if (details.pointerCount != 2) return;
+              setState(() {
+                _scale = (_scale * details.scale).clamp(_minScale, _maxScale);
+              });
+            },
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(
+                top: _scrollPaddingTop,
+                bottom: _scrollPaddingBottom,
+              ),
+              child: SizedBox(
+                height: totalHeight,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildTimeLabels(totalHeight),
+                    Expanded(
+                      child:
+                          _buildPlanGrid(instances, templateMap, totalHeight),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-        );
+              ),
+            ));
       },
-      loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2)),
-      error: (e, _) => Center(child: Text(S.of(context)!.loadFailed(e.toString()), style: TextStyles.body2.copyWith(color: AppColors.error))),
+      loading: () => const Center(
+          child: CircularProgressIndicator(
+              color: AppColors.primary, strokeWidth: 2)),
+      error: (e, _) => Center(
+          child: Text(S.of(context)!.loadFailed(e.toString()),
+              style: TextStyles.body2.copyWith(color: AppColors.error))),
     );
   }
 
@@ -320,9 +433,12 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
             final template = templateMap[instance.planTemplateId];
             if (template == null) return const SizedBox.shrink();
 
-            final startOffset = _getTimeOffset(template.startHour, template.startMinute);
-            final endOffset = _getTimeOffset(template.endHour, template.endMinute);
-            final cardHeight = (endOffset - startOffset).clamp(40.0, totalHeight);
+            final startOffset =
+                _getTimeOffset(template.startHour, template.startMinute);
+            final endOffset =
+                _getTimeOffset(template.endHour, template.endMinute);
+            final cardHeight =
+                (endOffset - startOffset).clamp(40.0, totalHeight);
 
             return Positioned(
               top: startOffset,
@@ -340,21 +456,21 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
                 data: (courses) => courses.map((course) {
                   final startPeriod = course.startPeriod;
                   final endPeriod = course.endPeriod;
-                  if (startPeriod < 1 || startPeriod > _periodTimeSlots.length) {
+                  if (startPeriod < 1 ||
+                      startPeriod > _periodTimeSlots.length) {
                     return const SizedBox.shrink();
                   }
                   final effectiveEnd =
                       endPeriod.clamp(1, _periodTimeSlots.length);
-                  final startTime =
-                      _periodTimeSlots[startPeriod - 1];
-                  final endTime =
-                      _periodTimeSlots[effectiveEnd - 1];
+                  final startTime = _periodTimeSlots[startPeriod - 1];
+                  final endTime = _periodTimeSlots[effectiveEnd - 1];
 
                   final startOffset = _getTimeOffset(
                       startTime['startHour']!, startTime['startMinute']!);
                   final endOffset = _getTimeOffset(
                       endTime['endHour']!, endTime['endMinute']!);
-                  final cardHeight = (endOffset - startOffset).clamp(40.0, totalHeight);
+                  final cardHeight =
+                      (endOffset - startOffset).clamp(40.0, totalHeight);
 
                   final colorIndex =
                       course.courseName.hashCode.abs() % _courseColors.length;
@@ -485,22 +601,26 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
                         shape: BoxShape.circle,
                         color: AppColors.primary.withValues(alpha: 0.12),
                       ),
-                      child: const Icon(Icons.edit_outlined, size: 16, color: AppColors.primary),
+                      child: const Icon(Icons.edit_outlined,
+                          size: 16, color: AppColors.primary),
                     ),
                   ),
                   _buildCompletionToggle(instance),
                 ],
               ),
               const SizedBox(height: 16),
-              _buildDetailRow(s.time, '${template.startHour.toString().padLeft(2, '0')}:${template.startMinute.toString().padLeft(2, '0')} - ${template.endHour.toString().padLeft(2, '0')}:${template.endMinute.toString().padLeft(2, '0')}'),
+              _buildDetailRow(s.time,
+                  '${template.startHour.toString().padLeft(2, '0')}:${template.startMinute.toString().padLeft(2, '0')} - ${template.endHour.toString().padLeft(2, '0')}:${template.endMinute.toString().padLeft(2, '0')}'),
               if (instance.targetAmount > 0) ...[
-                _buildDetailRow(s.progress, '${instance.completedAmount}/${instance.targetAmount} ${template.unit ?? ''}'),
+                _buildDetailRow(s.progress,
+                    '${instance.completedAmount}/${instance.targetAmount} ${template.unit ?? ''}'),
                 const SizedBox(height: 12),
                 _buildDetailProgressBar(progress),
                 const SizedBox(height: 12),
                 _buildAmountInput(instance),
               ],
-              if (template.description != null && template.description!.isNotEmpty) ...[
+              if (template.description != null &&
+                  template.description!.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 _buildDetailRow(s.descriptionOptional, template.description!),
               ],
@@ -522,7 +642,9 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   Widget _buildCompletionToggle(PlanInstance instance) {
     return GestureDetector(
       onTap: () {
-        ref.read(planInstanceNotifierProvider.notifier).toggleComplete(instance.id);
+        ref
+            .read(planInstanceNotifierProvider.notifier)
+            .toggleComplete(instance.id);
         Navigator.pop(context);
       },
       child: AnimatedContainer(
@@ -551,7 +673,9 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
         children: [
           SizedBox(
             width: 48,
-            child: Text(label, style: TextStyles.body2.copyWith(color: AppColors.textTertiary)),
+            child: Text(label,
+                style:
+                    TextStyles.body2.copyWith(color: AppColors.textTertiary)),
           ),
           Expanded(child: Text(value, style: TextStyles.body1)),
         ],
@@ -566,13 +690,17 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
         height: 6,
         child: Stack(
           children: [
-            Container(decoration: BoxDecoration(color: AppColors.surfaceLight, borderRadius: BorderRadius.circular(4))),
+            Container(
+                decoration: BoxDecoration(
+                    color: AppColors.surfaceLight,
+                    borderRadius: BorderRadius.circular(4))),
             FractionallySizedBox(
               widthFactor: progress,
               child: Container(
                 decoration: BoxDecoration(
                   gradient: progress >= 1.0
-                      ? const LinearGradient(colors: [AppColors.success, AppColors.successLight])
+                      ? const LinearGradient(
+                          colors: [AppColors.success, AppColors.successLight])
                       : AppColors.progressGradient,
                   borderRadius: BorderRadius.circular(4),
                 ),
@@ -586,7 +714,8 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
 
   Widget _buildAmountInput(PlanInstance instance) {
     final s = S.of(context)!;
-    final controller = TextEditingController(text: instance.completedAmount.toString());
+    final controller =
+        TextEditingController(text: instance.completedAmount.toString());
     return Row(
       children: [
         Text(s.completedAmountLabel, style: TextStyles.body2),
@@ -602,13 +731,18 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
             decoration: InputDecoration(
               filled: true,
               fillColor: AppColors.surfaceLight,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none),
               isDense: true,
             ),
             onSubmitted: (value) {
               final amount = int.tryParse(value) ?? 0;
-              ref.read(planInstanceNotifierProvider.notifier).updateCompletedAmount(instance.id, amount);
+              ref
+                  .read(planInstanceNotifierProvider.notifier)
+                  .updateCompletedAmount(instance.id, amount);
               Navigator.pop(context);
             },
           ),
@@ -625,7 +759,8 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
 
   void _showCourseDetail(TimetableCourse course, Color color) {
     final startTime = _periodTimeSlots[course.startPeriod - 1];
-    final endTime = _periodTimeSlots[course.endPeriod.clamp(1, _periodTimeSlots.length) - 1];
+    final endTime = _periodTimeSlots[
+        course.endPeriod.clamp(1, _periodTimeSlots.length) - 1];
 
     showModalBottomSheet(
       context: context,
@@ -662,7 +797,8 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
                 '${startTime['startHour'].toString().padLeft(2, '0')}:${startTime['startMinute'].toString().padLeft(2, '0')} - ${endTime['endHour'].toString().padLeft(2, '0')}:${endTime['endMinute'].toString().padLeft(2, '0')}',
               ),
               if (course.teacherName != null && course.teacherName!.isNotEmpty)
-                _buildDetailRow(S.of(context)!.teacherName, course.teacherName!),
+                _buildDetailRow(
+                    S.of(context)!.teacherName, course.teacherName!),
               if (course.location != null && course.location!.isNotEmpty)
                 _buildDetailRow(S.of(context)!.location, course.location!),
               _buildDetailRow(S.of(context)!.weekRanges, course.weekRanges),
@@ -714,14 +850,17 @@ class _PlanCard extends StatelessWidget {
                   height: 14,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: instance.isCompleted ? AppColors.success : Colors.transparent,
+                    color: instance.isCompleted
+                        ? AppColors.success
+                        : Colors.transparent,
                     border: Border.all(
                       color: instance.isCompleted ? AppColors.success : color,
                       width: 1.2,
                     ),
                   ),
                   child: instance.isCompleted
-                      ? const Icon(Icons.check, size: 8, color: AppColors.backgroundDeep)
+                      ? const Icon(Icons.check,
+                          size: 8, color: AppColors.backgroundDeep)
                       : null,
                 ),
                 const SizedBox(width: 6),
@@ -732,7 +871,9 @@ class _PlanCard extends StatelessWidget {
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: color,
-                      decoration: instance.isCompleted ? TextDecoration.lineThrough : null,
+                      decoration: instance.isCompleted
+                          ? TextDecoration.lineThrough
+                          : null,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

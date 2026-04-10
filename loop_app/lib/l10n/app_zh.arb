@@ -85,6 +85,14 @@
   "enableQuantityValidationDesc": "开启后需输入完成数量",
   "timeSlot": "时间段",
   "timeSlotDesc": "设置计划在课程表中的显示时间",
+  "timeConflictWarning": "时间段与课程冲突",
+  "timeConflictDesc": "当前设置的时间段与以下课程存在时间重叠：{courses}",
+  "@timeConflictDesc": {
+    "placeholders": {
+      "courses": {"type": "String"}
+    }
+  },
+  "timeConflictConfirm": "仍要保存",
   "startTime": "开始时间",
   "endTime": "结束时间",
   "tapToEdit": "点击修改",
@@ -349,6 +357,12 @@
   "weekRangesRequired": "请输入上课周次",
   "weekFormat": "第{week}周",
   "@weekFormat": {
+    "placeholders": {
+      "week": {"type": "int"}
+    }
+  },
+  "weekFormatNotCurrent": "第{week}周（非本周）",
+  "@weekFormatNotCurrent": {
     "placeholders": {
       "week": {"type": "int"}
     }
