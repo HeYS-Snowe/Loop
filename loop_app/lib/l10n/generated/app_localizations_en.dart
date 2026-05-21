@@ -691,7 +691,7 @@ class SEn extends S {
   String get academicYear => 'Academic Year';
 
   @override
-  String get semester => '学期';
+  String get semester => 'Semester';
 
   @override
   String get firstSemester => '1st Semester';
@@ -904,6 +904,64 @@ class SEn extends S {
   @override
   String get folderModeNotSupported =>
       'Folder mode not supported on this platform, switched to file mode';
+
+  @override
+  String get selectMonthDays => 'Select days of month to execute';
+
+  @override
+  String get monthStart => 'Start';
+
+  @override
+  String get monthMid => 'Mid';
+
+  @override
+  String get monthEnd => 'End';
+
+  @override
+  String get planDate => 'Plan Date';
+
+  @override
+  String get timeRangeDescNone => 'Select the date to execute this plan';
+
+  @override
+  String get timeRangeDescDaily => 'Execute daily within this range';
+
+  @override
+  String get timeRangeDescWeekly =>
+      'Execute on selected weekdays within this range';
+
+  @override
+  String get timeRangeDescMonthly =>
+      'Execute on selected days within this range';
+
+  @override
+  String get timeRangeDescInterval => 'Execute at interval within this range';
+
+  @override
+  String get enableTimeSlot => 'Enable Time Slot';
+
+  @override
+  String get enableTimeSlotDesc => 'Plan won\'t be time-bound when disabled';
+
+  @override
+  String get allDayEvents => 'All-day Plans';
+
+  @override
+  String monthFormat(int month) {
+    return 'Month $month';
+  }
+
+  @override
+  String monthFormatNotCurrent(int month) {
+    return 'Month $month (Not Current)';
+  }
+
+  @override
+  String get confirmSemesterStart => 'Confirm Semester Start Date';
+
+  @override
+  String get confirmSemesterStartDesc =>
+      'The first Monday of the semester was detected as follows. Please confirm or adjust:';
 
   @override
   String get editPlanInstance => 'Edit Plan';

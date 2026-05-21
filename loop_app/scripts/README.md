@@ -49,11 +49,11 @@
 
 APK 文件命名格式：
 ```
-Loop_{状态类型}_{版本号}_{构建日期}_{构建序号}.apk
+Loop_{状态类型}_{版本号}_{构建日期}.apk
 ```
 
 示例：
-- `Loop_release_1.0.0_20260326_01.apk`
-- `Loop_beta_0.0.1_20260326_02.apk`
+- `Loop_release_1.0.0.1_20260326.apk`
+- `Loop_beta_0.0.1.2_20260326.apk`
 
 详细规范请参考: [APK 命名规范](../docs/APK_NAMING_CONVENTION.md)

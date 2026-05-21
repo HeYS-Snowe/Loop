@@ -249,6 +249,7 @@
   "timetableName": "Timetable Name",
   "timetableNameHint": "e.g., 2025-2026 Spring Semester",
   "academicYear": "Academic Year",
+  "semester": "Semester",
   "firstSemester": "1st Semester",
   "secondSemester": "2nd Semester",
   "thirdSemester": "3rd Semester",
@@ -356,6 +357,34 @@
     }
   },
   "folderModeNotSupported": "Folder mode not supported on this platform, switched to file mode",
+
+  "selectMonthDays": "Select days of month to execute",
+  "monthStart": "Start",
+  "monthMid": "Mid",
+  "monthEnd": "End",
+  "planDate": "Plan Date",
+  "timeRangeDescNone": "Select the date to execute this plan",
+  "timeRangeDescDaily": "Execute daily within this range",
+  "timeRangeDescWeekly": "Execute on selected weekdays within this range",
+  "timeRangeDescMonthly": "Execute on selected days within this range",
+  "timeRangeDescInterval": "Execute at interval within this range",
+  "enableTimeSlot": "Enable Time Slot",
+  "enableTimeSlotDesc": "Plan won't be time-bound when disabled",
+  "allDayEvents": "All-day Plans",
+  "monthFormat": "Month {month}",
+  "@monthFormat": {
+    "placeholders": {
+      "month": {"type": "int"}
+    }
+  },
+  "monthFormatNotCurrent": "Month {month} (Not Current)",
+  "@monthFormatNotCurrent": {
+    "placeholders": {
+      "month": {"type": "int"}
+    }
+  },
+  "confirmSemesterStart": "Confirm Semester Start Date",
+  "confirmSemesterStartDesc": "The first Monday of the semester was detected as follows. Please confirm or adjust:",
 
   "editPlanInstance": "Edit Plan",
   "selectEditScope": "Select Edit Scope",

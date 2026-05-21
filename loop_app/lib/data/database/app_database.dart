@@ -33,7 +33,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -49,6 +49,11 @@ class AppDatabase extends _$AppDatabase {
         if (from < 3) {
           await m.createTable(timetables);
           await m.createTable(timetableCourses);
+        }
+        if (from < 4) {
+          await customStatement(
+            'ALTER TABLE plan_templates ADD COLUMN enable_time_slot INTEGER NOT NULL DEFAULT 1',
+          );
         }
       },
     );

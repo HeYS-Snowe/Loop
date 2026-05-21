@@ -58,12 +58,20 @@ class PlanInstanceRepository {
         if (normalizedDate.isAfter(normalizedEnd)) continue;
       }
 
-      if (template.repeatType == 'interval') {
+      if (template.repeatType == 'none') {
+        if (normalizedDate != normalizedStart) continue;
+      } else if (template.repeatType == 'interval') {
         final diffDays = normalizedDate.difference(normalizedStart).inDays;
         if (diffDays < 0) continue;
         final interval = template.repeatInterval;
         if (interval <= 0) continue;
         if (diffDays % (interval + 1) != 0) continue;
+      } else if (template.repeatType == 'monthly') {
+        final activeDays = template.activeDays
+            .split(',')
+            .map(int.parse)
+            .toList();
+        if (!activeDays.contains(normalizedDate.day)) continue;
       } else {
         final activeDays = template.activeDays
             .split(',')

@@ -1795,6 +1795,108 @@ abstract class S {
   /// **'当前平台不支持文件夹选择，已切换为文件模式'**
   String get folderModeNotSupported;
 
+  /// No description provided for @selectMonthDays.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择每月执行的日期'**
+  String get selectMonthDays;
+
+  /// No description provided for @monthStart.
+  ///
+  /// In zh, this message translates to:
+  /// **'月初'**
+  String get monthStart;
+
+  /// No description provided for @monthMid.
+  ///
+  /// In zh, this message translates to:
+  /// **'月中'**
+  String get monthMid;
+
+  /// No description provided for @monthEnd.
+  ///
+  /// In zh, this message translates to:
+  /// **'月末'**
+  String get monthEnd;
+
+  /// No description provided for @planDate.
+  ///
+  /// In zh, this message translates to:
+  /// **'计划日期'**
+  String get planDate;
+
+  /// No description provided for @timeRangeDescNone.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择计划执行的日期'**
+  String get timeRangeDescNone;
+
+  /// No description provided for @timeRangeDescDaily.
+  ///
+  /// In zh, this message translates to:
+  /// **'在此时间范围内每天执行'**
+  String get timeRangeDescDaily;
+
+  /// No description provided for @timeRangeDescWeekly.
+  ///
+  /// In zh, this message translates to:
+  /// **'在此时间范围内按选定的星期执行'**
+  String get timeRangeDescWeekly;
+
+  /// No description provided for @timeRangeDescMonthly.
+  ///
+  /// In zh, this message translates to:
+  /// **'在此时间范围内按选定的日期执行'**
+  String get timeRangeDescMonthly;
+
+  /// No description provided for @timeRangeDescInterval.
+  ///
+  /// In zh, this message translates to:
+  /// **'在此时间范围内按间隔天数执行'**
+  String get timeRangeDescInterval;
+
+  /// No description provided for @enableTimeSlot.
+  ///
+  /// In zh, this message translates to:
+  /// **'启用时间段'**
+  String get enableTimeSlot;
+
+  /// No description provided for @enableTimeSlotDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'关闭后计划将不受时间约束'**
+  String get enableTimeSlotDesc;
+
+  /// No description provided for @allDayEvents.
+  ///
+  /// In zh, this message translates to:
+  /// **'全天计划'**
+  String get allDayEvents;
+
+  /// No description provided for @monthFormat.
+  ///
+  /// In zh, this message translates to:
+  /// **'第{month}月'**
+  String monthFormat(int month);
+
+  /// No description provided for @monthFormatNotCurrent.
+  ///
+  /// In zh, this message translates to:
+  /// **'第{month}月（非本月）'**
+  String monthFormatNotCurrent(int month);
+
+  /// No description provided for @confirmSemesterStart.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认学期起始日期'**
+  String get confirmSemesterStart;
+
+  /// No description provided for @confirmSemesterStartDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'检测到学期第一周周一为以下日期，请确认或调整：'**
+  String get confirmSemesterStartDesc;
+
   /// No description provided for @editPlanInstance.
   ///
   /// In zh, this message translates to:

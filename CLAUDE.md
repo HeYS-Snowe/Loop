@@ -600,12 +600,12 @@ flutter pub run build_runner build --delete-conflicting-outputs
 ### 8.2 产物命名与输出
 
 ```
-格式: Loop_{status}_{version}_{date}_{seq}.apk
+格式: Loop_{status}_{version}_{date}.apk
 
 示例:
-Loop_正式版_1.0.0_20260430_01.apk
-Loop_测试版_1.0.0_20260415_01.apk
-Loop_开发版_1.0.0_20260401_01.apk
+Loop_正式版_1.0.0.1_20260430.apk
+Loop_测试版_1.0.0.2_20260415.apk
+Loop_开发版_0.0.1.3_20260401.apk
 ```
 
 **产物输出目录**: 项目根目录下的 `builds/`（不在 `build/` 内，不受 `flutter clean` 影响）
@@ -621,13 +621,13 @@ Loop_开发版_1.0.0_20260401_01.apk
 
 ```yaml
 # pubspec.yaml
-version: 1.0.0+1  # version+buildNumber
+version: 1.0.0.1  # Major.Minor.Patch.Build
 
 # 版本号规则
-# Major.Minor.Patch+Build
-# 1.0.0+1  - MVP版本
-# 1.1.0+2  - 新增功能
-# 1.1.1+3  - Bug修复
+# Major.Minor.Patch.Build
+# 1.0.0.1  - MVP版本
+# 1.1.0.2  - 新增功能
+# 1.1.1.3  - Bug修复
 ```
 
 ---

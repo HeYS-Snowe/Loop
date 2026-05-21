@@ -415,6 +415,34 @@
   },
   "folderModeNotSupported": "当前平台不支持文件夹选择，已切换为文件模式",
 
+  "selectMonthDays": "选择每月执行的日期",
+  "monthStart": "月初",
+  "monthMid": "月中",
+  "monthEnd": "月末",
+  "planDate": "计划日期",
+  "timeRangeDescNone": "选择计划执行的日期",
+  "timeRangeDescDaily": "在此时间范围内每天执行",
+  "timeRangeDescWeekly": "在此时间范围内按选定的星期执行",
+  "timeRangeDescMonthly": "在此时间范围内按选定的日期执行",
+  "timeRangeDescInterval": "在此时间范围内按间隔天数执行",
+  "enableTimeSlot": "启用时间段",
+  "enableTimeSlotDesc": "关闭后计划将不受时间约束",
+  "allDayEvents": "全天计划",
+  "monthFormat": "第{month}月",
+  "@monthFormat": {
+    "placeholders": {
+      "month": {"type": "int"}
+    }
+  },
+  "monthFormatNotCurrent": "第{month}月（非本月）",
+  "@monthFormatNotCurrent": {
+    "placeholders": {
+      "month": {"type": "int"}
+    }
+  },
+  "confirmSemesterStart": "确认学期起始日期",
+  "confirmSemesterStartDesc": "检测到学期第一周周一为以下日期，请确认或调整：",
+
   "editPlanInstance": "编辑计划",
   "selectEditScope": "选择修改范围",
   "editScopeThisOnly": "仅修改本次",

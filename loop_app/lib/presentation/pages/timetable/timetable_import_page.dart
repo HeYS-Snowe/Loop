@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:loop_app/core/constants/route_constants.dart';
 import 'package:loop_app/core/theme/colors.dart';
 import 'package:loop_app/core/theme/text_styles.dart';
+import 'package:loop_app/data/database/app_database.dart';
 import 'package:loop_app/l10n/generated/app_localizations.dart';
 import 'package:loop_app/presentation/providers/timetable_provider.dart';
 import 'package:loop_app/presentation/widgets/common/glass_card.dart';
@@ -629,26 +630,13 @@ class _TimetableImportPageState extends ConsumerState<TimetableImportPage> {
     });
 
     try {
+      Timetable? timetable;
+
       if (_mode == _ImportMode.folder && _selectedFolderPath != null) {
         final timetableName = _selectedFolderName ?? 'Timetable';
-        final timetable = await ref
+        timetable = await ref
             .read(timetableCourseNotifierProvider.notifier)
             .importFromFolder(_selectedFolderPath!, timetableName);
-
-        ref.invalidate(allTimetablesProvider);
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(s.importSuccess),
-              backgroundColor: AppColors.success,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-          context.go(
-            '${RouteConstants.timetableDetail}?id=${timetable.id}',
-          );
-        }
       } else if (_mode == _ImportMode.file && _selectedFilePath != null) {
         final file = File(_selectedFilePath!);
         final htmlContent = await file.readAsString();
@@ -659,11 +647,37 @@ class _TimetableImportPageState extends ConsumerState<TimetableImportPage> {
             ) ??
             'Timetable';
 
-        final timetable = await ref
+        timetable = await ref
             .read(timetableCourseNotifierProvider.notifier)
             .importFromHtml(htmlContent, timetableName);
+      }
 
+      if (timetable != null && mounted) {
         ref.invalidate(allTimetablesProvider);
+
+        final confirmedDate = await _showSemesterStartConfirmDialog(
+          timetable.firstWeekMonday,
+          s,
+        );
+
+        if (confirmedDate != null && confirmedDate != timetable.firstWeekMonday && mounted) {
+          final updated = Timetable(
+            id: timetable.id,
+            name: timetable.name,
+            academicYear: timetable.academicYear,
+            semester: timetable.semester,
+            firstWeekMonday: confirmedDate,
+            totalWeeks: timetable.totalWeeks,
+            currentWeek: timetable.currentWeek,
+            source: timetable.source,
+            createdAt: timetable.createdAt,
+            updatedAt: DateTime.now(),
+          );
+          await ref
+              .read(timetableNotifierProvider.notifier)
+              .updateTimetable(updated);
+          ref.invalidate(activeTimetableProvider);
+        }
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -696,6 +710,103 @@ class _TimetableImportPageState extends ConsumerState<TimetableImportPage> {
     } finally {
       if (mounted) setState(() => _isImporting = false);
     }
+  }
+
+  Future<DateTime?> _showSemesterStartConfirmDialog(
+    DateTime detectedDate,
+    S s,
+  ) async {
+    DateTime selectedDate = detectedDate;
+
+    return showDialog<DateTime>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppColors.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Text(s.confirmSemesterStart, style: TextStyles.heading4),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    s.confirmSemesterStartDesc,
+                    style: TextStyles.body2,
+                  ),
+                  const SizedBox(height: 16),
+                  InkWell(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2030),
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: const ColorScheme.dark(
+                                primary: AppColors.primary,
+                                onPrimary: AppColors.backgroundDeep,
+                                surface: AppColors.surface,
+                                onSurface: AppColors.textPrimary,
+                              ),
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (picked != null) {
+                        setDialogState(() => selectedDate = picked);
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceLight,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Text(s.firstWeekMonday, style: TextStyles.body2),
+                          const Spacer(),
+                          Text(
+                            '${selectedDate.year}/${selectedDate.month}/${selectedDate.day}',
+                            style: TextStyles.body1.copyWith(
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.calendar_today,
+                              size: 16, color: AppColors.textTertiary),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, null),
+                  child: Text(s.cancel),
+                ),
+                TextButton(
+                  onPressed: () =>
+                      Navigator.pop(dialogContext, selectedDate),
+                  child: Text(s.confirm),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   String _getErrorMessage(String error, S s) {

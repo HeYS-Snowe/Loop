@@ -19,6 +19,42 @@
       "platform": "android",
       "timestamp": "2026-04-06T12:30:00",
       "configSource": "pubspec.yaml"
+    },
+    {
+      "version": "0.0.7",
+      "buildNumber": 7,
+      "status": "fix",
+      "date": "20260507",
+      "sequence": 1,
+      "filename": "Loop_fix_0.0.7_20260507_01.apk",
+      "originalName": "app-release.apk",
+      "filePath": "d:\\Code\\Project\\Loop\\builds\\Loop_fix_0.0.7_20260507_01.apk",
+      "backupPath": "build/app/outputs/flutter-apk/backup/app-release.apk_20260507_164742.original",
+      "fileSize": 107543817,
+      "fileSizeHuman": "102.57 MB",
+      "sha256": "61124AE817C25BAF2645C180600631F0AF3ED2978F722269CDFB02D781BAAE43",
+      "buildType": "apk",
+      "platform": "android",
+      "timestamp": "2026-05-07T16:47:42",
+      "configSource": "pubspec.yaml"
+    },
+    {
+      "version": "0.0.8",
+      "buildNumber": 8,
+      "status": "fix",
+      "date": "20260507",
+      "sequence": 2,
+      "filename": "Loop_fix_0.0.8_20260507_02.apk",
+      "originalName": "app-release.apk",
+      "filePath": "d:\\Code\\Project\\Loop\\builds\\Loop_fix_0.0.8_20260507_02.apk",
+      "backupPath": "d:\\Code\\Project\\Loop\\builds\\backup\\2026\\05\\07\\app-release.apk_20260507_212000.original",
+      "fileSize": 86703229,
+      "fileSizeHuman": "82.69 MB",
+      "sha256": "1F775CE14044DF46B0965DCE9E898417C3B822C4C8D7EF616AC1A26025AE758F",
+      "buildType": "apk",
+      "platform": "android-arm64,android-arm",
+      "timestamp": "2026-05-07T21:20:00",
+      "configSource": "pubspec.yaml"
     }
   ]
 }

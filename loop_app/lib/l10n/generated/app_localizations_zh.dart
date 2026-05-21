@@ -898,6 +898,61 @@ class SZh extends S {
   String get folderModeNotSupported => '当前平台不支持文件夹选择，已切换为文件模式';
 
   @override
+  String get selectMonthDays => '选择每月执行的日期';
+
+  @override
+  String get monthStart => '月初';
+
+  @override
+  String get monthMid => '月中';
+
+  @override
+  String get monthEnd => '月末';
+
+  @override
+  String get planDate => '计划日期';
+
+  @override
+  String get timeRangeDescNone => '选择计划执行的日期';
+
+  @override
+  String get timeRangeDescDaily => '在此时间范围内每天执行';
+
+  @override
+  String get timeRangeDescWeekly => '在此时间范围内按选定的星期执行';
+
+  @override
+  String get timeRangeDescMonthly => '在此时间范围内按选定的日期执行';
+
+  @override
+  String get timeRangeDescInterval => '在此时间范围内按间隔天数执行';
+
+  @override
+  String get enableTimeSlot => '启用时间段';
+
+  @override
+  String get enableTimeSlotDesc => '关闭后计划将不受时间约束';
+
+  @override
+  String get allDayEvents => '全天计划';
+
+  @override
+  String monthFormat(int month) {
+    return '第$month月';
+  }
+
+  @override
+  String monthFormatNotCurrent(int month) {
+    return '第$month月（非本月）';
+  }
+
+  @override
+  String get confirmSemesterStart => '确认学期起始日期';
+
+  @override
+  String get confirmSemesterStartDesc => '检测到学期第一周周一为以下日期，请确认或调整：';
+
+  @override
   String get editPlanInstance => '编辑计划';
 
   @override

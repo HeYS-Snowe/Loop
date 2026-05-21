@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loop_app/core/constants/time_slot_constants.dart';
 import 'package:loop_app/core/theme/colors.dart';
 import 'package:loop_app/core/theme/text_styles.dart';
 import 'package:loop_app/data/database/app_database.dart';
@@ -41,6 +42,8 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
   late int _endHour;
   late int _endMinute;
   late int _selectedColorValue;
+  late Set<int> _selectedMonthDays;
+  late bool _enableTimeSlot;
 
   bool get _isEditMode => widget.template != null;
   bool get _isEditFromInstance => _isEditMode && widget.currentDate != null;
@@ -68,18 +71,7 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
     'interval',
   ];
 
-  static const List<Map<String, int>> _periodTimeSlots = [
-    {'startHour': 8, 'startMinute': 0, 'endHour': 8, 'endMinute': 45},
-    {'startHour': 8, 'startMinute': 55, 'endHour': 9, 'endMinute': 40},
-    {'startHour': 10, 'startMinute': 0, 'endHour': 10, 'endMinute': 45},
-    {'startHour': 10, 'startMinute': 55, 'endHour': 11, 'endMinute': 40},
-    {'startHour': 14, 'startMinute': 0, 'endHour': 14, 'endMinute': 45},
-    {'startHour': 14, 'startMinute': 55, 'endHour': 15, 'endMinute': 40},
-    {'startHour': 16, 'startMinute': 0, 'endHour': 16, 'endMinute': 45},
-    {'startHour': 16, 'startMinute': 55, 'endHour': 17, 'endMinute': 40},
-    {'startHour': 19, 'startMinute': 0, 'endHour': 19, 'endMinute': 45},
-    {'startHour': 19, 'startMinute': 55, 'endHour': 20, 'endMinute': 40},
-  ];
+
 
   @override
   void initState() {
@@ -95,28 +87,41 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
       _endDate = t.endDate;
       _enableQuantityTracking = t.enableQuantityTracking;
       _repeatType = t.repeatType;
-      _selectedDays = t.activeDays
-          .split(',')
-          .map((s) => int.tryParse(s.trim()) ?? 0)
-          .where((d) => d >= 1 && d <= 7)
-          .toSet();
+      if (t.repeatType == 'monthly') {
+        _selectedDays = {1, 2, 3, 4, 5};
+        _selectedMonthDays = t.activeDays
+            .split(',')
+            .map((s) => int.tryParse(s.trim()) ?? 0)
+            .where((d) => d >= 1 && d <= 31)
+            .toSet();
+      } else {
+        _selectedDays = t.activeDays
+            .split(',')
+            .map((s) => int.tryParse(s.trim()) ?? 0)
+            .where((d) => d >= 1 && d <= 7)
+            .toSet();
+        _selectedMonthDays = {1};
+      }
       _startHour = t.startHour;
       _startMinute = t.startMinute;
       _endHour = t.endHour;
       _endMinute = t.endMinute;
       _selectedColorValue = t.colorValue;
+      _enableTimeSlot = t.enableTimeSlot;
     } else {
       _startDate = DateTime.now();
       _endDate = null;
       _enableQuantityTracking = true;
       _repeatType = 'daily';
       _selectedDays = {1, 2, 3, 4, 5};
+      _selectedMonthDays = {1};
       _intervalController.text = '1';
       _startHour = 8;
       _startMinute = 0;
       _endHour = 9;
       _endMinute = 0;
       _selectedColorValue = 0xFF2196F3;
+      _enableTimeSlot = true;
     }
   }
 
@@ -237,60 +242,69 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
                   subtitle: s.timeSlotDesc,
                   child: Column(
                     children: [
-                      _buildTimePickerTile(
-                        label: s.startTime,
-                        hour: _startHour,
-                        minute: _startMinute,
-                        onTap: () => _pickTime(isStart: true),
+                      _buildSwitchRow(
+                        label: s.enableTimeSlot,
+                        subtitle: s.enableTimeSlotDesc,
+                        value: _enableTimeSlot,
+                        onChanged: (v) => setState(() => _enableTimeSlot = v),
                       ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 24,
-                            height: 1.5,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppColors.primary.withValues(alpha: 0.3),
-                                  AppColors.accent.withValues(alpha: 0.3),
-                                ],
+                      if (_enableTimeSlot) ...[
+                        const SizedBox(height: 16),
+                        _buildTimePickerTile(
+                          label: s.startTime,
+                          hour: _startHour,
+                          minute: _startMinute,
+                          onTap: () => _pickTime(isStart: true),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 24,
+                              height: 1.5,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    AppColors.primary.withValues(alpha: 0.3),
+                                    AppColors.accent.withValues(alpha: 0.3),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            child: Text(
-                              _buildDurationText(),
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: AppColors.textTertiary,
-                                fontWeight: FontWeight.w500,
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              child: Text(
+                                _buildDurationText(),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textTertiary,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
-                          ),
-                          Container(
-                            width: 24,
-                            height: 1.5,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppColors.accent.withValues(alpha: 0.3),
-                                  AppColors.warmAccent.withValues(alpha: 0.3),
-                                ],
+                            Container(
+                              width: 24,
+                              height: 1.5,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    AppColors.accent.withValues(alpha: 0.3),
+                                    AppColors.warmAccent.withValues(alpha: 0.3),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      _buildTimePickerTile(
-                        label: s.endTime,
-                        hour: _endHour,
-                        minute: _endMinute,
-                        onTap: () => _pickTime(isStart: false),
-                      ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        _buildTimePickerTile(
+                          label: s.endTime,
+                          hour: _endHour,
+                          minute: _endMinute,
+                          onTap: () => _pickTime(isStart: false),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -368,82 +382,89 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                _buildSectionCard(
-                  title: s.activeDate,
-                  subtitle: _repeatType == 'daily' ? s.executeDaily : s.selectWeekdays,
-                  child: _repeatType == 'daily'
-                      ? const SizedBox.shrink()
-                      : Column(
-                          children: [
-                            Row(
-                              children: List.generate(7, (index) {
-                                final day = index + 1;
-                                final isSelected = _selectedDays.contains(day);
-                                final dayLabels = _getDayLabels(s);
-                                return Expanded(
-                                  child: GestureDetector(
-                                  onTap: () => _toggleDay(day),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: isSelected ? AppColors.primary : AppColors.surfaceLight,
-                                      border: Border.all(
-                                        color: isSelected ? AppColors.primary : AppColors.border,
-                                        width: isSelected ? 1.5 : 0.5,
-                                      ),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        dayLabels[index],
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                          color: isSelected ? AppColors.backgroundDeep : AppColors.textSecondary,
+                if (!{'none', 'daily', 'interval'}.contains(_repeatType)) ...[
+                  const SizedBox(height: 16),
+                  _buildSectionCard(
+                    title: s.activeDate,
+                    subtitle: _repeatType == 'monthly'
+                        ? s.selectMonthDays
+                        : s.selectWeekdays,
+                    child: _repeatType == 'monthly'
+                            ? _buildMonthDaySelector()
+                            : Column(
+                                children: [
+                                  Row(
+                                    children: List.generate(7, (index) {
+                                      final day = index + 1;
+                                      final isSelected = _selectedDays.contains(day);
+                                      final dayLabels = _getDayLabels(s);
+                                      return Expanded(
+                                        child: GestureDetector(
+                                        onTap: () => _toggleDay(day),
+                                        child: AnimatedContainer(
+                                          duration: const Duration(milliseconds: 200),
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: isSelected ? AppColors.primary : AppColors.surfaceLight,
+                                            border: Border.all(
+                                              color: isSelected ? AppColors.primary : AppColors.border,
+                                              width: isSelected ? 1.5 : 0.5,
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              dayLabels[index],
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                                color: isSelected ? AppColors.backgroundDeep : AppColors.textSecondary,
+                                              ),
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ),
+                                        ),
+                                      );
+                                    }),
                                   ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      _buildQuickDayChip(s.weekday, {1, 2, 3, 4, 5}),
+                                      const SizedBox(width: 8),
+                                      _buildQuickDayChip(s.everyday, {1, 2, 3, 4, 5, 6, 7}),
+                                      const SizedBox(width: 8),
+                                      _buildQuickDayChip(s.weekend, {6, 7}),
+                                    ],
                                   ),
-                                );
-                              }),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _buildQuickDayChip(s.weekday, {1, 2, 3, 4, 5}),
-                                const SizedBox(width: 8),
-                                _buildQuickDayChip(s.everyday, {1, 2, 3, 4, 5, 6, 7}),
-                                const SizedBox(width: 8),
-                                _buildQuickDayChip(s.weekend, {6, 7}),
-                              ],
-                            ),
-                          ],
-                        ),
-                ),
+                                ],
+                              ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 _buildSectionCard(
                   title: s.timeRange,
+                  subtitle: _getTimeRangeSubtitle(s),
                   child: Column(
                     children: [
                       _buildDateRow(
-                        label: s.startDate,
+                        label: _repeatType == 'none' ? s.planDate : s.startDate,
                         date: _startDate,
                         onTap: () => _pickDate(isStart: true),
                       ),
-                      const SizedBox(height: 12),
-                      _buildDateRow(
-                        label: s.endDate,
-                        date: _endDate,
-                        onTap: () => _pickDate(isStart: false),
-                        trailing: TextButton(
-                          onPressed: () => setState(() => _endDate = null),
-                          child: Text(s.unlimited, style: const TextStyle(color: AppColors.primary, fontSize: 12)),
+                      if (_repeatType != 'none') ...[
+                        const SizedBox(height: 12),
+                        _buildDateRow(
+                          label: s.endDate,
+                          date: _endDate,
+                          onTap: () => _pickDate(isStart: false),
+                          trailing: TextButton(
+                            onPressed: () => setState(() => _endDate = null),
+                            child: Text(s.unlimited, style: const TextStyle(color: AppColors.primary, fontSize: 12)),
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
@@ -766,16 +787,129 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
     );
   }
 
+  Widget _buildMonthDaySelector() {
+    final s = S.of(context)!;
+    return Column(
+      children: [
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: List.generate(31, (index) {
+            final day = index + 1;
+            final isSelected = _selectedMonthDays.contains(day);
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  if (_selectedMonthDays.contains(day)) {
+                    _selectedMonthDays.remove(day);
+                  } else {
+                    _selectedMonthDays.add(day);
+                  }
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isSelected ? AppColors.primary : AppColors.surfaceLight,
+                  border: Border.all(
+                    color: isSelected ? AppColors.primary : AppColors.border,
+                    width: isSelected ? 1.5 : 0.5,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    '$day',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                      color: isSelected ? AppColors.backgroundDeep : AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildQuickMonthDayChip(s.monthStart, {1}),
+            const SizedBox(width: 8),
+            _buildQuickMonthDayChip(s.monthMid, {15}),
+            const SizedBox(width: 8),
+            _buildQuickMonthDayChip(s.monthEnd, {28, 29, 30, 31}),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickMonthDayChip(String label, Set<int> days) {
+    final isActive = _selectedMonthDays.length == days.length && _selectedMonthDays.containsAll(days);
+    return GestureDetector(
+      onTap: () => setState(() => _selectedMonthDays = Set.from(days)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.primary.withValues(alpha: 0.15) : AppColors.surfaceLight,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isActive ? AppColors.primary : AppColors.border,
+            width: isActive ? 1 : 0.5,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: isActive ? AppColors.primary : AppColors.textSecondary,
+            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getTimeRangeSubtitle(S s) {
+    switch (_repeatType) {
+      case 'none':
+        return s.timeRangeDescNone;
+      case 'daily':
+        return s.timeRangeDescDaily;
+      case 'weekly':
+        return s.timeRangeDescWeekly;
+      case 'monthly':
+        return s.timeRangeDescMonthly;
+      case 'interval':
+        return s.timeRangeDescInterval;
+      default:
+        return '';
+    }
+  }
+
   Future<List<String>> _checkTimeConflicts() async {
+    if (!_enableTimeSlot) return [];
     final timetable = ref.read(activeTimetableProvider).value;
     if (timetable == null) return [];
 
     final planStartMinutes = _startHour * 60 + _startMinute;
     final planEndMinutes = _endHour * 60 + _endMinute;
 
-    final activeDays = _repeatType == 'daily'
-        ? {1, 2, 3, 4, 5, 6, 7}
-        : _selectedDays;
+    final Set<int> activeDays;
+    switch (_repeatType) {
+      case 'none':
+        activeDays = {_startDate.weekday};
+      case 'daily':
+        activeDays = {1, 2, 3, 4, 5, 6, 7};
+      case 'monthly':
+        activeDays = {1, 2, 3, 4, 5, 6, 7};
+      default:
+        activeDays = _selectedDays;
+    }
 
     final repo = ref.read(timetableRepositoryProvider);
     final conflictingCourses = <String>[];
@@ -786,13 +920,13 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
         final startPeriod = course.startPeriod - 1;
         final endPeriod = course.endPeriod - 1;
 
-        if (startPeriod < 0 || startPeriod >= _periodTimeSlots.length) continue;
-        if (endPeriod >= _periodTimeSlots.length) continue;
+        if (startPeriod < 0 || startPeriod >= TimeSlotConstants.periodTimeSlots.length) continue;
+        if (endPeriod >= TimeSlotConstants.periodTimeSlots.length) continue;
 
-        final courseStart = _periodTimeSlots[startPeriod]['startHour']! * 60 +
-            _periodTimeSlots[startPeriod]['startMinute']!;
-        final courseEnd = _periodTimeSlots[endPeriod]['endHour']! * 60 +
-            _periodTimeSlots[endPeriod]['endMinute']!;
+        final courseStart = TimeSlotConstants.periodTimeSlots[startPeriod]['startHour']! * 60 +
+            TimeSlotConstants.periodTimeSlots[startPeriod]['startMinute']!;
+        final courseEnd = TimeSlotConstants.periodTimeSlots[endPeriod]['endHour']! * 60 +
+            TimeSlotConstants.periodTimeSlots[endPeriod]['endMinute']!;
 
         if (planStartMinutes < courseEnd && planEndMinutes > courseStart) {
           if (!conflictingCourses.contains(course.courseName)) {
@@ -871,6 +1005,10 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
       _repeatType = type;
       if (type == 'daily') {
         _selectedDays = {1, 2, 3, 4, 5, 6, 7};
+      } else if (type == 'weekly' && _selectedDays.isEmpty) {
+        _selectedDays = {1, 2, 3, 4, 5};
+      } else if (type == 'none') {
+        _endDate = null;
       }
     });
   }
@@ -919,7 +1057,13 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
   Future<void> _submit() async {
     final s = S.of(context)!;
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedDays.isEmpty && _repeatType != 'daily') {
+    if (_repeatType == 'monthly' && _selectedMonthDays.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(s.pleaseSelectActiveDate)),
+      );
+      return;
+    }
+    if (_repeatType == 'weekly' && _selectedDays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(s.pleaseSelectActiveDate)),
       );
@@ -951,14 +1095,24 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
     setState(() => _isSubmitting = true);
 
     try {
-      final sortedDays = _selectedDays.toList()..sort();
-      final activeDays = _repeatType == 'daily'
-          ? '1,2,3,4,5,6,7'
-          : sortedDays.join(',');
+      final String activeDays;
+      if (_repeatType == 'none') {
+        activeDays = '${_startDate.weekday}';
+      } else if (_repeatType == 'daily' || _repeatType == 'interval') {
+        activeDays = '1,2,3,4,5,6,7';
+      } else if (_repeatType == 'monthly') {
+        final sortedMonthDays = _selectedMonthDays.toList()..sort();
+        activeDays = sortedMonthDays.join(',');
+      } else {
+        final sortedDays = _selectedDays.toList()..sort();
+        activeDays = sortedDays.join(',');
+      }
 
       final repeatInterval = _repeatType == 'interval'
           ? int.tryParse(_intervalController.text) ?? 1
           : 1;
+
+      final effectiveEndDate = _repeatType == 'none' ? null : _endDate;
 
       final dailyTargetAmount = int.tryParse(_targetAmountController.text) ?? 0;
 
@@ -980,8 +1134,9 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
           endHour: _endHour,
           endMinute: _endMinute,
           colorValue: _selectedColorValue,
+          enableTimeSlot: _enableTimeSlot,
           startDate: _startDate,
-          endDate: _endDate,
+          endDate: effectiveEndDate,
           isActive: true,
           sortOrder: t.sortOrder,
           createdAt: t.createdAt,
@@ -1017,8 +1172,9 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
               endHour: _endHour,
               endMinute: _endMinute,
               colorValue: _selectedColorValue,
+              enableTimeSlot: _enableTimeSlot,
               startDate: _startDate,
-              endDate: _endDate,
+              endDate: effectiveEndDate,
             );
       }
 

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loop_app/core/constants/route_constants.dart';
+import 'package:loop_app/core/constants/time_slot_constants.dart';
 import 'package:loop_app/core/theme/colors.dart';
 import 'package:loop_app/core/theme/text_styles.dart';
 import 'package:loop_app/data/database/app_database.dart';
@@ -17,34 +18,37 @@ class DailyPlanPage extends ConsumerStatefulWidget {
   ConsumerState<DailyPlanPage> createState() => _DailyPlanPageState();
 }
 
+enum _DateViewLevel { day, week, month }
+
 class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   late DateTime _selectedDate;
-  double _scale = 1.0;
 
-  static const double _baseHourHeight = 72.0;
   static const int _startHour = 5;
   static const int _endHour = 24;
   static const double _timeLabelWidth = 48.0;
   static const int _dayPageCenter = 36500;
-  static const double _scrollPaddingTop = 120.0;
-  static const double _scrollPaddingBottom = 100.0;
-  static const double _minScale = 0.5;
-  static const double _maxScale = 2.0;
+  static const double _scrollPaddingTop = 16.0;
+  static const double _scrollPaddingBottom = 40.0;
 
-  double get _hourHeight => _baseHourHeight * _scale;
-
-  static const List<Map<String, int>> _periodTimeSlots = [
-    {'startHour': 8, 'startMinute': 0, 'endHour': 8, 'endMinute': 45},
-    {'startHour': 8, 'startMinute': 55, 'endHour': 9, 'endMinute': 40},
-    {'startHour': 10, 'startMinute': 0, 'endHour': 10, 'endMinute': 45},
-    {'startHour': 10, 'startMinute': 55, 'endHour': 11, 'endMinute': 40},
-    {'startHour': 14, 'startMinute': 0, 'endHour': 14, 'endMinute': 45},
-    {'startHour': 14, 'startMinute': 55, 'endHour': 15, 'endMinute': 40},
-    {'startHour': 16, 'startMinute': 0, 'endHour': 16, 'endMinute': 45},
-    {'startHour': 16, 'startMinute': 55, 'endHour': 17, 'endMinute': 40},
-    {'startHour': 19, 'startMinute': 0, 'endHour': 19, 'endMinute': 45},
-    {'startHour': 19, 'startMinute': 55, 'endHour': 20, 'endMinute': 40},
+  static const List<({int interval, String label, double hourHeight})> _zoomLevels = [
+    (interval: 120, label: '2h',  hourHeight: 36.0),
+    (interval: 60,  label: '1h',  hourHeight: 72.0),
+    (interval: 45,  label: '45m', hourHeight: 96.0),
+    (interval: 30,  label: '30m', hourHeight: 144.0),
+    (interval: 15,  label: '15m', hourHeight: 288.0),
+    (interval: 10,  label: '10m', hourHeight: 432.0),
+    (interval: 5,   label: '5m',  hourHeight: 864.0),
   ];
+  int _currentZoomLevel = 1;
+  double _lastScaleFactor = 1.0;
+
+  double get _hourHeight => _zoomLevels[_currentZoomLevel].hourHeight;
+  int get _currentInterval => _zoomLevels[_currentZoomLevel].interval;
+
+  _DateViewLevel _dateViewLevel = _DateViewLevel.week;
+  double _dateViewLastScale = 1.0;
+
+
 
   static const List<Color> _courseColors = [
     Color(0xFF4A90D9),
@@ -152,7 +156,12 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
           ),
         ),
         child: SafeArea(
-          child: Column(
+          bottom: false,
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewPadding.bottom + 80.0,
+            ),
+            child: Column(
             children: [
               _buildWeekIndicator(),
               _buildWeekSelector(),
@@ -172,22 +181,40 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
               ),
             ],
           ),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildDayPageView(List<PlanInstance> instances) {
-    return PageView.builder(
-      controller: _dayPageController,
-      onPageChanged: (page) {
-        if (_isSyncingDayPage) return;
-        final date = _getDateFromDayPage(page);
-        _changeDate(date, syncWeekPage: true);
+    return GestureDetector(
+      onScaleStart: (_) {
+        _lastScaleFactor = 1.0;
       },
-      itemBuilder: (context, page) {
-        return _buildTimeTable(instances);
+      onScaleUpdate: (details) {
+        if (details.pointerCount != 2) return;
+        final scaleDelta = details.scale / _lastScaleFactor;
+        _lastScaleFactor = details.scale;
+        if (scaleDelta > 1.15 && _currentZoomLevel < _zoomLevels.length - 1) {
+          setState(() => _currentZoomLevel++);
+          _lastScaleFactor = details.scale;
+        } else if (scaleDelta < 0.85 && _currentZoomLevel > 0) {
+          setState(() => _currentZoomLevel--);
+          _lastScaleFactor = details.scale;
+        }
       },
+      child: PageView.builder(
+        controller: _dayPageController,
+        onPageChanged: (page) {
+          if (_isSyncingDayPage) return;
+          final date = _getDateFromDayPage(page);
+          _changeDate(date, syncWeekPage: true);
+        },
+        itemBuilder: (context, page) {
+          return _buildTimeTable(instances);
+        },
+      ),
     );
   }
 
@@ -210,24 +237,48 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
         final weekNumber = diff ~/ 7 + 1;
         if (weekNumber > timetable.totalWeeks) return const SizedBox.shrink();
 
-        final isCurrentWeek = weekNumber == timetable.currentWeek;
+        final now = DateTime.now();
+        final nowDiff = now.difference(firstMonday).inDays;
+        final currentWeekNumber = nowDiff >= 0 ? nowDiff ~/ 7 + 1 : 0;
+        final isCurrentWeek = weekNumber == currentWeekNumber;
         final weekText = isCurrentWeek
             ? s.weekFormat(weekNumber)
             : s.weekFormatNotCurrent(weekNumber);
 
+        final firstMonth = timetable.firstWeekMonday.month;
+        final firstYear = timetable.firstWeekMonday.year;
+        final monthNumber = (_selectedDate.year - firstYear) * 12 + (_selectedDate.month - firstMonth) + 1;
+        final currentMonthNumber = (now.year - firstYear) * 12 + (now.month - firstMonth) + 1;
+        final isCurrentMonth = monthNumber == currentMonthNumber;
+        final monthText = monthNumber > 0
+            ? (isCurrentMonth
+                ? s.monthFormat(monthNumber)
+                : s.monthFormatNotCurrent(monthNumber))
+            : '';
+
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              weekText,
-              style: TextStyles.caption.copyWith(
-                color:
-                    isCurrentWeek ? AppColors.primary : AppColors.textTertiary,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                weekText,
+                style: TextStyles.caption.copyWith(
+                  color: isCurrentWeek ? AppColors.primary : AppColors.textTertiary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
               ),
-            ),
+              if (monthText.isNotEmpty)
+                Text(
+                  monthText,
+                  style: TextStyles.caption.copyWith(
+                    color: isCurrentMonth ? AppColors.accent : AppColors.textTertiary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+            ],
           ),
         );
       },
@@ -237,6 +288,94 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   }
 
   Widget _buildWeekSelector() {
+    return GestureDetector(
+      onScaleStart: (_) {
+        _dateViewLastScale = 1.0;
+      },
+      onScaleUpdate: (details) {
+        if (details.pointerCount != 2) return;
+        final scaleDelta = details.scale / _dateViewLastScale;
+        _dateViewLastScale = details.scale;
+        if (scaleDelta > 1.2) {
+          _dateViewLastScale = details.scale;
+          if (_dateViewLevel == _DateViewLevel.month) {
+            setState(() => _dateViewLevel = _DateViewLevel.week);
+          } else if (_dateViewLevel == _DateViewLevel.week) {
+            setState(() => _dateViewLevel = _DateViewLevel.day);
+          }
+        } else if (scaleDelta < 0.8) {
+          _dateViewLastScale = details.scale;
+          if (_dateViewLevel == _DateViewLevel.day) {
+            setState(() => _dateViewLevel = _DateViewLevel.week);
+          } else if (_dateViewLevel == _DateViewLevel.week) {
+            setState(() => _dateViewLevel = _DateViewLevel.month);
+          }
+        }
+      },
+      child: switch (_dateViewLevel) {
+        _DateViewLevel.day => _buildDayView(),
+        _DateViewLevel.week => _buildWeekView(),
+        _DateViewLevel.month => _buildMonthView(),
+      },
+    );
+  }
+
+  Widget _buildDayView() {
+    final s = S.of(context)!;
+    final dayNames = [s.monday, s.tuesday, s.wednesday, s.thursday, s.friday, s.saturday, s.sunday];
+    final weekdayName = dayNames[_selectedDate.weekday - 1];
+
+    return Container(
+      height: 56,
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.surface.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Center(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            GestureDetector(
+              onTap: () => _changeDate(
+                _selectedDate.subtract(const Duration(days: 1)),
+                syncDayPage: true,
+                syncWeekPage: true,
+              ),
+              child: const Padding(
+                padding: EdgeInsets.all(8),
+                child: Icon(Icons.chevron_left, color: AppColors.textSecondary, size: 20),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '${_selectedDate.month}/${_selectedDate.day} $weekdayName',
+              style: const TextStyle(
+                fontFamily: 'MiSans',
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () => _changeDate(
+                _selectedDate.add(const Duration(days: 1)),
+                syncDayPage: true,
+                syncWeekPage: true,
+              ),
+              child: const Padding(
+                padding: EdgeInsets.all(8),
+                child: Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 20),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWeekView() {
     final now = DateTime.now();
     final s = S.of(context)!;
     final dayNames = [s.mon, s.tue, s.wed, s.thu, s.fri, s.sat, s.sun];
@@ -338,6 +477,137 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
     );
   }
 
+  Widget _buildMonthView() {
+    final now = DateTime.now();
+    final s = S.of(context)!;
+    final dayNames = [s.mon, s.tue, s.wed, s.thu, s.fri, s.sat, s.sun];
+
+    final year = _selectedDate.year;
+    final month = _selectedDate.month;
+    final firstDayOfMonth = DateTime(year, month, 1);
+    final daysInMonth = DateTime(year, month + 1, 0).day;
+    final startWeekday = firstDayOfMonth.weekday;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  final prevMonth = DateTime(year, month - 1, 1);
+                  _changeDate(
+                    DateTime(prevMonth.year, prevMonth.month,
+                        _selectedDate.day.clamp(1, DateTime(prevMonth.year, prevMonth.month + 1, 0).day)),
+                    syncDayPage: true,
+                    syncWeekPage: true,
+                  );
+                },
+                child: const Padding(
+                  padding: EdgeInsets.all(4),
+                  child: Icon(Icons.chevron_left, color: AppColors.textSecondary, size: 20),
+                ),
+              ),
+              Text(
+                '${_selectedDate.year}/${_selectedDate.month}',
+                style: const TextStyle(
+                  fontFamily: 'MiSans',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  final nextMonth = DateTime(year, month + 1, 1);
+                  _changeDate(
+                    DateTime(nextMonth.year, nextMonth.month,
+                        _selectedDate.day.clamp(1, DateTime(nextMonth.year, nextMonth.month + 1, 0).day)),
+                    syncDayPage: true,
+                    syncWeekPage: true,
+                  );
+                },
+                child: const Padding(
+                  padding: EdgeInsets.all(4),
+                  child: Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 20),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: dayNames.map((name) => Expanded(
+              child: Center(
+                child: Text(
+                  name,
+                  style: TextStyles.caption.copyWith(
+                    color: AppColors.textTertiary,
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+            )).toList(),
+          ),
+          const SizedBox(height: 4),
+          ...List.generate(6, (weekIndex) {
+            return Row(
+              children: List.generate(7, (dayIndex) {
+                final cellIndex = weekIndex * 7 + dayIndex;
+                final dayNumber = cellIndex - (startWeekday - 1) + 1;
+                if (dayNumber < 1 || dayNumber > daysInMonth) {
+                  return const Expanded(child: SizedBox(height: 32));
+                }
+                final date = DateTime(year, month, dayNumber);
+                final isSelected = _isSameDay(date, _selectedDate);
+                final isToday = _isSameDay(date, now);
+
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () => _changeDate(date, syncDayPage: true, syncWeekPage: true),
+                    child: Container(
+                      height: 32,
+                      margin: const EdgeInsets.all(1),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.primary
+                            : isToday
+                                ? AppColors.primary.withValues(alpha: 0.12)
+                                : Colors.transparent,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '$dayNumber',
+                          style: TextStyle(
+                            fontFamily: 'MiSans',
+                            fontSize: 12,
+                            fontWeight: isSelected || isToday ? FontWeight.w700 : FontWeight.w400,
+                            color: isSelected
+                                ? AppColors.backgroundDeep
+                                : isToday
+                                    ? AppColors.primary
+                                    : AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
   DateTime _getWeekStart(DateTime now, int weekOffset) {
     final weekday = now.weekday;
     return DateTime(now.year, now.month, now.day)
@@ -352,35 +622,47 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
       data: (templates) {
         final templateMap = {for (final t in templates) t.id: t};
 
+        final allDayInstances = <PlanInstance>[];
+        final timedInstances = <PlanInstance>[];
+        for (final instance in instances) {
+          final template = templateMap[instance.planTemplateId];
+          if (template == null) continue;
+          if (template.enableTimeSlot) {
+            timedInstances.add(instance);
+          } else {
+            allDayInstances.add(instance);
+          }
+        }
+
         final totalHeight = (_endHour - _startHour) * _hourHeight;
 
-        return GestureDetector(
-            onScaleStart: (_) {},
-            onScaleUpdate: (details) {
-              if (details.pointerCount != 2) return;
-              setState(() {
-                _scale = (_scale * details.scale).clamp(_minScale, _maxScale);
-              });
-            },
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(
-                top: _scrollPaddingTop,
-                bottom: _scrollPaddingBottom,
-              ),
-              child: SizedBox(
-                height: totalHeight,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTimeLabels(totalHeight),
-                    Expanded(
-                      child:
-                          _buildPlanGrid(instances, templateMap, totalHeight),
+        return Column(
+              children: [
+                if (allDayInstances.isNotEmpty)
+                  _buildAllDaySection(allDayInstances, templateMap),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.only(
+                      top: _scrollPaddingTop,
+                      bottom: _scrollPaddingBottom,
                     ),
-                  ],
+                    child: SizedBox(
+                      height: totalHeight,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildTimeLabels(totalHeight),
+                          Expanded(
+                            child: _buildPlanGrid(
+                                timedInstances, templateMap, totalHeight),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ));
+              ],
+            );
       },
       loading: () => const Center(
           child: CircularProgressIndicator(
@@ -391,19 +673,105 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
     );
   }
 
+  Widget _buildAllDaySection(
+    List<PlanInstance> allDayInstances,
+    Map<String, PlanTemplate> templateMap,
+  ) {
+    final s = S.of(context)!;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            s.allDayEvents,
+            style: TextStyles.caption.copyWith(
+              color: AppColors.textTertiary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: allDayInstances.map((instance) {
+              final template = templateMap[instance.planTemplateId];
+              if (template == null) return const SizedBox.shrink();
+              final color = Color(template.colorValue);
+              return GestureDetector(
+                onTap: () => _showInstanceDetail(instance, template),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: color.withValues(alpha: 0.3), width: 0.5),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: instance.isCompleted ? AppColors.success : Colors.transparent,
+                          border: Border.all(
+                            color: instance.isCompleted ? AppColors.success : color,
+                            width: 1,
+                          ),
+                        ),
+                        child: instance.isCompleted
+                            ? const Icon(Icons.check, size: 7, color: AppColors.backgroundDeep)
+                            : null,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        template.name,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: color,
+                          decoration: instance.isCompleted ? TextDecoration.lineThrough : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTimeLabels(double totalHeight) {
+    final interval = _currentInterval;
+    final totalMinutes = (_endHour - _startHour) * 60;
+    final labelCount = totalMinutes ~/ interval;
+
     return SizedBox(
       width: _timeLabelWidth,
       height: totalHeight,
       child: Stack(
-        children: List.generate(_endHour - _startHour, (index) {
-          final hour = _startHour + index;
+        children: List.generate(labelCount + 1, (index) {
+          final minutes = index * interval;
+          final hour = _startHour + minutes ~/ 60;
+          final minute = minutes % 60;
+          if (hour > _endHour) return const SizedBox.shrink();
+          final top = (minutes / 60.0) * _hourHeight - 6;
           return Positioned(
-            top: index * _hourHeight - 6,
+            top: top,
             left: 0,
             right: 0,
             child: Text(
-              '${hour.toString().padLeft(2, '0')}:00',
+              '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}',
               style: TextStyles.caption.copyWith(
                 color: AppColors.textTertiary,
                 fontSize: 10,
@@ -457,13 +825,13 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
                   final startPeriod = course.startPeriod;
                   final endPeriod = course.endPeriod;
                   if (startPeriod < 1 ||
-                      startPeriod > _periodTimeSlots.length) {
+                      startPeriod > TimeSlotConstants.periodTimeSlots.length) {
                     return const SizedBox.shrink();
                   }
                   final effectiveEnd =
-                      endPeriod.clamp(1, _periodTimeSlots.length);
-                  final startTime = _periodTimeSlots[startPeriod - 1];
-                  final endTime = _periodTimeSlots[effectiveEnd - 1];
+                      endPeriod.clamp(1, TimeSlotConstants.periodTimeSlots.length);
+                  final startTime = TimeSlotConstants.periodTimeSlots[startPeriod - 1];
+                  final endTime = TimeSlotConstants.periodTimeSlots[effectiveEnd - 1];
 
                   final startOffset = _getTimeOffset(
                       startTime['startHour']!, startTime['startMinute']!);
@@ -497,20 +865,25 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   }
 
   Widget _buildHourLines(double totalHeight) {
+    final interval = _currentInterval;
+    final totalMinutes = (_endHour - _startHour) * 60;
+    final lineCount = totalMinutes ~/ interval;
+    final lineSpacing = (interval / 60.0) * _hourHeight;
+
     return SizedBox(
       height: totalHeight,
-      child: Column(
-        children: List.generate(_endHour - _startHour, (index) {
-          return SizedBox(
-            height: _hourHeight,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: AppColors.border.withValues(alpha: 0.3),
-                    width: 0.5,
-                  ),
-                ),
+      child: Stack(
+        children: List.generate(lineCount + 1, (index) {
+          final minutes = index * interval;
+          final isHourLine = minutes % 60 == 0;
+          return Positioned(
+            top: index * lineSpacing,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 0.5,
+              color: AppColors.border.withValues(
+                alpha: isHourLine ? 0.4 : 0.2,
               ),
             ),
           );
@@ -563,6 +936,8 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
+      useSafeArea: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -609,8 +984,11 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
                 ],
               ),
               const SizedBox(height: 16),
-              _buildDetailRow(s.time,
-                  '${template.startHour.toString().padLeft(2, '0')}:${template.startMinute.toString().padLeft(2, '0')} - ${template.endHour.toString().padLeft(2, '0')}:${template.endMinute.toString().padLeft(2, '0')}'),
+              if (template.enableTimeSlot)
+                _buildDetailRow(s.time,
+                    '${template.startHour.toString().padLeft(2, '0')}:${template.startMinute.toString().padLeft(2, '0')} - ${template.endHour.toString().padLeft(2, '0')}:${template.endMinute.toString().padLeft(2, '0')}')
+              else
+                _buildDetailRow(s.time, s.allDayEvents),
               if (instance.targetAmount > 0) ...[
                 _buildDetailRow(s.progress,
                     '${instance.completedAmount}/${instance.targetAmount} ${template.unit ?? ''}'),
@@ -758,12 +1136,14 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   }
 
   void _showCourseDetail(TimetableCourse course, Color color) {
-    final startTime = _periodTimeSlots[course.startPeriod - 1];
-    final endTime = _periodTimeSlots[
-        course.endPeriod.clamp(1, _periodTimeSlots.length) - 1];
+    final startTime = TimeSlotConstants.periodTimeSlots[course.startPeriod - 1];
+    final endTime = TimeSlotConstants.periodTimeSlots[
+        course.endPeriod.clamp(1, TimeSlotConstants.periodTimeSlots.length) - 1];
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
+      useSafeArea: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),

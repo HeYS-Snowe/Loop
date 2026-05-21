@@ -16,7 +16,7 @@ function Get-VersionFromPubspec {
     param([string]$pubspecPath)
     
     if (-not (Test-Path $pubspecPath)) {
-        Write-Error "pubspec.yaml 文件不存在: $pubspecPath"
+        Write-Error "pubspec.yaml not found: $pubspecPath"
         exit 1
     }
     
@@ -28,7 +28,7 @@ function Get-VersionFromPubspec {
         }
     }
     
-    Write-Error "无法从 pubspec.yaml 中读取版本号"
+    Write-Error "Cannot read version from pubspec.yaml"
     exit 1
 }
 
@@ -39,11 +39,11 @@ function Update-VersionInPubspec {
         [int]$newBuildNumber
     )
     
-    $content = Get-Content $pubspecPath -Raw
+    $content = Get-Content $pubspecPath -Raw -Encoding UTF8
     $newContent = $content -replace "version:\s*\d+\.\d+\.\d+\+\d+", "version: $newVersion+$newBuildNumber"
     
-    Set-Content -Path $pubspecPath -Value $newContent -NoNewline
-    Write-Host "版本号已更新: $newVersion+$newBuildNumber" -ForegroundColor Yellow
+    [System.IO.File]::WriteAllText($pubspecPath, $newContent, [System.Text.UTF8Encoding]::new($false))
+    Write-Host "[VERSION] Updated: $newVersion+$newBuildNumber" -ForegroundColor Yellow
 }
 
 function Get-IncrementedVersion {
@@ -62,30 +62,6 @@ function Get-IncrementedVersion {
             $minor++
             $patch = 0
         }
-        "alpha" {
-            $patch++
-        }
-        "beta" {
-            $patch++
-        }
-        "rc" {
-            $patch++
-        }
-        "fix" {
-            $patch++
-        }
-        "hotfix" {
-            $patch++
-        }
-        "feature" {
-            $patch++
-        }
-        "dev" {
-            $patch++
-        }
-        "debug" {
-            $patch++
-        }
         default {
             $patch++
         }
@@ -99,10 +75,14 @@ function Get-BuildDate {
 }
 
 function Get-BuildSequence {
-    param([string]$apkOutputDir, [string]$buildDate, [string]$status, [string]$version)
+    param([string]$buildsDir, [string]$buildDate, [string]$status, [string]$version)
     
+    if (-not (Test-Path $buildsDir)) {
+        return 1
+    }
+
     $pattern = "Loop_${status}_${version}_${buildDate}_\d{2}\.apk"
-    $existingFiles = Get-ChildItem -Path $apkOutputDir -Filter "*.apk" -ErrorAction SilentlyContinue | Where-Object { $_.Name -match "Loop_${status}_${version}_${buildDate}_\d{2}\.apk" }
+    $existingFiles = Get-ChildItem -Path $buildsDir -Filter "*.apk" -ErrorAction SilentlyContinue | Where-Object { $_.Name -match $pattern }
     
     if ($existingFiles.Count -eq 0) {
         return 1
@@ -133,7 +113,7 @@ function Backup-OriginalAPK {
     $backupName = "app_$(Split-Path $apkPath -Leaf)_$timestamp.apk"
     $backupPath = Join-Path $backupDir $backupName
     
-    Write-Host "备份: $(Split-Path $apkPath -Leaf) -> backup\$backupName" -ForegroundColor Yellow
+    Write-Host "[BACKUP] $(Split-Path $apkPath -Leaf) -> backup\$backupName" -ForegroundColor Yellow
     Copy-Item -Path $apkPath -Destination $backupPath -Force
 }
 
@@ -151,17 +131,17 @@ function Rename-APK {
     $newPath = Join-Path (Split-Path $apkPath) $newName
     
     if (Test-Path $newPath) {
-        Write-Warning "目标文件已存在: $newPath"
+        Write-Warning "Target already exists: $newPath"
         return $false
     }
     
-    Write-Host "重命名: $(Split-Path $apkPath -Leaf) -> $newName" -ForegroundColor Green
+    Write-Host "[RENAME] $(Split-Path $apkPath -Leaf) -> $newName" -ForegroundColor Green
     Rename-Item -Path $apkPath -NewName $newName -Force
     return $true
 }
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Loop APK 构建工具" -ForegroundColor Cyan
+Write-Host "Loop APK Build Tool" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -171,76 +151,89 @@ $BuildNumber = $versionInfo.BuildNumber
 $buildDate = Get-BuildDate
 $apkOutputDir = Join-Path $projectRoot "build\app\outputs\flutter-apk"
 
-Write-Host "项目信息:" -ForegroundColor Cyan
-Write-Host "  项目根目录: $projectRoot" -ForegroundColor Gray
-Write-Host "  pubspec: $pubspecPath" -ForegroundColor Gray
-Write-Host "  输出目录: $apkOutputDir" -ForegroundColor Gray
+$solutionRoot = Split-Path -Parent $projectRoot
+$buildsDir = Join-Path $solutionRoot "builds"
+if (-not (Test-Path $buildsDir)) {
+    New-Item -ItemType Directory -Path $buildsDir | Out-Null
+}
+
+Write-Host "Project:" -ForegroundColor Cyan
+Write-Host "  Root:    $projectRoot" -ForegroundColor Gray
+Write-Host "  Pubspec: $pubspecPath" -ForegroundColor Gray
+Write-Host "  Output:  $apkOutputDir" -ForegroundColor Gray
 Write-Host ""
 
-Write-Host "构建参数:" -ForegroundColor Cyan
-Write-Host "  构建类型: $BuildType" -ForegroundColor Gray
-Write-Host "  状态类型: $Status" -ForegroundColor Gray
+Write-Host "Build Params:" -ForegroundColor Cyan
+Write-Host "  BuildType: $BuildType" -ForegroundColor Gray
+Write-Host "  Status:    $Status" -ForegroundColor Gray
 Write-Host ""
 
-$newVersion = Get-IncrementedVersion -currentVersion $Version -status $Status
-$newBuildNumber = $BuildNumber + 1
+$releaseVersion = Get-IncrementedVersion -currentVersion $Version -status $Status
+$releaseBuildNumber = $BuildNumber + 1
 
-Write-Host "版本信息:" -ForegroundColor Cyan
-Write-Host "  旧版本: $Version+$BuildNumber" -ForegroundColor Gray
-Write-Host "  新版本: $newVersion+$newBuildNumber" -ForegroundColor Gray
+Write-Host "Version:" -ForegroundColor Cyan
+Write-Host "  Current: $Version+$BuildNumber" -ForegroundColor Gray
+Write-Host "  Release: $releaseVersion+$releaseBuildNumber" -ForegroundColor Gray
 Write-Host ""
 
-$buildSequence = Get-BuildSequence -apkOutputDir $apkOutputDir -buildDate $buildDate -status $Status -version $Version
+Update-VersionInPubspec -pubspecPath $pubspecPath -newVersion $releaseVersion -newBuildNumber $releaseBuildNumber
 
-Write-Host "构建信息:" -ForegroundColor Cyan
-Write-Host "  构建日期: $buildDate" -ForegroundColor Gray
-Write-Host "  构建序号: $($buildSequence.ToString('00'))" -ForegroundColor Gray
+$buildSequence = Get-BuildSequence -buildsDir $buildsDir -buildDate $buildDate -status $Status -version $releaseVersion
+
+Write-Host "Build Info:" -ForegroundColor Cyan
+Write-Host "  Date:     $buildDate" -ForegroundColor Gray
+Write-Host "  Sequence: $($buildSequence.ToString('00'))" -ForegroundColor Gray
 Write-Host ""
 
-Write-Host "开始构建..." -ForegroundColor Green
+Write-Host "Building..." -ForegroundColor Green
 Set-Location $projectRoot
 & flutter build apk --$BuildType
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "构建失败！"
+    Update-VersionInPubspec -pubspecPath $pubspecPath -newVersion $Version -newBuildNumber $BuildNumber
+    Write-Error "Build failed! Version rolled back to $Version+$BuildNumber"
     exit 1
 }
 
 Write-Host ""
-Write-Host "构建完成，开始处理APK文件..." -ForegroundColor Green
+Write-Host "Build complete, processing APK..." -ForegroundColor Green
 
 $apkFile = Join-Path $apkOutputDir "app-$BuildType.apk"
 
 if (-not (Test-Path $apkFile)) {
-    Write-Error "APK 文件不存在: $apkFile"
+    Write-Error "APK not found: $apkFile"
     exit 1
 }
 
-Write-Host "找到 APK 文件: $apkFile" -ForegroundColor Cyan
+Write-Host "Found APK: $apkFile" -ForegroundColor Cyan
 Write-Host ""
 
 Backup-OriginalAPK -apkPath $apkFile
 
-if (Rename-APK -apkPath $apkFile -status $Status -version $Version -buildDate $buildDate -sequence $buildSequence) {
-    $newApkName = "Loop_${Status}_${Version}_${buildDate}_$($buildSequence.ToString('00')).apk"
+if (Rename-APK -apkPath $apkFile -status $Status -version $releaseVersion -buildDate $buildDate -sequence $buildSequence) {
+    $newApkName = "Loop_${Status}_${releaseVersion}_${buildDate}_$($buildSequence.ToString('00')).apk"
     $newApkPath = Join-Path $apkOutputDir $newApkName
+    $buildsApkPath = Join-Path $buildsDir $newApkName
+    
+    Copy-Item -Path $newApkPath -Destination $buildsApkPath -Force
+    Write-Host "[ARCHIVE] Copied to builds: $newApkName" -ForegroundColor Green
     
     Write-Host ""
     Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host "构建和重命名完成！" -ForegroundColor Green
+    Write-Host "Build & Rename Complete!" -ForegroundColor Green
     Write-Host ""
-    Write-Host "APK 文件:" -ForegroundColor Green
-    Write-Host "  $newApkPath" -ForegroundColor White
+    Write-Host "APK:" -ForegroundColor Green
+    Write-Host "  $buildsApkPath" -ForegroundColor White
     Write-Host ""
-    Write-Host "文件信息:" -ForegroundColor Green
-    $fileInfo = Get-Item $newApkPath
-    Write-Host "  文件大小: $([math]::Round($fileInfo.Length / 1MB, 2)) MB" -ForegroundColor Gray
-    Write-Host "  创建时间: $($fileInfo.CreationTime)" -ForegroundColor Gray
-    
-    Update-VersionInPubspec -pubspecPath $pubspecPath -newVersion $newVersion -newBuildNumber $newBuildNumber
+    Write-Host "File Info:" -ForegroundColor Green
+    $fileInfo = Get-Item $buildsApkPath
+    Write-Host "  Size:      $([math]::Round($fileInfo.Length / 1MB, 2)) MB" -ForegroundColor Gray
+    Write-Host "  Created:   $($fileInfo.CreationTime)" -ForegroundColor Gray
+    Write-Host "  Version:   $releaseVersion (build $releaseBuildNumber)" -ForegroundColor Gray
+    Write-Host "  Sequence:  $($buildSequence.ToString('00'))" -ForegroundColor Gray
     
     Write-Host "========================================" -ForegroundColor Cyan
 } else {
-    Write-Error "重命名失败！"
+    Write-Error "Rename failed!"
     exit 1
 }

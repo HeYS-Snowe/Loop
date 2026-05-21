@@ -12,7 +12,8 @@
       "Bash(powershell -Command \"[Environment]::GetEnvironmentVariable\\(''PUB_CACHE'', ''User''\\)\")",
       "Bash(powershell -Command \"[Environment]::GetEnvironmentVariable\\(''PUB_CACHE'', ''Machine''\\)\")",
       "Bash(setx PUB_HOSTED_URL \"https://mirrors.tuna.tsinghua.edu.cn/dart-pub\" && setx FLUTTER_STORAGE_BASE_URL \"https://mirrors.tuna.tsinghua.edu.cn/flutter\")",
-      "Bash(echo \"=== 新的镜像配置 ===\" && echo \"PUB_HOSTED_URL:\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('PUB_HOSTED_URL', 'User'\\)\" && echo \"FLUTTER_STORAGE_BASE_URL:\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('FLUTTER_STORAGE_BASE_URL', 'User'\\)\")"
+      "Bash(echo \"=== 新的镜像配置 ===\" && echo \"PUB_HOSTED_URL:\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('PUB_HOSTED_URL', 'User'\\)\" && echo \"FLUTTER_STORAGE_BASE_URL:\" && powershell -Command \"[Environment]::GetEnvironmentVariable\\('FLUTTER_STORAGE_BASE_URL', 'User'\\)\")",
+      "Bash(flutter analyze *)"
     ]
   }
 }

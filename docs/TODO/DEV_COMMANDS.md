@@ -60,6 +60,7 @@ Copy-Item -Path $src -Destination $dest -Force
 ```
 
 命名格式: `Loop_{status}_{version}_{date}_{seq}.apk`
+
 - status: alpha / beta / release / dev / debug
 - version: 如 0.0.4
 - date: YYYYMMDD
@@ -111,11 +112,11 @@ flutter pub run build_runner build --delete-conflicting-outputs
 
 在 `flutter run` 运行期间:
 
-| 按键 | 功能 |
-|------|------|
-| `r` | Hot reload（热重载，保留状态） |
+| 按键  | 功能                    |
+| --- | --------------------- |
+| `r` | Hot reload（热重载，保留状态）  |
 | `R` | Hot restart（热重启，重置状态） |
-| `q` | 退出 |
+| `q` | 退出                    |
 
 [NOTE] 修改了 i18n .arb 文件或数据库表定义后，需要 Hot restart (R) 或重新运行
 

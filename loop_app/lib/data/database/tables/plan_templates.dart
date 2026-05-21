@@ -18,6 +18,7 @@ class PlanTemplates extends Table {
   IntColumn get endHour => integer().withDefault(const Constant(9))();
   IntColumn get endMinute => integer().withDefault(const Constant(0))();
   IntColumn get colorValue => integer().withDefault(const Constant(0xFF2196F3))();
+  BoolColumn get enableTimeSlot => boolean().withDefault(const Constant(true))();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
   DateTimeColumn get startDate => dateTime()();
   DateTimeColumn get endDate => dateTime().nullable()();
