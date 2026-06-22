@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loop_app/core/constants/time_slot_constants.dart';
+import 'package:loop_app/core/constants/palette_colors.dart';
 import 'package:loop_app/core/theme/colors.dart';
 import 'package:loop_app/core/theme/text_styles.dart';
 import 'package:loop_app/data/database/app_database.dart';
@@ -48,21 +49,6 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
   bool get _isEditMode => widget.template != null;
   bool get _isEditFromInstance => _isEditMode && widget.currentDate != null;
 
-  static const List<int> _presetColors = [
-    0xFF2196F3,
-    0xFFE91E63,
-    0xFF4CAF50,
-    0xFF9C27B0,
-    0xFFFF9800,
-    0xFF00BCD4,
-    0xFFF44336,
-    0xFF3F51B5,
-    0xFF8BC34A,
-    0xFFFF5722,
-    0xFF607D8B,
-    0xFF795548,
-  ];
-
   static const List<String> _repeatOptionKeys = [
     'none',
     'daily',
@@ -70,8 +56,6 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
     'monthly',
     'interval',
   ];
-
-
 
   @override
   void initState() {
@@ -698,9 +682,9 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
     return Wrap(
       spacing: 12,
       runSpacing: 12,
-      children: _presetColors.map((colorValue) {
+      children: PaletteColors.planCardColors.map((color) {
+        final colorValue = color.toARGB32();
         final isSelected = _selectedColorValue == colorValue;
-        final color = Color(colorValue);
         return GestureDetector(
           onTap: () => setState(() => _selectedColorValue = colorValue),
           child: Container(

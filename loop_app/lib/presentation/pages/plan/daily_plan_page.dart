@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loop_app/core/constants/route_constants.dart';
 import 'package:loop_app/core/constants/time_slot_constants.dart';
+import 'package:loop_app/core/constants/palette_colors.dart';
 import 'package:loop_app/core/theme/colors.dart';
 import 'package:loop_app/core/theme/text_styles.dart';
 import 'package:loop_app/data/database/app_database.dart';
@@ -27,8 +28,8 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   static const int _endHour = 24;
   static const double _timeLabelWidth = 48.0;
   static const int _dayPageCenter = 36500;
-  static const double _scrollPaddingTop = 16.0;
-  static const double _scrollPaddingBottom = 40.0;
+  static const double _scrollPaddingTop = 24.0;
+  static const double _scrollPaddingBottom = 60.0;
 
   static const List<({int interval, String label, double hourHeight})> _zoomLevels = [
     (interval: 120, label: '2h',  hourHeight: 36.0),
@@ -50,16 +51,7 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
 
 
 
-  static const List<Color> _courseColors = [
-    Color(0xFF4A90D9),
-    Color(0xFF00BFA5),
-    Color(0xFFFF7043),
-    Color(0xFFAB47BC),
-    Color(0xFF42A5F5),
-    Color(0xFFFFCA28),
-    Color(0xFF66BB6A),
-    Color(0xFFEF5350),
-  ];
+  static const List<Color> _courseColors = PaletteColors.courseColors;
 
   final PageController _weekPageController = PageController(initialPage: 5200);
   final PageController _dayPageController =
@@ -760,6 +752,7 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
       width: _timeLabelWidth,
       height: totalHeight,
       child: Stack(
+        clipBehavior: Clip.none,
         children: List.generate(labelCount + 1, (index) {
           final minutes = index * interval;
           final hour = _startHour + minutes ~/ 60;
@@ -937,6 +930,7 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
     showModalBottomSheet(
       context: context,
       useRootNavigator: true,
+      isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
@@ -1143,6 +1137,7 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
     showModalBottomSheet(
       context: context,
       useRootNavigator: true,
+      isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(

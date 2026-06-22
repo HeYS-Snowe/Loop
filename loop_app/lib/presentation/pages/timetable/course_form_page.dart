@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loop_app/core/constants/palette_colors.dart';
 import 'package:loop_app/core/theme/colors.dart';
 import 'package:loop_app/core/theme/text_styles.dart';
 import 'package:loop_app/data/database/app_database.dart';
@@ -39,20 +40,7 @@ class _CourseFormPageState extends ConsumerState<CourseFormPage> {
   bool _isLoading = false;
   TimetableCourse? _existingCourse;
 
-  static const List<Color> _presetColors = [
-    AppColors.primary,
-    AppColors.accent,
-    AppColors.warmAccent,
-    AppColors.gold,
-    AppColors.success,
-    AppColors.error,
-    Color(0xFF9C27B0),
-    Color(0xFF00BCD4),
-    Color(0xFF795548),
-    Color(0xFF607D8B),
-    Color(0xFFE91E63),
-    Color(0xFF3F51B5),
-  ];
+  static const List<Color> _presetColors = PaletteColors.coursePickerColors;
 
   @override
   void initState() {

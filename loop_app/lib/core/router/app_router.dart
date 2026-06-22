@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loop_app/core/constants/route_constants.dart';
@@ -285,45 +286,82 @@ class ScaffoldWithNavBar extends StatefulWidget {
 class _ScaffoldWithNavBarState extends State<ScaffoldWithNavBar> {
   static const double _edgeWidth = 28.0;
   static const double _minVelocity = 300.0;
-  double? _startDx;
 
-  void _handlePanStart(DragStartDetails details) {
-    _startDx = details.globalPosition.dx;
+  int _activePointers = 0;
+  Offset? _edgeStart;
+  VelocityTracker? _velocityTracker;
+
+  void _onPointerDown(PointerDownEvent event) {
+    _activePointers++;
+    if (_activePointers == 1) {
+      final screenWidth = MediaQuery.of(context).size.width;
+      final isLeftEdge = event.position.dx < _edgeWidth;
+      final isRightEdge = event.position.dx > screenWidth - _edgeWidth;
+      if (isLeftEdge || isRightEdge) {
+        _edgeStart = event.position;
+        _velocityTracker = VelocityTracker.withKind(event.kind);
+        _velocityTracker!.addPosition(event.timeStamp, event.position);
+      }
+    } else {
+      _edgeStart = null;
+      _velocityTracker = null;
+    }
   }
 
-  void _handlePanEnd(DragEndDetails details) {
-    if (_startDx == null) return;
+  void _onPointerMove(PointerMoveEvent event) {
+    _velocityTracker?.addPosition(event.timeStamp, event.position);
+  }
+
+  void _onPointerUp(PointerUpEvent event) {
+    _activePointers = (_activePointers - 1).clamp(0, 999);
+    if (_edgeStart == null || _velocityTracker == null || _activePointers > 0) {
+      if (_activePointers == 0) {
+        _edgeStart = null;
+        _velocityTracker = null;
+      }
+      return;
+    }
+
+    _velocityTracker!.addPosition(event.timeStamp, event.position);
+    final velocity = _velocityTracker!.getVelocity();
+
+    final startDx = _edgeStart!.dx;
     final screenWidth = MediaQuery.of(context).size.width;
-    final isLeftEdge = _startDx! < _edgeWidth;
-    final isRightEdge = _startDx! > screenWidth - _edgeWidth;
+    final isLeftEdge = startDx < _edgeWidth;
+    final isRightEdge = startDx > screenWidth - _edgeWidth;
 
-    if (!isLeftEdge && !isRightEdge) {
-      _startDx = null;
-      return;
-    }
+    _edgeStart = null;
+    _velocityTracker = null;
 
-    final velocity = details.velocity.pixelsPerSecond.dx;
-    if (velocity.abs() < _minVelocity) {
-      _startDx = null;
-      return;
-    }
+    if (velocity == Velocity.zero) return;
+
+    final velocityX = velocity.pixelsPerSecond.dx;
+    if (velocityX.abs() < _minVelocity) return;
 
     final currentIndex = widget.navigationShell.currentIndex;
-    if (isLeftEdge && velocity > 0 && currentIndex > 0) {
+    if (isLeftEdge && velocityX > 0 && currentIndex > 0) {
       widget.navigationShell.goBranch(currentIndex - 1);
-    } else if (isRightEdge && velocity < 0 && currentIndex < 3) {
+    } else if (isRightEdge && velocityX < 0 && currentIndex < 3) {
       widget.navigationShell.goBranch(currentIndex + 1);
     }
-    _startDx = null;
+  }
+
+  void _onPointerCancel(PointerCancelEvent event) {
+    _activePointers = (_activePointers - 1).clamp(0, 999);
+    if (_activePointers == 0) {
+      _edgeStart = null;
+      _velocityTracker = null;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: GestureDetector(
-        onPanStart: _handlePanStart,
-        onPanEnd: _handlePanEnd,
-        behavior: HitTestBehavior.translucent,
+      body: Listener(
+        onPointerDown: _onPointerDown,
+        onPointerMove: _onPointerMove,
+        onPointerUp: _onPointerUp,
+        onPointerCancel: _onPointerCancel,
         child: widget.navigationShell,
       ),
       extendBody: true,
