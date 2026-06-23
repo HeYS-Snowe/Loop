@@ -28,7 +28,7 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   static const int _endHour = 24;
   static const double _timeLabelWidth = 48.0;
   static const int _dayPageCenter = 36500;
-  static const double _scrollPaddingTop = 24.0;
+  static const double _scrollPaddingTop = 48.0;
   static const double _scrollPaddingBottom = 60.0;
 
   static const List<({int interval, String label, double hourHeight})> _zoomLevels = [
@@ -639,16 +639,19 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
                       bottom: _scrollPaddingBottom,
                     ),
                     child: SizedBox(
-                      height: totalHeight,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildTimeLabels(totalHeight),
-                          Expanded(
-                            child: _buildPlanGrid(
-                                timedInstances, templateMap, totalHeight),
-                          ),
-                        ],
+                      height: totalHeight + 12,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildTimeLabels(totalHeight),
+                            Expanded(
+                              child: _buildPlanGrid(
+                                  timedInstances, templateMap, totalHeight),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

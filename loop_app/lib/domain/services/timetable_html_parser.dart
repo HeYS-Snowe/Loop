@@ -278,12 +278,40 @@ class TimetableHtmlParser {
 
       if (labels.isEmpty) continue;
 
-      final courseName = labels.isNotEmpty ? labels[0] : 'Unknown';
-      final teacherName = labels.length > 1 ? labels[1] : null;
-      final location = labels.length > 2 ? labels[2] : null;
-      final weekRanges = labels.length > 3
-          ? _normalizeWeekRanges(labels[3])
-          : '1-20';
+      // 智能识别各字段（课程名、课程编号、地点、老师、周次）
+      final courseName = labels[0];
+      String? teacherName;
+      String? location;
+      String weekRanges = '1-20';
+
+      for (int i = 1; i < labels.length; i++) {
+        final text = labels[i].trim();
+        if (text.isEmpty) continue;
+
+        // 周次行：包含"周"字，或纯数字范围格式（如 2-5,7-9）
+        if (text.contains('周') || RegExp(r'^\d+-\d+(,\s*\d+-\d+)*$').hasMatch(text)) {
+          weekRanges = _normalizeWeekRanges(text);
+        }
+        // 课程编号行：以课程名开头且含"-编号"后缀
+        else if (text.length > courseName.length &&
+            text.startsWith(courseName) &&
+            RegExp(r'-[A-Za-z0-9]+$').hasMatch(text)) {
+          // 课程编号，跳过
+        }
+        // 地点行：包含地点关键词
+        else if (text.contains('校区') ||
+            text.contains('楼') ||
+            text.contains('教室') ||
+            text.contains('室') ||
+            text.contains('馆') ||
+            text.contains('场')) {
+          location = text;
+        }
+        // 其余作为老师名
+        else {
+          teacherName = text;
+        }
+      }
 
       final startP = int.tryParse(firstPeriod ?? '1') ?? 1;
 
