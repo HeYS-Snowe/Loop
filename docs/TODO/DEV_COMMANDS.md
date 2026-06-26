@@ -103,7 +103,7 @@ flutter gen-l10n
 
 ```bash
 cd D:\Code\Project\Loop\loop_app
-flutter pub run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 ```
 
 ---

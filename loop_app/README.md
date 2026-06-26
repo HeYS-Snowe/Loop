@@ -47,7 +47,7 @@ flutter pub get
 
 2. 生成数据库代码
 ```bash
-flutter pub run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 ```
 
 3. 运行应用

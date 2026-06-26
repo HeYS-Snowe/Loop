@@ -24,12 +24,12 @@ enum _DateViewLevel { day, week, month }
 class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   late DateTime _selectedDate;
 
-  static const int _startHour = 5;
+  static const int _startHour = 0;
   static const int _endHour = 24;
   static const double _timeLabelWidth = 48.0;
   static const int _dayPageCenter = 36500;
-  static const double _scrollPaddingTop = 48.0;
-  static const double _scrollPaddingBottom = 60.0;
+  static const double _scrollPaddingTop = 80.0;
+  static const double _scrollPaddingBottom = 80.0;
 
   static const List<({int interval, String label, double hourHeight})> _zoomLevels = [
     (interval: 120, label: '2h',  hourHeight: 36.0),
@@ -634,24 +634,21 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
                   _buildAllDaySection(allDayInstances, templateMap),
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: EdgeInsets.only(
+                    padding: const EdgeInsets.only(
                       top: _scrollPaddingTop,
                       bottom: _scrollPaddingBottom,
                     ),
                     child: SizedBox(
-                      height: totalHeight + 12,
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildTimeLabels(totalHeight),
-                            Expanded(
-                              child: _buildPlanGrid(
-                                  timedInstances, templateMap, totalHeight),
-                            ),
-                          ],
-                        ),
+                      height: totalHeight,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildTimeLabels(totalHeight),
+                          Expanded(
+                            child: _buildPlanGrid(
+                                timedInstances, templateMap, totalHeight),
+                          ),
+                        ],
                       ),
                     ),
                   ),

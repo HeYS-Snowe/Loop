@@ -594,7 +594,7 @@ flutter build appbundle --release
 flutter test
 
 # 代码生成 (Drift)
-flutter pub run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 ```
 
 ### 8.2 产物命名与输出
@@ -728,7 +728,7 @@ class AppColors {
 - [ ] 确认 Flutter 环境: `flutter doctor`
 - [ ] 拉取最新代码
 - [ ] 安装依赖: `flutter pub get`
-- [ ] 运行代码生成: `flutter pub run build_runner build`
+- [ ] 运行代码生成: `dart run build_runner build`
 
 ### 提交前
 
