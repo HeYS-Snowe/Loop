@@ -19,9 +19,9 @@ flutter_launcher_icons:
   ios: false
 
   # Android 自适应图标 (Adaptive Icon, Android 8.0+)
-  # 背景: 纯白 (与图标源文件背景一致)
+  # 背景: 纯黑 (与新图标源文件背景一致, 避免白色背景割裂视觉)
   # 前景: 使用源图标 (已包含充足内边距, 适配自适应图标遮罩裁剪)
-  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_background: "#0A0A0A"
   adaptive_icon_foreground: "assets/icon/app_icon.png"
 
   # 关闭 web 和桌面平台

@@ -1,7 +1,7 @@
 name: loop_app
 description: Loop - 周期计划管理应用
 publish_to: 'none'
-version: 0.0.14+14
+version: 0.0.15+15
 
 environment:
   sdk: '>=3.6.0 <4.0.0'
@@ -36,6 +36,16 @@ dev_dependencies:
   drift_dev: ^2.22.1
   build_runner: ^2.4.13
   flutter_launcher_icons: ^0.14.3
+
+# sqlite3 3.3.x native code assets hook 配置
+# 默认从 GitHub 下载预编译库，国内网络不稳定，改为本地读取
+# 影响范围：仅 Android 构建（drift 2.34 + sqlite3 3.3.x 引入的 native assets 机制）
+# 目录结构：每个文件按 sourceFilename 命名（如 libsqlite3.arm.android.so）
+hooks:
+  user_defines:
+    sqlite3:
+      source: test-sqlite3
+      directory: file:///d:/Code/Project/Loop/loop_app/android/app/src/assets/precompiled/
 
 flutter:
   generate: true
