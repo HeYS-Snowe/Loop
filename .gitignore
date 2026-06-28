@@ -156,3 +156,6 @@ builds/
 
 # Logs
 log/
+
+# Icon source assets (local only)
+ico/

@@ -31,14 +31,15 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   static const double _scrollPaddingTop = 80.0;
   static const double _scrollPaddingBottom = 80.0;
 
-  static const List<({int interval, String label, double hourHeight})> _zoomLevels = [
-    (interval: 120, label: '2h',  hourHeight: 36.0),
-    (interval: 60,  label: '1h',  hourHeight: 72.0),
-    (interval: 45,  label: '45m', hourHeight: 96.0),
-    (interval: 30,  label: '30m', hourHeight: 144.0),
-    (interval: 15,  label: '15m', hourHeight: 288.0),
-    (interval: 10,  label: '10m', hourHeight: 432.0),
-    (interval: 5,   label: '5m',  hourHeight: 864.0),
+  static const List<({int interval, String label, double hourHeight})>
+      _zoomLevels = [
+    (interval: 120, label: '2h', hourHeight: 36.0),
+    (interval: 60, label: '1h', hourHeight: 72.0),
+    (interval: 45, label: '45m', hourHeight: 96.0),
+    (interval: 30, label: '30m', hourHeight: 144.0),
+    (interval: 15, label: '15m', hourHeight: 288.0),
+    (interval: 10, label: '10m', hourHeight: 432.0),
+    (interval: 5, label: '5m', hourHeight: 864.0),
   ];
   int _currentZoomLevel = 1;
   double _lastScaleFactor = 1.0;
@@ -48,8 +49,6 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
 
   _DateViewLevel _dateViewLevel = _DateViewLevel.week;
   double _dateViewLastScale = 1.0;
-
-
 
   static const List<Color> _courseColors = PaletteColors.courseColors;
 
@@ -154,25 +153,25 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
               bottom: MediaQuery.of(context).viewPadding.bottom + 80.0,
             ),
             child: Column(
-            children: [
-              _buildWeekIndicator(),
-              _buildWeekSelector(),
-              Expanded(
-                child: instancesAsync.when(
-                  data: (instances) => _buildDayPageView(instances),
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(
-                        color: AppColors.primary, strokeWidth: 2),
-                  ),
-                  error: (e, _) => Center(
-                    child: Text(S.of(context)!.loadFailed(e.toString()),
-                        style:
-                            TextStyles.body2.copyWith(color: AppColors.error)),
+              children: [
+                _buildWeekIndicator(),
+                _buildWeekSelector(),
+                Expanded(
+                  child: instancesAsync.when(
+                    data: (instances) => _buildDayPageView(instances),
+                    loading: () => const Center(
+                      child: CircularProgressIndicator(
+                          color: AppColors.primary, strokeWidth: 2),
+                    ),
+                    error: (e, _) => Center(
+                      child: Text(S.of(context)!.loadFailed(e.toString()),
+                          style: TextStyles.body2
+                              .copyWith(color: AppColors.error)),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
           ),
         ),
       ),
@@ -239,8 +238,11 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
 
         final firstMonth = timetable.firstWeekMonday.month;
         final firstYear = timetable.firstWeekMonday.year;
-        final monthNumber = (_selectedDate.year - firstYear) * 12 + (_selectedDate.month - firstMonth) + 1;
-        final currentMonthNumber = (now.year - firstYear) * 12 + (now.month - firstMonth) + 1;
+        final monthNumber = (_selectedDate.year - firstYear) * 12 +
+            (_selectedDate.month - firstMonth) +
+            1;
+        final currentMonthNumber =
+            (now.year - firstYear) * 12 + (now.month - firstMonth) + 1;
         final isCurrentMonth = monthNumber == currentMonthNumber;
         final monthText = monthNumber > 0
             ? (isCurrentMonth
@@ -256,7 +258,9 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
               Text(
                 weekText,
                 style: TextStyles.caption.copyWith(
-                  color: isCurrentWeek ? AppColors.primary : AppColors.textTertiary,
+                  color: isCurrentWeek
+                      ? AppColors.primary
+                      : AppColors.textTertiary,
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
                 ),
@@ -265,7 +269,9 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
                 Text(
                   monthText,
                   style: TextStyles.caption.copyWith(
-                    color: isCurrentMonth ? AppColors.accent : AppColors.textTertiary,
+                    color: isCurrentMonth
+                        ? AppColors.accent
+                        : AppColors.textTertiary,
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
                   ),
@@ -314,7 +320,15 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
 
   Widget _buildDayView() {
     final s = S.of(context)!;
-    final dayNames = [s.monday, s.tuesday, s.wednesday, s.thursday, s.friday, s.saturday, s.sunday];
+    final dayNames = [
+      s.monday,
+      s.tuesday,
+      s.wednesday,
+      s.thursday,
+      s.friday,
+      s.saturday,
+      s.sunday
+    ];
     final weekdayName = dayNames[_selectedDate.weekday - 1];
 
     return Container(
@@ -336,7 +350,8 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
               ),
               child: const Padding(
                 padding: EdgeInsets.all(8),
-                child: Icon(Icons.chevron_left, color: AppColors.textSecondary, size: 20),
+                child: Icon(Icons.chevron_left,
+                    color: AppColors.textSecondary, size: 20),
               ),
             ),
             const SizedBox(width: 8),
@@ -358,7 +373,8 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
               ),
               child: const Padding(
                 padding: EdgeInsets.all(8),
-                child: Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 20),
+                child: Icon(Icons.chevron_right,
+                    color: AppColors.textSecondary, size: 20),
               ),
             ),
           ],
@@ -496,15 +512,21 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
                 onTap: () {
                   final prevMonth = DateTime(year, month - 1, 1);
                   _changeDate(
-                    DateTime(prevMonth.year, prevMonth.month,
-                        _selectedDate.day.clamp(1, DateTime(prevMonth.year, prevMonth.month + 1, 0).day)),
+                    DateTime(
+                        prevMonth.year,
+                        prevMonth.month,
+                        _selectedDate.day.clamp(
+                            1,
+                            DateTime(prevMonth.year, prevMonth.month + 1, 0)
+                                .day)),
                     syncDayPage: true,
                     syncWeekPage: true,
                   );
                 },
                 child: const Padding(
                   padding: EdgeInsets.all(4),
-                  child: Icon(Icons.chevron_left, color: AppColors.textSecondary, size: 20),
+                  child: Icon(Icons.chevron_left,
+                      color: AppColors.textSecondary, size: 20),
                 ),
               ),
               Text(
@@ -520,32 +542,40 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
                 onTap: () {
                   final nextMonth = DateTime(year, month + 1, 1);
                   _changeDate(
-                    DateTime(nextMonth.year, nextMonth.month,
-                        _selectedDate.day.clamp(1, DateTime(nextMonth.year, nextMonth.month + 1, 0).day)),
+                    DateTime(
+                        nextMonth.year,
+                        nextMonth.month,
+                        _selectedDate.day.clamp(
+                            1,
+                            DateTime(nextMonth.year, nextMonth.month + 1, 0)
+                                .day)),
                     syncDayPage: true,
                     syncWeekPage: true,
                   );
                 },
                 child: const Padding(
                   padding: EdgeInsets.all(4),
-                  child: Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 20),
+                  child: Icon(Icons.chevron_right,
+                      color: AppColors.textSecondary, size: 20),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 4),
           Row(
-            children: dayNames.map((name) => Expanded(
-              child: Center(
-                child: Text(
-                  name,
-                  style: TextStyles.caption.copyWith(
-                    color: AppColors.textTertiary,
-                    fontSize: 10,
-                  ),
-                ),
-              ),
-            )).toList(),
+            children: dayNames
+                .map((name) => Expanded(
+                      child: Center(
+                        child: Text(
+                          name,
+                          style: TextStyles.caption.copyWith(
+                            color: AppColors.textTertiary,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ))
+                .toList(),
           ),
           const SizedBox(height: 4),
           ...List.generate(6, (weekIndex) {
@@ -562,7 +592,8 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
 
                 return Expanded(
                   child: GestureDetector(
-                    onTap: () => _changeDate(date, syncDayPage: true, syncWeekPage: true),
+                    onTap: () => _changeDate(date,
+                        syncDayPage: true, syncWeekPage: true),
                     child: Container(
                       height: 32,
                       margin: const EdgeInsets.all(1),
@@ -580,7 +611,9 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
                           style: TextStyle(
                             fontFamily: 'MiSans',
                             fontSize: 12,
-                            fontWeight: isSelected || isToday ? FontWeight.w700 : FontWeight.w400,
+                            fontWeight: isSelected || isToday
+                                ? FontWeight.w700
+                                : FontWeight.w400,
                             color: isSelected
                                 ? AppColors.backgroundDeep
                                 : isToday
@@ -629,32 +662,32 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
         final totalHeight = (_endHour - _startHour) * _hourHeight;
 
         return Column(
-              children: [
-                if (allDayInstances.isNotEmpty)
-                  _buildAllDaySection(allDayInstances, templateMap),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.only(
-                      top: _scrollPaddingTop,
-                      bottom: _scrollPaddingBottom,
-                    ),
-                    child: SizedBox(
-                      height: totalHeight,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildTimeLabels(totalHeight),
-                          Expanded(
-                            child: _buildPlanGrid(
-                                timedInstances, templateMap, totalHeight),
-                          ),
-                        ],
+          children: [
+            if (allDayInstances.isNotEmpty)
+              _buildAllDaySection(allDayInstances, templateMap),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.only(
+                  top: _scrollPaddingTop,
+                  bottom: _scrollPaddingBottom,
+                ),
+                child: SizedBox(
+                  height: totalHeight,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildTimeLabels(totalHeight),
+                      Expanded(
+                        child: _buildPlanGrid(
+                            timedInstances, templateMap, totalHeight),
                       ),
-                    ),
+                    ],
                   ),
                 ),
-              ],
-            );
+              ),
+            ),
+          ],
+        );
       },
       loading: () => const Center(
           child: CircularProgressIndicator(
@@ -698,11 +731,13 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
               return GestureDetector(
                 onTap: () => _showInstanceDetail(instance, template),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: color.withValues(alpha: 0.3), width: 0.5),
+                    border: Border.all(
+                        color: color.withValues(alpha: 0.3), width: 0.5),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -712,14 +747,19 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
                         height: 12,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: instance.isCompleted ? AppColors.success : Colors.transparent,
+                          color: instance.isCompleted
+                              ? AppColors.success
+                              : Colors.transparent,
                           border: Border.all(
-                            color: instance.isCompleted ? AppColors.success : color,
+                            color: instance.isCompleted
+                                ? AppColors.success
+                                : color,
                             width: 1,
                           ),
                         ),
                         child: instance.isCompleted
-                            ? const Icon(Icons.check, size: 7, color: AppColors.backgroundDeep)
+                            ? const Icon(Icons.check,
+                                size: 7, color: AppColors.backgroundDeep)
                             : null,
                       ),
                       const SizedBox(width: 6),
@@ -729,7 +769,9 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: color,
-                          decoration: instance.isCompleted ? TextDecoration.lineThrough : null,
+                          decoration: instance.isCompleted
+                              ? TextDecoration.lineThrough
+                              : null,
                         ),
                       ),
                     ],
@@ -821,10 +863,12 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
                       startPeriod > TimeSlotConstants.periodTimeSlots.length) {
                     return const SizedBox.shrink();
                   }
-                  final effectiveEnd =
-                      endPeriod.clamp(1, TimeSlotConstants.periodTimeSlots.length);
-                  final startTime = TimeSlotConstants.periodTimeSlots[startPeriod - 1];
-                  final endTime = TimeSlotConstants.periodTimeSlots[effectiveEnd - 1];
+                  final effectiveEnd = endPeriod.clamp(
+                      1, TimeSlotConstants.periodTimeSlots.length);
+                  final startTime =
+                      TimeSlotConstants.periodTimeSlots[startPeriod - 1];
+                  final endTime =
+                      TimeSlotConstants.periodTimeSlots[effectiveEnd - 1];
 
                   final startOffset = _getTimeOffset(
                       startTime['startHour']!, startTime['startMinute']!);
@@ -957,23 +1001,24 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
                   Expanded(
                     child: Text(template.name, style: TextStyles.heading4),
                   ),
-                  GestureDetector(
+                  _buildActionButton(
+                    icon: Icons.edit_outlined,
+                    color: AppColors.primary,
                     onTap: () {
                       Navigator.pop(context);
                       _navigateToEditPlan(template);
                     },
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      margin: const EdgeInsets.only(right: 12),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.primary.withValues(alpha: 0.12),
-                      ),
-                      child: const Icon(Icons.edit_outlined,
-                          size: 16, color: AppColors.primary),
-                    ),
                   ),
+                  const SizedBox(width: 8),
+                  _buildActionButton(
+                    icon: Icons.delete_outline,
+                    color: AppColors.error,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _confirmDeletePlan(template);
+                    },
+                  ),
+                  const SizedBox(width: 12),
                   _buildCompletionToggle(instance),
                 ],
               ),
@@ -1009,6 +1054,90 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
       RouteConstants.editPlan,
       extra: (template: template, currentDate: _selectedDate),
     );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: color.withValues(alpha: 0.12),
+        ),
+        child: Icon(icon, size: 16, color: color),
+      ),
+    );
+  }
+
+  Future<void> _confirmDeletePlan(PlanTemplate template) async {
+    final s = S.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Text(s.confirmDeletePlan),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(s.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child:
+                Text(s.delete, style: const TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      await ref
+          .read(planTemplateNotifierProvider.notifier)
+          .deleteTemplate(template.id);
+      if (mounted) {
+        ref
+            .read(planInstanceNotifierProvider.notifier)
+            .loadForDate(_selectedDate);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(s.planDeleted)),
+        );
+      }
+    }
+  }
+
+  Future<void> _confirmDeleteCourse(TimetableCourse course) async {
+    final s = S.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Text(s.confirmDeleteCourse),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(s.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child:
+                Text(s.delete, style: const TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      final notifier = ref.read(timetableCourseNotifierProvider.notifier);
+      await notifier.deleteCourse(course.id, course.timetableId);
+      if (mounted) {
+        ref.invalidate(coursesForDateProvider(_selectedDate));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(s.courseDeleted)),
+        );
+      }
+    }
   }
 
   Widget _buildCompletionToggle(PlanInstance instance) {
@@ -1132,7 +1261,8 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   void _showCourseDetail(TimetableCourse course, Color color) {
     final startTime = TimeSlotConstants.periodTimeSlots[course.startPeriod - 1];
     final endTime = TimeSlotConstants.periodTimeSlots[
-        course.endPeriod.clamp(1, TimeSlotConstants.periodTimeSlots.length) - 1];
+        course.endPeriod.clamp(1, TimeSlotConstants.periodTimeSlots.length) -
+            1];
 
     showModalBottomSheet(
       context: context,
@@ -1164,6 +1294,26 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
                   Expanded(
                     child: Text(course.courseName, style: TextStyles.heading4),
                   ),
+                  _buildActionButton(
+                    icon: Icons.edit_outlined,
+                    color: AppColors.primary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.push(
+                        '${RouteConstants.courseForm}?timetableId=${course.timetableId}&courseId=${course.id}',
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  _buildActionButton(
+                    icon: Icons.delete_outline,
+                    color: AppColors.error,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _confirmDeleteCourse(course);
+                    },
+                  ),
+                  const SizedBox(width: 12),
                 ],
               ),
               const SizedBox(height: 16),

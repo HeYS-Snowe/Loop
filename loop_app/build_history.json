@@ -181,6 +181,24 @@
       "platform": "android-arm64,android-arm,android-x64",
       "timestamp": "2026-06-25T13:43:59",
       "configSource": "pubspec.yaml"
+    },
+    {
+      "version": "0.0.14",
+      "buildNumber": 14,
+      "status": "fix",
+      "date": "20260628",
+      "sequence": 1,
+      "filename": "Loop_fix_0.0.14_20260628_01.apk",
+      "originalName": "app-release.apk",
+      "filePath": "d:\\Code\\Project\\Loop\\builds\\Loop_fix_0.0.14_20260628_01.apk",
+      "backupPath": "d:\\Code\\Project\\Loop\\loop_app\\build\\app\\outputs\\flutter-apk\\backup\\app_app-release.apk_20260628_195406.apk",
+      "fileSize": 108564615,
+      "fileSizeHuman": "103.54 MB",
+      "sha256": "CC1B87CD04419CD0A123EAA3A69179D8333F9195EF7213DF5D0AC1E8D22C84DC",
+      "buildType": "apk",
+      "platform": "android-arm64,android-arm,android-x64",
+      "timestamp": "2026-06-28T19:54:06",
+      "configSource": "pubspec.yaml"
     }
   ]
 }

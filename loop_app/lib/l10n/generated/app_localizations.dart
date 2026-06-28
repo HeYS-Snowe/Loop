@@ -5,7 +5,11 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
+import 'app_localizations_de.dart';
 import 'app_localizations_en.dart';
+import 'app_localizations_fr.dart';
+import 'app_localizations_ja.dart';
+import 'app_localizations_ko.dart';
 import 'app_localizations_zh.dart';
 
 // ignore_for_file: type=lint
@@ -93,7 +97,11 @@ abstract class S {
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
+    Locale('de'),
     Locale('en'),
+    Locale('fr'),
+    Locale('ja'),
+    Locale('ko'),
     Locale('zh')
   ];
 
@@ -1297,6 +1305,30 @@ abstract class S {
   /// **'English'**
   String get languageEn;
 
+  /// No description provided for @languageJa.
+  ///
+  /// In zh, this message translates to:
+  /// **'日本語'**
+  String get languageJa;
+
+  /// No description provided for @languageKo.
+  ///
+  /// In zh, this message translates to:
+  /// **'한국어'**
+  String get languageKo;
+
+  /// No description provided for @languageFr.
+  ///
+  /// In zh, this message translates to:
+  /// **'Français'**
+  String get languageFr;
+
+  /// No description provided for @languageDe.
+  ///
+  /// In zh, this message translates to:
+  /// **'Deutsch'**
+  String get languageDe;
+
   /// No description provided for @taskNameRequired.
   ///
   /// In zh, this message translates to:
@@ -1962,6 +1994,18 @@ abstract class S {
   /// In zh, this message translates to:
   /// **'计划已更新'**
   String get planInstanceUpdated;
+
+  /// No description provided for @confirmDeletePlan.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要删除此计划吗？所有相关记录将被清除。'**
+  String get confirmDeletePlan;
+
+  /// No description provided for @planDeleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'计划已删除'**
+  String get planDeleted;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {
@@ -1973,8 +2017,14 @@ class _SDelegate extends LocalizationsDelegate<S> {
   }
 
   @override
-  bool isSupported(Locale locale) =>
-      <String>['en', 'zh'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>[
+        'de',
+        'en',
+        'fr',
+        'ja',
+        'ko',
+        'zh'
+      ].contains(locale.languageCode);
 
   @override
   bool shouldReload(_SDelegate old) => false;
@@ -1983,8 +2033,16 @@ class _SDelegate extends LocalizationsDelegate<S> {
 S lookupS(Locale locale) {
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
+    case 'de':
+      return SDe();
     case 'en':
       return SEn();
+    case 'fr':
+      return SFr();
+    case 'ja':
+      return SJa();
+    case 'ko':
+      return SKo();
     case 'zh':
       return SZh();
   }

@@ -636,6 +636,18 @@ class SEn extends S {
   String get languageEn => 'English';
 
   @override
+  String get languageJa => '日本語';
+
+  @override
+  String get languageKo => '한국어';
+
+  @override
+  String get languageFr => 'Français';
+
+  @override
+  String get languageDe => 'Deutsch';
+
+  @override
   String get taskNameRequired => 'Please enter task name';
 
   @override
@@ -995,4 +1007,11 @@ class SEn extends S {
 
   @override
   String get planInstanceUpdated => 'Plan updated';
+
+  @override
+  String get confirmDeletePlan =>
+      'Delete this plan? All related records will be removed.';
+
+  @override
+  String get planDeleted => 'Plan deleted';
 }

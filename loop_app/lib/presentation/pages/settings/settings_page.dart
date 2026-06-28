@@ -324,6 +324,14 @@ class SettingsPage extends ConsumerWidget {
         return s.languageZh;
       case 'en':
         return s.languageEn;
+      case 'ja':
+        return s.languageJa;
+      case 'ko':
+        return s.languageKo;
+      case 'fr':
+        return s.languageFr;
+      case 'de':
+        return s.languageDe;
       default:
         return s.languageZh;
     }
@@ -497,8 +505,19 @@ class SettingsPage extends ConsumerWidget {
     final options = [
       const Locale('zh'),
       const Locale('en'),
+      const Locale('ja'),
+      const Locale('ko'),
+      const Locale('fr'),
+      const Locale('de'),
     ];
-    final labels = [s.languageZh, s.languageEn];
+    final labels = [
+      s.languageZh,
+      s.languageEn,
+      s.languageJa,
+      s.languageKo,
+      s.languageFr,
+      s.languageDe,
+    ];
 
     showDialog(
       context: context,

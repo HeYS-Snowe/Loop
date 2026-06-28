@@ -633,6 +633,18 @@ class SZh extends S {
   String get languageEn => 'English';
 
   @override
+  String get languageJa => '日本語';
+
+  @override
+  String get languageKo => '한국어';
+
+  @override
+  String get languageFr => 'Français';
+
+  @override
+  String get languageDe => 'Deutsch';
+
+  @override
   String get taskNameRequired => '请输入任务名称';
 
   @override
@@ -984,4 +996,10 @@ class SZh extends S {
 
   @override
   String get planInstanceUpdated => '计划已更新';
+
+  @override
+  String get confirmDeletePlan => '确定要删除此计划吗？所有相关记录将被清除。';
+
+  @override
+  String get planDeleted => '计划已删除';
 }

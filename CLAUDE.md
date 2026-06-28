@@ -1,9 +1,9 @@
 # Loop - 项目定制规则
 
-> **版本**: v1.2.1
-> **更新日期**: 2026-04-10
+> **版本**: v1.3.0
+> **更新日期**: 2026-06-26
 > **项目类型**: Flutter Mobile App (Android)
-> **技术栈**: Flutter 3.x / Dart 3.6+ / Riverpod / Drift / go_router
+> **技术栈**: Flutter 3.x / Dart 3.6+ / Riverpod 3.x / Drift / go_router
 
 ---
 
@@ -51,10 +51,10 @@
 |------|-----|
 | 项目名称 | Loop - 周期计划管理应用 |
 | 项目类型 | 移动端应用 (个人自用) |
-| 当前版本 | v0.0.1 (Alpha) |
+| 当前版本 | v0.0.13+13 (Alpha) |
 | 目标平台 | Android 6.0+ (API 23) |
-| 核心功能 | 周期计划管理、进度追踪、每日打卡、周期总结、计划模板 |
-| 特点 | 纯本地应用，无需网络，支持"部分完成"进度记录、国际化(i18n) |
+| 核心功能 | 周期计划管理、进度追踪、每日打卡、周期总结、计划模板、教务课表导入 |
+| 特点 | 纯本地应用，无需网络，支持"部分完成"进度记录、计划编辑范围(仅本次/未来/过去/全部)、教务课表 HTML 智能解析、国际化(i18n) |
 
 ### 1.2 技术栈
 
@@ -62,17 +62,22 @@
 |------|------|------|------|
 | 框架 | Flutter | 3.x | 跨平台 UI 框架 |
 | 语言 | Dart | 3.6+ | 编程语言 |
-| 状态管理 | flutter_riverpod | ^2.6.1 | 响应式状态管理 |
-| 路由 | go_router | ^14.8.0 | 声明式路由 |
-| 数据库 | Drift + SQLite | ^2.22.1 | 本地 ORM 数据库 |
+| 状态管理 | flutter_riverpod | ^3.3.1 | 响应式状态管理 (AsyncNotifier 范式) |
+| 路由 | go_router | ^17.2.0 | 声明式路由 (StatefulShellRoute) |
+| 数据库 | drift | ^2.22.1 | 本地 ORM 数据库 |
+| SQLite 驱动 | sqlite3_flutter_libs | ^0.6.0+eol | SQLite 原生库 |
 | 简单存储 | shared_preferences | ^2.3.5 | 应用设置 |
-| 通知 | flutter_local_notifications | ^18.0.1 | 本地提醒 |
-| 图表 | fl_chart | ^0.70.2 | 进度图表 |
+| 通知 | flutter_local_notifications | ^22.0.0 | 本地提醒 |
+| 时区 | timezone | ^0.11.0 | 通知时区处理 |
+| 图表 | fl_chart | ^1.2.0 | 进度图表 |
 | 日历 | table_calendar | ^3.1.3 | 打卡日历 |
 | 动画 | flutter_animate | ^4.5.2 | 打卡动画 |
-| 国际化 | flutter_localizations | SDK 内置 | 多语言支持 |
-| 时区 | timezone | ^0.10.0 | 通知时区处理 |
-| 字体 | MiSans + HunYuan | 自定义 | 品牌字体 |
+| 唯一 ID | uuid | ^4.5.1 | 实体 ID 生成 |
+| 国际化 | intl + flutter_localizations | ^0.20.2 / SDK | 多语言支持 (zh/en) |
+| 文件路径 | path_provider / path | ^2.1.5 / ^1.9.1 | 本地路径访问 |
+| 文件选择 | file_picker | ^11.0.1 | 课表 HTML 文件/文件夹导入 |
+| 权限 | permission_handler | ^12.0.0 | 运行时权限申请 |
+| 字体 | MiSans | 自定义 | 品牌字体 (8 种字重 100-800) |
 
 ---
 
@@ -84,22 +89,26 @@
 loop_app/
 ├── lib/
 │   ├── main.dart                 # 应用入口
+│   ├── app.dart                  # MaterialApp 配置 (主题/语言/路由)
 │   │
 │   ├── core/                     # 核心模块
 │   │   ├── constants/            # 常量定义
-│   │   │   └── route_constants.dart
+│   │   │   ├── palette_colors.dart       # 调色板常量
+│   │   │   ├── route_constants.dart      # 路由路径常量
+│   │   │   └── time_slot_constants.dart  # 课表时段常量
 │   │   ├── theme/                # 主题配置
 │   │   │   ├── app_theme.dart
 │   │   │   ├── colors.dart
 │   │   │   └── text_styles.dart
 │   │   ├── router/               # 路由配置
-│   │   │   └── app_router.dart
+│   │   │   └── app_router.dart   # StatefulShellRoute + 自定义转场 + 边缘滑动
 │   │   └── utils/                # 工具函数
+│   │       ├── date_utils.dart
 │   │       └── validators.dart
 │   │
 │   ├── data/                     # 数据层
 │   │   ├── database/             # Drift 数据库定义
-│   │   │   ├── app_database.dart
+│   │   │   ├── app_database.dart        # schemaVersion 4
 │   │   │   ├── database_connection.dart
 │   │   │   ├── database_connection_stub.dart
 │   │   │   ├── database_connection_web.dart
@@ -111,23 +120,28 @@ loop_app/
 │   │   │   │   ├── categories.dart
 │   │   │   │   ├── cycle_summaries.dart
 │   │   │   │   ├── plan_templates.dart
-│   │   │   │   └── plan_instances.dart
+│   │   │   │   ├── plan_instances.dart
+│   │   │   │   ├── timetables.dart          # 课表
+│   │   │   │   └── timetable_courses.dart   # 课表课程
 │   │   │   └── app_database.g.dart   # 生成文件
 │   │   ├── extensions/           # 数据扩展
 │   │   │   └── model_extensions.dart
+│   │   ├── models/               # 纯数据模型
+│   │   │   └── check_in_record.dart
 │   │   └── repositories/         # 数据仓库
 │   │       ├── cycle_repository.dart
 │   │       ├── task_repository.dart
 │   │       ├── check_in_repository.dart
 │   │       ├── category_repository.dart
 │   │       ├── plan_template_repository.dart
-│   │       └── plan_instance_repository.dart
+│   │       ├── plan_instance_repository.dart
+│   │       └── timetable_repository.dart
 │   │
 │   ├── domain/                   # 业务层
-│   │   ├── entities/             # 业务实体
 │   │   └── services/             # 业务服务
 │   │       ├── cycle_service.dart
-│   │       └── check_in_service.dart
+│   │       ├── check_in_service.dart
+│   │       └── timetable_html_parser.dart  # 教务系统 HTML 智能解析
 │   │
 │   ├── presentation/             # 表现层
 │   │   ├── providers/            # Riverpod Providers
@@ -135,27 +149,37 @@ loop_app/
 │   │   │   ├── task_provider.dart
 │   │   │   ├── check_in_provider.dart
 │   │   │   ├── plan_provider.dart
+│   │   │   ├── timetable_provider.dart
 │   │   │   └── settings_provider.dart
 │   │   ├── pages/                # 页面
 │   │   │   ├── home/
 │   │   │   │   ├── home_page.dart
 │   │   │   │   └── widgets/
+│   │   │   │       ├── check_in_card.dart
+│   │   │   │       ├── cycle_card.dart
+│   │   │   │       └── quick_stats_card.dart
 │   │   │   ├── tasks/
 │   │   │   │   ├── task_list_page.dart
 │   │   │   │   ├── task_detail_page.dart
 │   │   │   │   └── widgets/
+│   │   │   │       ├── add_task_dialog.dart
+│   │   │   │       ├── edit_task_dialog.dart
+│   │   │   │       └── task_card.dart
 │   │   │   ├── check_in/
 │   │   │   │   └── check_in_page.dart
 │   │   │   ├── summary/
 │   │   │   │   ├── summary_page.dart
-│   │   │   │   └── widgets/
+│   │   │   │   └── summary_card.dart
 │   │   │   ├── cycle/
 │   │   │   │   └── cycle_form_page.dart
 │   │   │   ├── plan/
 │   │   │   │   ├── daily_plan_page.dart
 │   │   │   │   └── plan_form_page.dart
-│   │   │   ├── schedule/
-│   │   │   │   └── schedule_page.dart
+│   │   │   ├── timetable/                # 课表模块
+│   │   │   │   ├── timetable_list_page.dart
+│   │   │   │   ├── timetable_detail_page.dart
+│   │   │   │   ├── timetable_import_page.dart
+│   │   │   │   └── course_form_page.dart
 │   │   │   └── settings/
 │   │   │       └── settings_page.dart
 │   │   └── widgets/              # 共享组件
@@ -168,7 +192,9 @@ loop_app/
 │   │           └── particle_background.dart
 │   │
 │   ├── l10n/                     # 国际化
-│   │   └── generated/            # 生成的本地化文件
+│   │   ├── app_zh.arb            # 模板语言 (中文)
+│   │   ├── app_en.arb            # 英文
+│   │   └── generated/            # 生成的本地化文件 (output-class: S)
 │   │
 │   └── shared/                   # 共享模块
 │       ├── services/
@@ -177,7 +203,7 @@ loop_app/
 │           └── date_extensions.dart
 │
 ├── fonts/                        # 自定义字体
-│   └── ttf/                      # MiSans + HunYuan
+│   └── ttf/                      # MiSans (8 种字重)
 │
 ├── test/                         # 测试目录
 ├── docs/                         # 项目文档
@@ -197,7 +223,7 @@ loop_app/
 | `presentation/` | 表现层 | Providers、页面、共享组件 |
 | `l10n/` | 国际化 | 多语言支持 (zh/en) |
 | `shared/` | 共享模块 | 跨层服务、扩展方法 |
-| `fonts/` | 自定义字体 | MiSans (品牌)、HunYuan (装饰) |
+| `fonts/` | 自定义字体 | MiSans (品牌字体，8 种字重 100-800) |
 
 ---
 
@@ -331,12 +357,35 @@ class Tasks extends Table {
   CycleSummaries,
   PlanTemplates,
   PlanInstances,
+  Timetables,
+  TimetableCourses,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 4;
+
+  // 迁移策略: v2 加计划表 / v3 加课表表 / v4 给 plan_templates 加 enable_time_slot
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (Migrator m) async => m.createAll(),
+    onUpgrade: (Migrator m, int from, int to) async {
+      if (from < 2) {
+        await m.createTable(planTemplates);
+        await m.createTable(planInstances);
+      }
+      if (from < 3) {
+        await m.createTable(timetables);
+        await m.createTable(timetableCourses);
+      }
+      if (from < 4) {
+        await customStatement(
+          'ALTER TABLE plan_templates ADD COLUMN enable_time_slot INTEGER NOT NULL DEFAULT 1',
+        );
+      }
+    },
+  );
 
   // 查询方法
   Future<List<Task>> getTasksByCycle(String cycleId) {
@@ -367,7 +416,7 @@ class AppDatabase extends _$AppDatabase {
 ### 5.1 Provider 定义
 
 ```dart
-// presentation/providers/task_provider.dart
+// presentation/providers/cycle_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // 数据库 Provider
@@ -375,66 +424,51 @@ final databaseProvider = Provider<AppDatabase>((ref) {
   return AppDatabase();
 });
 
-// Repository Provider
+// Repository Provider (依赖注入)
 final taskRepositoryProvider = Provider<TaskRepository>((ref) {
   return TaskRepository(ref.watch(databaseProvider));
 });
 
-// 任务列表 Provider (异步)
-final tasksByCycleProvider = FutureProvider.family<List<Task>, String>((ref, cycleId) async {
-  final repository = ref.watch(taskRepositoryProvider);
-  return repository.getTasksByCycle(cycleId);
+// 查询型 Provider - 用 FutureProvider / StreamProvider
+final cyclesProvider = FutureProvider<List<Cycle>>((ref) async {
+  return ref.watch(cycleRepositoryProvider).getAllCycles();
 });
 
-// 当前周期 Provider
-final currentCycleProvider = StateNotifierProvider<CycleNotifier, AsyncValue<Cycle?>>((ref) {
-  return CycleNotifier(ref.watch(cycleRepositoryProvider));
+final activeCycleProvider = FutureProvider<Cycle?>((ref) async {
+  return ref.watch(cycleRepositoryProvider).getActiveCycle();
 });
+
+// 带变更逻辑的 Provider - 用 AsyncNotifier (Riverpod 3.x)
+final planTemplateNotifierProvider =
+    AsyncNotifierProvider<PlanTemplateNotifier, List<PlanTemplate>>(
+  PlanTemplateNotifier.new,
+);
 ```
 
-### 5.2 StateNotifier 示例
+### 5.2 AsyncNotifier 示例 (Riverpod 3.x)
 
 ```dart
-// presentation/providers/check_in_provider.dart
-class CheckInNotifier extends StateNotifier<AsyncValue<CheckInState>> {
-  final CheckInRepository _repository;
+// presentation/providers/settings_provider.dart
+class SettingsNotifier extends AsyncNotifier<SettingsState> {
+  @override
+  Future<SettingsState> build() async {
+    final prefs = await SharedPreferences.getInstance();
+    return SettingsState(
+      enableNotifications: prefs.getBool('notifications_enabled') ?? true,
+      defaultCycleDays: prefs.getInt('default_cycle_days') ?? 30,
+    );
+  }
 
-  CheckInNotifier(this._repository) : super(const AsyncValue.loading());
-
-  Future<void> checkIn() async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final today = DateTime.now();
-      final yesterday = today.subtract(const Duration(days: 1));
-
-      final yesterdayRecord = await _repository.getRecordByDate(yesterday);
-      final lastRecord = await _repository.getLastRecord();
-
-      int streakCount = 1;
-      if (yesterdayRecord != null) {
-        streakCount = lastRecord?.streakCount ?? 0 + 1;
-      }
-
-      await _repository.insertRecord(
-        CheckInRecord(
-          id: uuid.v4(),
-          date: today,
-          streakCount: streakCount,
-          createdAt: today,
-        ),
-      );
-
-      return CheckInState(checkedIn: true, streakCount: streakCount);
-    });
+  Future<void> updateNotifications(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('notifications_enabled', enabled);
+    final current = state.value ?? const SettingsState();
+    state = AsyncValue.data(current.copyWith(enableNotifications: enabled));
   }
 }
 
-class CheckInState {
-  final bool checkedIn;
-  final int streakCount;
-
-  CheckInState({required this.checkedIn, required this.streakCount});
-}
+final settingsProvider =
+    AsyncNotifierProvider<SettingsNotifier, SettingsState>(SettingsNotifier.new);
 ```
 
 ---
@@ -445,40 +479,48 @@ class CheckInState {
 
 ```dart
 // core/router/app_router.dart
-import 'package:go_router/go_router.dart';
-
 final appRouter = GoRouter(
-  initialLocation: '/home',
+  initialLocation: RouteConstants.home,
   routes: [
-    GoRoute(path: '/home', name: 'home', builder: ...),
-    GoRoute(path: '/tasks', name: 'tasks', builder: ..., routes: [
-      GoRoute(path: ':taskId', name: 'task-detail', builder: ...),
-    ]),
-    GoRoute(path: '/check-in', name: 'check-in', builder: ...),
-    GoRoute(path: '/summary', name: 'summary', builder: ...),
-    GoRoute(path: '/cycle-form', name: 'cycle-form', builder: ...),
-    GoRoute(path: '/plan', name: 'plan', builder: ..., routes: [
-      GoRoute(path: 'daily', name: 'daily-plan', builder: ...),
-      GoRoute(path: 'form', name: 'plan-form', builder: ...),
-    ]),
-    GoRoute(path: '/schedule', name: 'schedule', builder: ...),
-    GoRoute(path: '/settings', name: 'settings', builder: ...),
+    // 底部导航 4 个 Tab (各分支独立保活，StatefulShellRoute.indexedStack)
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) =>
+          ScaffoldWithNavBar(navigationShell: navigationShell),
+      branches: [
+        StatefulShellBranch(routes: [/* /home */]),
+        StatefulShellBranch(routes: [/* /daily-plan */]),
+        StatefulShellBranch(routes: [/* /summary */]),
+        StatefulShellBranch(routes: [/* /settings */]),
+      ],
+    ),
+    // 全屏路由 (带自定义转场 LoopPageTransition)
+    GoRoute(path: '/tasks', name: 'tasks', ...),
+    GoRoute(path: '/create-cycle', name: 'create-cycle', ...),
+    GoRoute(path: '/edit-cycle', name: 'edit-cycle', ...),
+    GoRoute(path: '/create-plan', name: 'create-plan', ...),
+    GoRoute(path: '/edit-plan', name: 'edit-plan', ...),
+    GoRoute(path: '/timetables', name: 'timetables', ...),
+    GoRoute(path: '/timetable-detail', name: 'timetable-detail', ...),
+    GoRoute(path: '/timetable-import', name: 'timetable-import', ...),
+    GoRoute(path: '/course-form', name: 'course-form', ...),
   ],
 );
+
+// ScaffoldWithNavBar: 自定义边缘滑动切换 Tab (左右边缘 28px + 速度判定，无 setState)
 ```
 
 ### 6.2 路由导航
 
 ```dart
 // 导航示例
-context.go('/home');                           // 首页
-context.go('/tasks');                          // 任务列表
-context.go('/tasks/${task.id}');               // 任务详情
-context.go('/check-in');                       // 打卡页
-context.go('/cycle-form');                     // 创建/编辑周期
-context.go('/plan/daily');                     // 每日计划
-context.go('/schedule');                       // 日程页
-context.pop();                                 // 返回上一页
+context.go('/home');              // 首页
+context.go('/daily-plan');        // 每日计划
+context.go('/summary');           // 周期总结
+context.go('/settings');          // 设置
+context.go('/tasks');             // 任务列表
+context.go('/timetables');        // 课表列表
+context.push('/create-cycle');    // 创建周期 (push 入栈)
+context.pop();                    // 返回上一页
 ```
 
 ---
@@ -524,7 +566,7 @@ class TaskValidator {
 ### 7.3 计算规则
 
 ```dart
-// domain/services/calculation_service.dart
+// 计算逻辑示例 (完成率 / 周期完成率 / 连续打卡天数)
 class CalculationService {
   // 完成率计算
   static double calculateProgress(int completed, int target) {
@@ -600,12 +642,16 @@ dart run build_runner build
 ### 8.2 产物命名与输出
 
 ```
-格式: Loop_{status}_{version}_{date}.apk
+格式: Loop_{status}_{version}_{date}_{seq}.apk
 
-示例:
-Loop_正式版_1.0.0.1_20260430.apk
-Loop_测试版_1.0.0.2_20260415.apk
-Loop_开发版_0.0.1.3_20260401.apk
+- status: alpha / beta / release / dev / debug
+- version: 如 0.0.13
+- date: YYYYMMDD
+- seq: 01, 02, ...
+
+示例: Loop_alpha_0.0.13_20260626_01.apk
+
+> 详细命名与归档流程见 `docs/TODO/DEV_COMMANDS.md`
 ```
 
 **产物输出目录**: 项目根目录下的 `builds/`（不在 `build/` 内，不受 `flutter clean` 影响）
@@ -621,13 +667,14 @@ Loop_开发版_0.0.1.3_20260401.apk
 
 ```yaml
 # pubspec.yaml
-version: 1.0.0.1  # Major.Minor.Patch.Build
+version: 0.0.13+13  # Major.Minor.Patch+BuildNumber (Flutter 标准格式)
 
 # 版本号规则
-# Major.Minor.Patch.Build
-# 1.0.0.1  - MVP版本
-# 1.1.0.2  - 新增功能
-# 1.1.1.3  - Bug修复
+# Major.Minor.Patch+BuildNumber
+# 0.0.13+13  - 当前 Alpha 版本
+# 1.0.0+1    - MVP 版本
+# 1.1.0+2    - 新增功能
+# 1.1.1+3    - Bug 修复
 ```
 
 ---
@@ -645,7 +692,7 @@ version: 1.0.0.1  # Major.Minor.Patch.Build
 ### 9.2 测试示例
 
 ```dart
-// test/unit/calculation_service_test.dart
+// 计算逻辑测试示例
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -827,6 +874,7 @@ class TaskList extends ConsumerWidget {
 | v1.1.0 | 2026-04-02 | 适配规则体系 v3.1.0，新增 CRITICAL 禁令 + 规则分层引用 |
 | v1.2.0 | 2026-04-04 | 同步项目现状：新增 plan 模块、schedule 页面、l10n、自定义字体、版本号更新 |
 | v1.2.1 | 2026-04-10 | 同步规则体系：新增"必须遵守"章节，修正禁令措辞 |
+| v1.3.0 | 2026-06-26 | 同步至 v0.0.13+13：Riverpod 3.x / go_router 17 / fl_chart 1.x；新增 timetable 课表模块；schemaVersion 升至 4；移除不存在的 schedule/entities/HunYuan |
 
 > **补充规则** (源自 AI-Rules v3.0.0):
 

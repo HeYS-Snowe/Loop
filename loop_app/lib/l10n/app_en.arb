@@ -229,6 +229,10 @@
   "language": "Language",
   "languageZh": "中文",
   "languageEn": "English",
+  "languageJa": "日本語",
+  "languageKo": "한국어",
+  "languageFr": "Français",
+  "languageDe": "Deutsch",
 
   "taskNameRequired": "Please enter task name",
   "taskNameTooLong": "Task name must be under 50 characters",
@@ -396,5 +400,7 @@
   "editScopePastDesc": "Modify this and all past plans",
   "editScopeAll": "All Plans",
   "editScopeAllDesc": "Modify all associated plans",
-  "planInstanceUpdated": "Plan updated"
+  "planInstanceUpdated": "Plan updated",
+  "confirmDeletePlan": "Delete this plan? All related records will be removed.",
+  "planDeleted": "Plan deleted"
 }

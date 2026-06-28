@@ -286,6 +286,10 @@
   "language": "语言",
   "languageZh": "中文",
   "languageEn": "English",
+  "languageJa": "日本語",
+  "languageKo": "한국어",
+  "languageFr": "Français",
+  "languageDe": "Deutsch",
 
   "taskNameRequired": "请输入任务名称",
   "taskNameTooLong": "任务名称不能超过50字符",
@@ -453,5 +457,7 @@
   "editScopePastDesc": "修改当前及之前的所有计划",
   "editScopeAll": "修改全部计划",
   "editScopeAllDesc": "修改所有关联的计划",
-  "planInstanceUpdated": "计划已更新"
+  "planInstanceUpdated": "计划已更新",
+  "confirmDeletePlan": "确定要删除此计划吗？所有相关记录将被清除。",
+  "planDeleted": "计划已删除"
 }
