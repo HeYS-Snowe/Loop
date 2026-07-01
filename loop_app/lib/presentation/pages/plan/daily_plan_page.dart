@@ -21,7 +21,8 @@ class DailyPlanPage extends ConsumerStatefulWidget {
 
 enum _DateViewLevel { day, week, month }
 
-class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
+class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
+    with SingleTickerProviderStateMixin {
   late DateTime _selectedDate;
 
   static const int _startHour = 0;
@@ -45,7 +46,14 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   final Map<int, Offset> _zoomPointers = {};
   double _zoomBaseDistance = 0.0;
 
-  double get _hourHeight => _zoomLevels[_currentZoomLevel].hourHeight;
+  late AnimationController _zoomController;
+  double _animatedHourHeight = 72.0;
+  double _zoomFrom = 72.0;
+  double _zoomTo = 72.0;
+
+  double get _hourHeight => _zoomController.isAnimating
+      ? _animatedHourHeight
+      : _zoomLevels[_currentZoomLevel].hourHeight;
   int get _currentInterval => _zoomLevels[_currentZoomLevel].interval;
 
   _DateViewLevel _dateViewLevel = _DateViewLevel.week;
@@ -63,6 +71,15 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   void initState() {
     super.initState();
     _selectedDate = DateTime.now();
+    _animatedHourHeight = _zoomLevels[_currentZoomLevel].hourHeight;
+    _zoomController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    )..addListener(() {
+        _animatedHourHeight =
+            _zoomFrom + (_zoomTo - _zoomFrom) * _zoomController.value;
+        setState(() {});
+      });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref
           .read(planInstanceNotifierProvider.notifier)
@@ -72,6 +89,7 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
 
   @override
   void dispose() {
+    _zoomController.dispose();
     _weekPageController.dispose();
     _dayPageController.dispose();
     super.dispose();
@@ -218,10 +236,10 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
     final ratio = dist / _zoomBaseDistance;
 
     if (ratio > 1.3 && _currentZoomLevel < _zoomLevels.length - 1) {
-      setState(() => _currentZoomLevel++);
+      _animateZoomTo(_currentZoomLevel + 1);
       _zoomBaseDistance = dist;
     } else if (ratio < 0.7 && _currentZoomLevel > 0) {
-      setState(() => _currentZoomLevel--);
+      _animateZoomTo(_currentZoomLevel - 1);
       _zoomBaseDistance = dist;
     }
   }
@@ -234,6 +252,13 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   void _onZoomPointerCancel(PointerCancelEvent event) {
     _zoomPointers.remove(event.pointer);
     if (_zoomPointers.length < 2) _zoomBaseDistance = 0;
+  }
+
+  void _animateZoomTo(int targetLevel) {
+    _zoomFrom = _hourHeight;
+    _currentZoomLevel = targetLevel;
+    _zoomTo = _zoomLevels[targetLevel].hourHeight;
+    _zoomController.forward(from: 0);
   }
 
   Widget _buildWeekIndicator() {
