@@ -1033,4 +1033,22 @@ class SFr extends S {
 
   @override
   String get planDeleted => 'Plan supprimé';
+
+  @override
+  String get exportSuccess => 'Données exportées';
+
+  @override
+  String get exportFailed => 'Échec de l\'export';
+
+  @override
+  String get filterTasks => 'Filtrer les tâches';
+
+  @override
+  String get storagePermissionDenied =>
+      'L\'autorisation d\'accès au stockage est requise pour analyser les dossiers. Veuillez accorder l\'autorisation dans les paramètres.';
+
+  @override
+  String folderAccessError(String error) {
+    return 'Impossible d\'accéder au dossier : $error';
+  }
 }

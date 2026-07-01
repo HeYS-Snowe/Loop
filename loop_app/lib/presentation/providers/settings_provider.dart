@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../shared/services/notification_service.dart';
 
 final sharedPreferencesProvider =
     FutureProvider<SharedPreferences>((ref) async {
@@ -55,19 +56,48 @@ class SettingsNotifier extends AsyncNotifier<SettingsState> {
     );
   }
 
-  Future<void> updateNotifications(bool enabled) async {
+  Future<void> updateNotifications(bool enabled, {
+    String? title,
+    String? body,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('notifications_enabled', enabled);
     final current = state.value ?? const SettingsState();
     state = AsyncValue.data(current.copyWith(enableNotifications: enabled));
+
+    final notificationService = NotificationService();
+    if (enabled) {
+      await notificationService.showDailyReminder(
+        hour: current.notificationTime.hour,
+        minute: current.notificationTime.minute,
+        title: title ?? 'Loop',
+        body: body ?? '',
+      );
+    } else {
+      await notificationService.cancelAll();
+    }
   }
 
-  Future<void> updateReminderTime(TimeOfDay time) async {
+  Future<void> updateReminderTime(TimeOfDay time, {
+    String? title,
+    String? body,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('reminder_hour', time.hour);
     await prefs.setInt('reminder_minute', time.minute);
     final current = state.value ?? const SettingsState();
     state = AsyncValue.data(current.copyWith(notificationTime: time));
+
+    if (current.enableNotifications) {
+      final notificationService = NotificationService();
+      await notificationService.cancelAll();
+      await notificationService.showDailyReminder(
+        hour: time.hour,
+        minute: time.minute,
+        title: title ?? 'Loop',
+        body: body ?? '',
+      );
+    }
   }
 
   Future<void> updateDefaultCycleDays(int days) async {

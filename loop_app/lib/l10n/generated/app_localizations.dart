@@ -2006,6 +2006,36 @@ abstract class S {
   /// In zh, this message translates to:
   /// **'计划已删除'**
   String get planDeleted;
+
+  /// No description provided for @exportSuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据已导出'**
+  String get exportSuccess;
+
+  /// No description provided for @exportFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出失败'**
+  String get exportFailed;
+
+  /// No description provided for @filterTasks.
+  ///
+  /// In zh, this message translates to:
+  /// **'筛选任务'**
+  String get filterTasks;
+
+  /// No description provided for @storagePermissionDenied.
+  ///
+  /// In zh, this message translates to:
+  /// **'需要\"所有文件访问\"权限才能扫描文件夹，请在设置中授予权限'**
+  String get storagePermissionDenied;
+
+  /// No description provided for @folderAccessError.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法访问文件夹: {error}'**
+  String folderAccessError(String error);
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

@@ -1002,4 +1002,21 @@ class SZh extends S {
 
   @override
   String get planDeleted => '计划已删除';
+
+  @override
+  String get exportSuccess => '数据已导出';
+
+  @override
+  String get exportFailed => '导出失败';
+
+  @override
+  String get filterTasks => '筛选任务';
+
+  @override
+  String get storagePermissionDenied => '需要\"所有文件访问\"权限才能扫描文件夹，请在设置中授予权限';
+
+  @override
+  String folderAccessError(String error) {
+    return '无法访问文件夹: $error';
+  }
 }

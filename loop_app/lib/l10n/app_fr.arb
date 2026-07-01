@@ -402,5 +402,10 @@
   "editScopeAllDesc": "Modifier tous les plans associés",
   "planInstanceUpdated": "Plan mis à jour",
   "confirmDeletePlan": "Supprimer ce plan ? Tous les enregistrements associés seront supprimés.",
-  "planDeleted": "Plan supprimé"
+  "planDeleted": "Plan supprimé",
+  "exportSuccess": "Données exportées",
+  "exportFailed": "Échec de l'export",
+  "filterTasks": "Filtrer les tâches",
+  "storagePermissionDenied": "L'autorisation d'accès au stockage est requise pour analyser les dossiers. Veuillez accorder l'autorisation dans les paramètres.",
+  "folderAccessError": "Impossible d'accéder au dossier : {error}"
 }

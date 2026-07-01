@@ -38,8 +38,4 @@ class AppDateUtils {
         .replaceAll('MM', month)
         .replaceAll('dd', day);
   }
-
-  static String formatDateCN(DateTime date) {
-    return '${date.year}年${date.month}月${date.day}日';
-  }
 }

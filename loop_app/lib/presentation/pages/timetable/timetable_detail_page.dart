@@ -344,126 +344,139 @@ class TimetableDetailPage extends ConsumerWidget {
       s.sunday,
     ];
 
-    return Column(
-      children: courses.map((course) {
-        final color = course.colorHex != null
-            ? _parseColor(course.colorHex!)
-            : AppColors.primary;
-        final weekdayName = weekdayNames[course.weekday - 1];
-
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: courses.length,
+      itemBuilder: (context, index) {
         return Padding(
           padding: const EdgeInsets.only(bottom: 10),
-          child: GlassCard(
-            borderRadius: 14,
-            padding: const EdgeInsets.all(14),
-            onTap: () => context.push(
-              '${RouteConstants.courseForm}?timetableId=$timetableId&courseId=${course.id}',
+          child: _buildCourseCard(context, ref, s, courses[index], weekdayNames),
+        );
+      },
+    );
+  }
+
+  Widget _buildCourseCard(
+    BuildContext context,
+    WidgetRef ref,
+    S s,
+    TimetableCourse course,
+    List<String> weekdayNames,
+  ) {
+    final color = course.colorHex != null
+        ? _parseColor(course.colorHex!)
+        : AppColors.primary;
+    final weekdayName = weekdayNames[course.weekday - 1];
+
+    return GlassCard(
+      borderRadius: 14,
+      padding: const EdgeInsets.all(14),
+      onTap: () => context.push(
+        '${RouteConstants.courseForm}?timetableId=$timetableId&courseId=${course.id}',
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 48,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
             ),
-            child: Row(
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 4,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(2),
+                Text(
+                  course.courseName,
+                  style: TextStyles.body1.copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        course.courseName,
-                        style: TextStyles.body1.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.access_time_rounded,
-                            size: 12,
-                            color: AppColors.textTertiary,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '$weekdayName ${s.periodFormat(course.startPeriod, course.endPeriod)}',
-                            style: TextStyles.caption,
-                          ),
-                        ],
-                      ),
-                      if (course.location != null) ...[
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.location_on_rounded,
-                              size: 12,
-                              color: AppColors.textTertiary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              course.location!,
-                              style: TextStyles.caption,
-                            ),
-                          ],
-                        ),
-                      ],
-                      if (course.teacherName != null) ...[
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.person_rounded,
-                              size: 12,
-                              color: AppColors.textTertiary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              course.teacherName!,
-                              style: TextStyles.caption,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                const SizedBox(height: 4),
+                Row(
                   children: [
-                    Text(
-                      course.weekRanges,
-                      style: TextStyles.caption.copyWith(
-                        color: color,
-                      ),
+                    Icon(
+                      Icons.access_time_rounded,
+                      size: 12,
+                      color: AppColors.textTertiary,
                     ),
-                    const SizedBox(height: 4),
-                    GestureDetector(
-                      onTap: () => _showDeleteCourseConfirmation(
-                        context,
-                        ref,
-                        s,
-                        course,
-                      ),
-                      child: Icon(
-                        Icons.delete_outline_rounded,
-                        size: 18,
-                        color: AppColors.textTertiary.withValues(alpha: 0.6),
-                      ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$weekdayName ${s.periodFormat(course.startPeriod, course.endPeriod)}',
+                      style: TextStyles.caption,
                     ),
                   ],
                 ),
+                if (course.location != null) ...[
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on_rounded,
+                        size: 12,
+                        color: AppColors.textTertiary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        course.location!,
+                        style: TextStyles.caption,
+                      ),
+                    ],
+                  ),
+                ],
+                if (course.teacherName != null) ...[
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.person_rounded,
+                        size: 12,
+                        color: AppColors.textTertiary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        course.teacherName!,
+                        style: TextStyles.caption,
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
-        );
-      }).toList(),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                course.weekRanges,
+                style: TextStyles.caption.copyWith(
+                  color: color,
+                ),
+              ),
+              const SizedBox(height: 4),
+              GestureDetector(
+                onTap: () => _showDeleteCourseConfirmation(
+                  context,
+                  ref,
+                  s,
+                  course,
+                ),
+                child: Icon(
+                  Icons.delete_outline_rounded,
+                  size: 18,
+                  color: AppColors.textTertiary.withValues(alpha: 0.6),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

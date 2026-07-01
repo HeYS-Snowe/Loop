@@ -402,5 +402,10 @@
   "editScopeAllDesc": "모든 관련 계획 수정",
   "planInstanceUpdated": "계획이 수정되었습니다",
   "confirmDeletePlan": "이 계획을 삭제하시겠습니까? 모든 관련 기록이 삭제됩니다.",
-  "planDeleted": "계획이 삭제되었습니다"
+  "planDeleted": "계획이 삭제되었습니다",
+  "exportSuccess": "데이터를 내보냈습니다",
+  "exportFailed": "내보내기 실패",
+  "filterTasks": "작업 필터",
+  "storagePermissionDenied": "폴더를 스캔하려면 저장소 접근 권한이 필요합니다. 설정에서 권한을 부여해 주세요.",
+  "folderAccessError": "폴더에 접근할 수 없습니다: {error}"
 }

@@ -61,7 +61,8 @@ class TaskListPage extends ConsumerWidget {
             const SizedBox(height: 16),
             Text(S.of(context)!.noActiveCycle, style: TextStyles.heading4),
             const SizedBox(height: 8),
-            Text(S.of(context)!.pleaseCreateCycleFirst, style: TextStyles.body2),
+            Text(S.of(context)!.pleaseCreateCycleFirst,
+                style: TextStyles.body2),
             const SizedBox(height: 24),
             Container(
               decoration: BoxDecoration(
@@ -87,7 +88,8 @@ class TaskListPage extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: Text(S.of(context)!.createCycleBtn, style: TextStyles.button),
+                child: Text(S.of(context)!.createCycleBtn,
+                    style: TextStyles.button),
               ),
             ),
           ],
@@ -117,7 +119,7 @@ class TaskListPage extends ConsumerWidget {
             ),
             child: IconButton(
               icon: const Icon(Icons.filter_list_rounded, size: 20),
-              onPressed: () {},
+              onPressed: () => _showFilterSheet(context, ref),
             ),
           ),
         ],
@@ -191,13 +193,17 @@ class TaskListPage extends ConsumerWidget {
 
   Widget _buildTaskList(
       BuildContext context, WidgetRef ref, List<Task> tasks, String cycleId) {
+    final filter = ref.watch(taskFilterProvider);
     final completedTasks = tasks.where((t) => t.isCompleted).toList();
     final pendingTasks = tasks.where((t) => !t.isCompleted).toList();
+
+    final showPending = filter == 0 || filter == 1;
+    final showCompleted = filter == 0 || filter == 2;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 80, 20, 100),
       children: [
-        if (pendingTasks.isNotEmpty) ...[
+        if (showPending && pendingTasks.isNotEmpty) ...[
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
@@ -222,7 +228,7 @@ class TaskListPage extends ConsumerWidget {
                 ),
               )),
         ],
-        if (completedTasks.isNotEmpty) ...[
+        if (showCompleted && completedTasks.isNotEmpty) ...[
           const SizedBox(height: 20),
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
@@ -244,6 +250,65 @@ class TaskListPage extends ConsumerWidget {
               )),
         ],
       ],
+    );
+  }
+
+  void _showFilterSheet(BuildContext context, WidgetRef ref) {
+    final s = S.of(context)!;
+    final current = ref.read(taskFilterProvider);
+    final options = [
+      (0, s.total, Icons.list_rounded),
+      (1, s.inProgress, Icons.play_circle_outline_rounded),
+      (2, s.completed, Icons.check_circle_outline_rounded),
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(s.filterTasks, style: TextStyles.heading4),
+              ),
+              ...options.map((opt) {
+                final (value, label, icon) = opt;
+                final isSelected = value == current;
+                return ListTile(
+                  leading: Icon(icon,
+                      size: 20,
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.textSecondary),
+                  title: Text(label,
+                      style: TextStyles.body1.copyWith(
+                        color: isSelected
+                            ? AppColors.primary
+                            : AppColors.textPrimary,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w400,
+                      )),
+                  trailing: isSelected
+                      ? const Icon(Icons.check_rounded,
+                          size: 18, color: AppColors.primary)
+                      : null,
+                  onTap: () {
+                    ref.read(taskFilterProvider.notifier).setFilter(value);
+                    Navigator.pop(sheetContext);
+                  },
+                );
+              }),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
     );
   }
 

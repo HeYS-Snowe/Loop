@@ -459,5 +459,15 @@
   "editScopeAllDesc": "修改所有关联的计划",
   "planInstanceUpdated": "计划已更新",
   "confirmDeletePlan": "确定要删除此计划吗？所有相关记录将被清除。",
-  "planDeleted": "计划已删除"
+  "planDeleted": "计划已删除",
+  "exportSuccess": "数据已导出",
+  "exportFailed": "导出失败",
+  "filterTasks": "筛选任务",
+  "storagePermissionDenied": "需要\"所有文件访问\"权限才能扫描文件夹，请在设置中授予权限",
+  "folderAccessError": "无法访问文件夹: {error}",
+  "@folderAccessError": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  }
 }

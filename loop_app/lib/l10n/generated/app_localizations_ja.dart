@@ -1004,4 +1004,22 @@ class SJa extends S {
 
   @override
   String get planDeleted => 'プランが削除されました';
+
+  @override
+  String get exportSuccess => 'データをエクスポートしました';
+
+  @override
+  String get exportFailed => 'エクスポートに失敗しました';
+
+  @override
+  String get filterTasks => 'タスクを絞り込む';
+
+  @override
+  String get storagePermissionDenied =>
+      'フォルダをスキャンするにはストレージアクセス権限が必要です。設定で権限を付与してください。';
+
+  @override
+  String folderAccessError(String error) {
+    return 'フォルダにアクセスできません: $error';
+  }
 }

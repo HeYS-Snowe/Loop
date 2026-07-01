@@ -42,7 +42,8 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
     (interval: 5, label: '5m', hourHeight: 864.0),
   ];
   int _currentZoomLevel = 1;
-  double _lastScaleFactor = 1.0;
+  final Map<int, Offset> _zoomPointers = {};
+  double _zoomBaseDistance = 0.0;
 
   double get _hourHeight => _zoomLevels[_currentZoomLevel].hourHeight;
   int get _currentInterval => _zoomLevels[_currentZoomLevel].interval;
@@ -179,22 +180,11 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
   }
 
   Widget _buildDayPageView(List<PlanInstance> instances) {
-    return GestureDetector(
-      onScaleStart: (_) {
-        _lastScaleFactor = 1.0;
-      },
-      onScaleUpdate: (details) {
-        if (details.pointerCount != 2) return;
-        final scaleDelta = details.scale / _lastScaleFactor;
-        _lastScaleFactor = details.scale;
-        if (scaleDelta > 1.15 && _currentZoomLevel < _zoomLevels.length - 1) {
-          setState(() => _currentZoomLevel++);
-          _lastScaleFactor = details.scale;
-        } else if (scaleDelta < 0.85 && _currentZoomLevel > 0) {
-          setState(() => _currentZoomLevel--);
-          _lastScaleFactor = details.scale;
-        }
-      },
+    return Listener(
+      onPointerDown: _onZoomPointerDown,
+      onPointerMove: _onZoomPointerMove,
+      onPointerUp: _onZoomPointerUp,
+      onPointerCancel: _onZoomPointerCancel,
       child: PageView.builder(
         controller: _dayPageController,
         onPageChanged: (page) {
@@ -207,6 +197,43 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage> {
         },
       ),
     );
+  }
+
+  void _onZoomPointerDown(PointerDownEvent event) {
+    _zoomPointers[event.pointer] = event.position;
+    if (_zoomPointers.length == 2) {
+      final pts = _zoomPointers.values.toList();
+      _zoomBaseDistance = (pts[0] - pts[1]).distance;
+    }
+  }
+
+  void _onZoomPointerMove(PointerMoveEvent event) {
+    if (!_zoomPointers.containsKey(event.pointer)) return;
+    _zoomPointers[event.pointer] = event.position;
+
+    if (_zoomPointers.length != 2 || _zoomBaseDistance <= 0) return;
+
+    final pts = _zoomPointers.values.toList();
+    final dist = (pts[0] - pts[1]).distance;
+    final ratio = dist / _zoomBaseDistance;
+
+    if (ratio > 1.3 && _currentZoomLevel < _zoomLevels.length - 1) {
+      setState(() => _currentZoomLevel++);
+      _zoomBaseDistance = dist;
+    } else if (ratio < 0.7 && _currentZoomLevel > 0) {
+      setState(() => _currentZoomLevel--);
+      _zoomBaseDistance = dist;
+    }
+  }
+
+  void _onZoomPointerUp(PointerUpEvent event) {
+    _zoomPointers.remove(event.pointer);
+    if (_zoomPointers.length < 2) _zoomBaseDistance = 0;
+  }
+
+  void _onZoomPointerCancel(PointerCancelEvent event) {
+    _zoomPointers.remove(event.pointer);
+    if (_zoomPointers.length < 2) _zoomBaseDistance = 0;
   }
 
   Widget _buildWeekIndicator() {

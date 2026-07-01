@@ -69,7 +69,9 @@ class _CourseFormPageState extends ConsumerState<CourseFormPage> {
             _selectedColor = Color(
               int.parse(course.colorHex!.replaceFirst('#', '0xFF')),
             );
-          } catch (_) {}
+          } catch (e) {
+            debugPrint('Failed to parse course color: $e');
+          }
         }
       });
     }

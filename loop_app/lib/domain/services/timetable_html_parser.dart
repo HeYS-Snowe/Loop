@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../../data/database/app_database.dart';
 
@@ -64,6 +65,11 @@ class TimetableHtmlParser {
       totalWeeks: totalWeeks,
       courses: courses,
     );
+  }
+
+  /// 在后台 Isolate 中解析 HTML，避免阻塞 UI 线程
+  static Future<ParsedTimetable> parseAsync(String htmlContent) {
+    return compute(parse, htmlContent);
   }
 
   static (ParsedTimetable, bool) parseWithValidation(String htmlContent) {

@@ -402,5 +402,10 @@
   "editScopeAllDesc": "関連するすべてのプランを変更",
   "planInstanceUpdated": "プランが更新されました",
   "confirmDeletePlan": "このプランを削除しますか？関連するすべての記録が削除されます。",
-  "planDeleted": "プランが削除されました"
+  "planDeleted": "プランが削除されました",
+  "exportSuccess": "データをエクスポートしました",
+  "exportFailed": "エクスポートに失敗しました",
+  "filterTasks": "タスクを絞り込む",
+  "storagePermissionDenied": "フォルダをスキャンするにはストレージアクセス権限が必要です。設定で権限を付与してください。",
+  "folderAccessError": "フォルダにアクセスできません: {error}"
 }

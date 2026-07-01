@@ -402,5 +402,10 @@
   "editScopeAllDesc": "Alle verknüpften Pläne ändern",
   "planInstanceUpdated": "Plan aktualisiert",
   "confirmDeletePlan": "Diesen Plan löschen? Alle zugehörigen Datensätze werden entfernt.",
-  "planDeleted": "Plan gelöscht"
+  "planDeleted": "Plan gelöscht",
+  "exportSuccess": "Daten exportiert",
+  "exportFailed": "Export fehlgeschlagen",
+  "filterTasks": "Aufgaben filtern",
+  "storagePermissionDenied": "Speicherzugriffsberechtigung ist erforderlich, um Ordner zu scannen. Bitte erteilen Sie die Berechtigung in den Einstellungen.",
+  "folderAccessError": "Auf Ordner kann nicht zugegriffen werden: {error}"
 }

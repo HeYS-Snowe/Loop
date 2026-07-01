@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/database/app_database.dart';
+import '../../data/models/create_plan_template_params.dart';
 import '../../data/repositories/plan_template_repository.dart';
 import '../../data/repositories/plan_instance_repository.dart';
 import 'cycle_provider.dart';
@@ -50,48 +51,8 @@ class PlanTemplateNotifier extends AsyncNotifier<List<PlanTemplate>> {
   PlanTemplateRepository get _templateRepo =>
       ref.read(planTemplateRepositoryProvider);
 
-  Future<void> createTemplate({
-    required String name,
-    String? description,
-    String? categoryId,
-    int dailyTargetAmount = 0,
-    String? unit,
-    bool enableQuantityTracking = true,
-    String repeatType = 'none',
-    int repeatInterval = 1,
-    String activeDays = '1,2,3,4,5,6,7',
-    int startHour = 8,
-    int startMinute = 0,
-    int endHour = 9,
-    int endMinute = 0,
-    int colorValue = 0xFF2196F3,
-    bool enableTimeSlot = true,
-    bool isActive = true,
-    required DateTime startDate,
-    DateTime? endDate,
-    int sortOrder = 0,
-  }) async {
-    await _templateRepo.createTemplate(
-      name: name,
-      description: description,
-      categoryId: categoryId,
-      dailyTargetAmount: dailyTargetAmount,
-      unit: unit,
-      enableQuantityTracking: enableQuantityTracking,
-      repeatType: repeatType,
-      repeatInterval: repeatInterval,
-      activeDays: activeDays,
-      startHour: startHour,
-      startMinute: startMinute,
-      endHour: endHour,
-      endMinute: endMinute,
-      colorValue: colorValue,
-      enableTimeSlot: enableTimeSlot,
-      isActive: isActive,
-      startDate: startDate,
-      endDate: endDate,
-      sortOrder: sortOrder,
-    );
+  Future<void> createTemplate(CreatePlanTemplateParams params) async {
+    await _templateRepo.createTemplate(params);
     ref.invalidateSelf();
   }
 

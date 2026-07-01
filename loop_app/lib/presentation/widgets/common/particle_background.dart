@@ -40,7 +40,7 @@ class ParticleBackground extends StatefulWidget {
 }
 
 class _ParticleBackgroundState extends State<ParticleBackground>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late AnimationController _controller;
   List<Particle> _particles = [];
   final Random _random = Random(42);
@@ -48,12 +48,25 @@ class _ParticleBackgroundState extends State<ParticleBackground>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 30),
     )..repeat();
 
     _particles = List.generate(widget.particleCount, (_) => _createParticle());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      _controller.stop();
+    } else if (state == AppLifecycleState.resumed) {
+      if (!_controller.isAnimating) {
+        _controller.repeat();
+      }
+    }
   }
 
   Particle _createParticle() {
@@ -77,6 +90,7 @@ class _ParticleBackgroundState extends State<ParticleBackground>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     super.dispose();
   }

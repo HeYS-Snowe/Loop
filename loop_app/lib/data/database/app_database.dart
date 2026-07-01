@@ -291,6 +291,32 @@ class AppDatabase extends _$AppDatabase {
   Future<void> deleteCourse(String id) async {
     await (delete(timetableCourses)..where((c) => c.id.equals(id))).go();
   }
+
+  /// 导出全部数据为 JSON Map
+  Future<Map<String, dynamic>> exportToJson() async {
+    return {
+      'schemaVersion': schemaVersion,
+      'exportedAt': DateTime.now().toIso8601String(),
+      'cycles': (await select(cycles).get())
+          .map((e) => e.toJson()).toList(),
+      'tasks': (await select(tasks).get())
+          .map((e) => e.toJson()).toList(),
+      'checkInRecords': (await select(checkInRecords).get())
+          .map((e) => e.toJson()).toList(),
+      'categories': (await select(categories).get())
+          .map((e) => e.toJson()).toList(),
+      'cycleSummaries': (await select(cycleSummaries).get())
+          .map((e) => e.toJson()).toList(),
+      'planTemplates': (await select(planTemplates).get())
+          .map((e) => e.toJson()).toList(),
+      'planInstances': (await select(planInstances).get())
+          .map((e) => e.toJson()).toList(),
+      'timetables': (await select(timetables).get())
+          .map((e) => e.toJson()).toList(),
+      'timetableCourses': (await select(timetableCourses).get())
+          .map((e) => e.toJson()).toList(),
+    };
+  }
 }
 
 LazyDatabase _openConnection() => openConnection();

@@ -76,3 +76,14 @@ final taskNotifierProvider =
     AsyncNotifierProvider.family<TaskNotifier, List<Task>, String>(
   TaskNotifier.new,
 );
+
+/// 任务筛选模式: 0=全部, 1=进行中, 2=已完成
+class TaskFilterNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void setFilter(int value) => state = value;
+}
+
+final taskFilterProvider =
+    NotifierProvider<TaskFilterNotifier, int>(TaskFilterNotifier.new);

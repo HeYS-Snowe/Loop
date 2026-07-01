@@ -1026,4 +1026,22 @@ class SDe extends S {
 
   @override
   String get planDeleted => 'Plan gelöscht';
+
+  @override
+  String get exportSuccess => 'Daten exportiert';
+
+  @override
+  String get exportFailed => 'Export fehlgeschlagen';
+
+  @override
+  String get filterTasks => 'Aufgaben filtern';
+
+  @override
+  String get storagePermissionDenied =>
+      'Speicherzugriffsberechtigung ist erforderlich, um Ordner zu scannen. Bitte erteilen Sie die Berechtigung in den Einstellungen.';
+
+  @override
+  String folderAccessError(String error) {
+    return 'Auf Ordner kann nicht zugegriffen werden: $error';
+  }
 }

@@ -1,6 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../../core/constants/route_constants.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/text_styles.dart';
@@ -99,10 +102,14 @@ class SettingsPage extends ConsumerWidget {
                             trailing: Switch(
                               value: settings.enableNotifications,
                               onChanged: (value) {
-                                ref
-                                    .read(settingsProvider.notifier)
-                                    .updateNotifications(value);
-                              },
+                              ref
+                                  .read(settingsProvider.notifier)
+                                  .updateNotifications(
+                                    value,
+                                    title: s.dailyReminder,
+                                    body: s.dailyReminderBody,
+                                  );
+                            },
                             ),
                           ),
                           const Divider(height: 1, indent: 20, endIndent: 20),
@@ -124,7 +131,11 @@ class SettingsPage extends ConsumerWidget {
                               if (time != null) {
                                 ref
                                     .read(settingsProvider.notifier)
-                                    .updateReminderTime(time);
+                                    .updateReminderTime(
+                                      time,
+                                      title: s.dailyReminder,
+                                      body: s.dailyReminderBody,
+                                    );
                               }
                             },
                           ),
@@ -263,7 +274,7 @@ class SettingsPage extends ConsumerWidget {
                               color: AppColors.textTertiary,
                               size: 20,
                             ),
-                            onTap: () {},
+                            onTap: () => _exportData(context, ref),
                           ),
                           const Divider(height: 1, indent: 20, endIndent: 20),
                           _buildSettingsTile(
@@ -291,7 +302,7 @@ class SettingsPage extends ConsumerWidget {
                       child: Column(
                         children: [
                           Text(
-                            'Loop v1.0.0',
+                            'Loop v0.0.15',
                             style: TextStyles.caption.copyWith(
                               color: AppColors.textTertiary,
                             ),
@@ -670,6 +681,30 @@ class SettingsPage extends ConsumerWidget {
         );
       },
     );
+  }
+
+  Future<void> _exportData(BuildContext context, WidgetRef ref) async {
+    final s = S.of(context)!;
+    try {
+      final db = ref.read(databaseProvider);
+      final data = await db.exportToJson();
+      final jsonStr = const JsonEncoder.withIndent('  ').convert(data);
+      final dir = await getApplicationDocumentsDirectory();
+      final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-');
+      final file = File('${dir.path}/loop_backup_$timestamp.json');
+      await file.writeAsString(jsonStr);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(s.exportSuccess)),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(s.exportFailed)),
+        );
+      }
+    }
   }
 
   void _showDeleteConfirmation(BuildContext context, WidgetRef ref) {

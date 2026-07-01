@@ -402,5 +402,15 @@
   "editScopeAllDesc": "Modify all associated plans",
   "planInstanceUpdated": "Plan updated",
   "confirmDeletePlan": "Delete this plan? All related records will be removed.",
-  "planDeleted": "Plan deleted"
+  "planDeleted": "Plan deleted",
+  "exportSuccess": "Data exported",
+  "exportFailed": "Export failed",
+  "filterTasks": "Filter Tasks",
+  "storagePermissionDenied": "Storage access permission is required to scan folders. Please grant permission in Settings.",
+  "folderAccessError": "Cannot access folder: {error}",
+  "@folderAccessError": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  }
 }

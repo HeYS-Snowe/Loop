@@ -189,7 +189,7 @@ class TimetableCourseNotifier extends AsyncNotifier<List<TimetableCourse>> {
 
   Future<Timetable> importFromHtml(
       String htmlContent, String timetableName) async {
-    final parsed = TimetableHtmlParser.parse(htmlContent);
+    final parsed = await TimetableHtmlParser.parseAsync(htmlContent);
 
     if (parsed.courses.isEmpty) {
       throw Exception('noCourseData');

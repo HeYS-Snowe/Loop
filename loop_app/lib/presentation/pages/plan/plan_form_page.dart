@@ -6,6 +6,7 @@ import 'package:loop_app/core/constants/palette_colors.dart';
 import 'package:loop_app/core/theme/colors.dart';
 import 'package:loop_app/core/theme/text_styles.dart';
 import 'package:loop_app/data/database/app_database.dart';
+import 'package:loop_app/data/models/create_plan_template_params.dart';
 import 'package:loop_app/l10n/generated/app_localizations.dart';
 import 'package:loop_app/presentation/providers/plan_provider.dart';
 import 'package:loop_app/presentation/providers/timetable_provider.dart';
@@ -1143,22 +1144,28 @@ class _PlanFormPageState extends ConsumerState<PlanFormPage> {
         }
       } else {
         await ref.read(planTemplateNotifierProvider.notifier).createTemplate(
-              name: _nameController.text.trim(),
-              description: _descController.text.trim().isEmpty ? null : _descController.text.trim(),
-              dailyTargetAmount: dailyTargetAmount,
-              unit: _unitController.text.trim().isEmpty ? null : _unitController.text.trim(),
-              enableQuantityTracking: _enableQuantityTracking,
-              repeatType: _repeatType,
-              repeatInterval: repeatInterval,
-              activeDays: activeDays,
-              startHour: _startHour,
-              startMinute: _startMinute,
-              endHour: _endHour,
-              endMinute: _endMinute,
-              colorValue: _selectedColorValue,
-              enableTimeSlot: _enableTimeSlot,
-              startDate: _startDate,
-              endDate: effectiveEndDate,
+              CreatePlanTemplateParams(
+                name: _nameController.text.trim(),
+                description: _descController.text.trim().isEmpty
+                    ? null
+                    : _descController.text.trim(),
+                dailyTargetAmount: dailyTargetAmount,
+                unit: _unitController.text.trim().isEmpty
+                    ? null
+                    : _unitController.text.trim(),
+                enableQuantityTracking: _enableQuantityTracking,
+                repeatType: _repeatType,
+                repeatInterval: repeatInterval,
+                activeDays: activeDays,
+                startHour: _startHour,
+                startMinute: _startMinute,
+                endHour: _endHour,
+                endMinute: _endMinute,
+                colorValue: _selectedColorValue,
+                enableTimeSlot: _enableTimeSlot,
+                startDate: _startDate,
+                endDate: effectiveEndDate,
+              ),
             );
       }
 

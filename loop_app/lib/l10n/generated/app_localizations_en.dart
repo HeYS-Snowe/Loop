@@ -1014,4 +1014,22 @@ class SEn extends S {
 
   @override
   String get planDeleted => 'Plan deleted';
+
+  @override
+  String get exportSuccess => 'Data exported';
+
+  @override
+  String get exportFailed => 'Export failed';
+
+  @override
+  String get filterTasks => 'Filter Tasks';
+
+  @override
+  String get storagePermissionDenied =>
+      'Storage access permission is required to scan folders. Please grant permission in Settings.';
+
+  @override
+  String folderAccessError(String error) {
+    return 'Cannot access folder: $error';
+  }
 }

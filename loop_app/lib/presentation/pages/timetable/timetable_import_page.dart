@@ -527,7 +527,7 @@ class _TimetableImportPageState extends ConsumerState<TimetableImportPage> {
           debugPrint('[TimetableImport] request result: $result');
           if (!result.isGranted) {
             setState(() {
-              _errorMessage = '需要"所有文件访问"权限才能扫描文件夹，请在设置中授予权限';
+              _errorMessage = S.of(context)!.storagePermissionDenied;
             });
             await openAppSettings();
             return;
@@ -544,7 +544,7 @@ class _TimetableImportPageState extends ConsumerState<TimetableImportPage> {
       final result = await _dirContainsHtml(dir);
       if (result.error != null) {
         setState(() {
-          _errorMessage = result.error;
+          _errorMessage = S.of(context)!.folderAccessError(result.error!);
         });
         return;
       }
@@ -609,7 +609,9 @@ class _TimetableImportPageState extends ConsumerState<TimetableImportPage> {
                   '[TimetableImport] Found HTML in subdir: ${entity.path}');
               return subResult;
             }
-          } catch (_) {}
+          } catch (e) {
+            debugPrint('[TimetableImport] Error scanning subdir: $e');
+          }
         }
       }
       debugPrint('[TimetableImport] No HTML found');
@@ -618,7 +620,7 @@ class _TimetableImportPageState extends ConsumerState<TimetableImportPage> {
       debugPrint('[TimetableImport] Error scanning: $e');
       return _DirScanResult(
         found: false,
-        error: '无法访问文件夹: ${e.toString()}',
+        error: e.toString(),
       );
     }
   }

@@ -1004,4 +1004,22 @@ class SKo extends S {
 
   @override
   String get planDeleted => '계획이 삭제되었습니다';
+
+  @override
+  String get exportSuccess => '데이터를 내보냈습니다';
+
+  @override
+  String get exportFailed => '내보내기 실패';
+
+  @override
+  String get filterTasks => '작업 필터';
+
+  @override
+  String get storagePermissionDenied =>
+      '폴더를 스캔하려면 저장소 접근 권한이 필요합니다. 설정에서 권한을 부여해 주세요.';
+
+  @override
+  String folderAccessError(String error) {
+    return '폴더에 접근할 수 없습니다: $error';
+  }
 }
