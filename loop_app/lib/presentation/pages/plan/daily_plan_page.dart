@@ -64,8 +64,15 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
   final PageController _weekPageController = PageController(initialPage: 5200);
   final PageController _dayPageController =
       PageController(initialPage: _dayPageCenter);
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _scrollKey = GlobalKey();
   bool _isSyncingDayPage = false;
   bool _isSyncingWeekPage = false;
+
+  // 缩放锚点: 缩放开始时手指中点对应的内容时间偏移量(分钟)
+  double _zoomAnchorMinutes = 0.0;
+  // 缩放锚点: 手指中点在屏幕上的 Y 坐标(相对于 ScrollController)
+  double _zoomAnchorScreenY = 0.0;
 
   @override
   void initState() {
@@ -78,6 +85,16 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
     )..addListener(() {
         _animatedHourHeight =
             _zoomFrom + (_zoomTo - _zoomFrom) * _zoomController.value;
+        // 保持锚点: 锚点时间在新高度下的内容偏移 = anchorMinutes/60 * newHourHeight
+        // 该内容偏移 - 屏幕Y = scrollOffset
+        final contentOffset =
+            (_zoomAnchorMinutes / 60.0) * _animatedHourHeight +
+                _scrollPaddingTop;
+        final targetScroll = (contentOffset - _zoomAnchorScreenY)
+            .clamp(0.0, _scrollController.position.maxScrollExtent);
+        if (_scrollController.hasClients) {
+          _scrollController.jumpTo(targetScroll);
+        }
         setState(() {});
       });
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -92,6 +109,7 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
     _zoomController.dispose();
     _weekPageController.dispose();
     _dayPageController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -222,6 +240,7 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
     if (_zoomPointers.length == 2) {
       final pts = _zoomPointers.values.toList();
       _zoomBaseDistance = (pts[0] - pts[1]).distance;
+      _updateZoomAnchor();
     }
   }
 
@@ -236,9 +255,11 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
     final ratio = dist / _zoomBaseDistance;
 
     if (ratio > 1.3 && _currentZoomLevel < _zoomLevels.length - 1) {
+      _updateZoomAnchor();
       _animateZoomTo(_currentZoomLevel + 1);
       _zoomBaseDistance = dist;
     } else if (ratio < 0.7 && _currentZoomLevel > 0) {
+      _updateZoomAnchor();
       _animateZoomTo(_currentZoomLevel - 1);
       _zoomBaseDistance = dist;
     }
@@ -252,6 +273,26 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
   void _onZoomPointerCancel(PointerCancelEvent event) {
     _zoomPointers.remove(event.pointer);
     if (_zoomPointers.length < 2) _zoomBaseDistance = 0;
+  }
+
+  /// 计算缩放锚点: 双指中点对应的"时间(分钟)"和"相对视口的Y坐标"
+  void _updateZoomAnchor() {
+    final pts = _zoomPointers.values.toList();
+    final midY = (pts[0].dy + pts[1].dy) / 2;
+
+    final renderBox =
+        _scrollKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null || !_scrollController.hasClients) return;
+
+    final viewportTop = renderBox.localToGlobal(Offset.zero).dy;
+    _zoomAnchorScreenY = midY - viewportTop;
+
+    // 当前滚动偏移 + 视口内Y = 内容绝对Y(含padding)
+    final contentY = _scrollController.offset + _zoomAnchorScreenY;
+    // 减去 padding 得到时间线内的Y
+    final timelineY = (contentY - _scrollPaddingTop).clamp(0.0, double.infinity);
+    // 转换为分钟
+    _zoomAnchorMinutes = (timelineY / _hourHeight) * 60.0;
   }
 
   void _animateZoomTo(int targetLevel) {
@@ -719,6 +760,8 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
               _buildAllDaySection(allDayInstances, templateMap),
             Expanded(
               child: SingleChildScrollView(
+                key: _scrollKey,
+                controller: _scrollController,
                 padding: const EdgeInsets.only(
                   top: _scrollPaddingTop,
                   bottom: _scrollPaddingBottom,
