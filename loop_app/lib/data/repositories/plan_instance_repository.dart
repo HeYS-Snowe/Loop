@@ -96,6 +96,13 @@ class PlanInstanceRepository {
     }
   }
 
+  Future<PlanInstance?> getInstanceById(String id) async {
+    final result = await (_database.select(_database.planInstances)
+          ..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+    return result;
+  }
+
   Future<void> updateInstance(PlanInstance instance) async {
     await _database.update(_database.planInstances).replace(instance);
   }

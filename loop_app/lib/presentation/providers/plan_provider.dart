@@ -128,23 +128,27 @@ class PlanInstanceNotifier extends AsyncNotifier<List<PlanInstance>> {
   }
 
   Future<void> toggleComplete(String instanceId) async {
-    final current = state.value ?? [];
-    final instance = current.firstWhere((i) => i.id == instanceId);
+    final instance = await _instanceRepo.getInstanceById(instanceId);
+    if (instance == null) return;
     if (instance.isCompleted) {
       await _instanceRepo.uncompleteInstance(instanceId);
     } else {
       await _instanceRepo.completeInstance(instanceId);
     }
-    ref.invalidateSelf();
+    final date = DateTime(
+        instance.date.year, instance.date.month, instance.date.day);
+    ref.invalidate(planInstancesByDateProvider(date));
   }
 
   Future<void> updateCompletedAmount(String instanceId, int amount) async {
-    final current = state.value ?? [];
-    final instance = current.firstWhere((i) => i.id == instanceId);
+    final instance = await _instanceRepo.getInstanceById(instanceId);
+    if (instance == null) return;
     await _instanceRepo.updateInstance(
       instance.copyWith(completedAmount: amount),
     );
-    ref.invalidateSelf();
+    final date = DateTime(
+        instance.date.year, instance.date.month, instance.date.day);
+    ref.invalidate(planInstancesByDateProvider(date));
   }
 
   Future<List<PlanInstance>> getInstancesForDate(DateTime date) async {

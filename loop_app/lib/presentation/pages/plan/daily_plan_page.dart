@@ -64,8 +64,10 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
   final PageController _weekPageController = PageController(initialPage: 5200);
   final PageController _dayPageController =
       PageController(initialPage: _dayPageCenter);
-  final ScrollController _scrollController = ScrollController();
-  final GlobalKey _scrollKey = GlobalKey();
+  // 缩放期间追踪滚动位置(避免 ScrollController/GlobalKey 跨多页面冲突)
+  double _currentScrollOffset = 0.0;
+  double _currentMaxScrollExtent = 0.0;
+  BuildContext? _scrollableContext;
   bool _isSyncingDayPage = false;
   bool _isSyncingWeekPage = false;
 
@@ -86,21 +88,19 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
         _animatedHourHeight =
             _zoomFrom + (_zoomTo - _zoomFrom) * _zoomController.value;
         // 保持锚点: 锚点时间在新高度下的内容偏移 = anchorMinutes/60 * newHourHeight
-        // 该内容偏移 - 屏幕Y = scrollOffset
         final contentOffset =
             (_zoomAnchorMinutes / 60.0) * _animatedHourHeight +
                 _scrollPaddingTop;
         final targetScroll = (contentOffset - _zoomAnchorScreenY)
-            .clamp(0.0, _scrollController.position.maxScrollExtent);
-        if (_scrollController.hasClients) {
-          _scrollController.jumpTo(targetScroll);
+            .clamp(0.0, _currentMaxScrollExtent);
+        final ctx = _scrollableContext;
+        if (ctx != null) {
+          Scrollable.of(ctx).position.jumpTo(targetScroll);
         }
         setState(() {});
       });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(planInstanceNotifierProvider.notifier)
-          .loadForDate(_selectedDate);
+      _preloadAdjacentDates(_selectedDate);
     });
   }
 
@@ -109,14 +109,13 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
     _zoomController.dispose();
     _weekPageController.dispose();
     _dayPageController.dispose();
-    _scrollController.dispose();
     super.dispose();
   }
 
   void _changeDate(DateTime date,
       {bool syncDayPage = false, bool syncWeekPage = false}) {
     setState(() => _selectedDate = date);
-    ref.read(planInstanceNotifierProvider.notifier).loadForDate(date);
+    _preloadAdjacentDates(date);
 
     if (syncDayPage && !_isSyncingDayPage) {
       _isSyncingDayPage = true;
@@ -150,10 +149,17 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
     return DateTime(now.year, now.month, now.day).add(Duration(days: diff));
   }
 
+  /// Pre-load data for adjacent dates to ensure smooth swiping
+  void _preloadAdjacentDates(DateTime date) {
+    final prev = date.subtract(const Duration(days: 1));
+    final next = date.add(const Duration(days: 1));
+    ref.read(planInstancesByDateProvider(date).future);
+    ref.read(planInstancesByDateProvider(prev).future);
+    ref.read(planInstancesByDateProvider(next).future);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final instancesAsync = ref.watch(planInstanceNotifierProvider);
-
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: AppColors.backgroundDeep,
@@ -194,18 +200,7 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
                 _buildWeekIndicator(),
                 _buildWeekSelector(),
                 Expanded(
-                  child: instancesAsync.when(
-                    data: (instances) => _buildDayPageView(instances),
-                    loading: () => const Center(
-                      child: CircularProgressIndicator(
-                          color: AppColors.primary, strokeWidth: 2),
-                    ),
-                    error: (e, _) => Center(
-                      child: Text(S.of(context)!.loadFailed(e.toString()),
-                          style: TextStyles.body2
-                              .copyWith(color: AppColors.error)),
-                    ),
-                  ),
+                  child: _buildDayPageView(),
                 ),
               ],
             ),
@@ -215,7 +210,7 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
     );
   }
 
-  Widget _buildDayPageView(List<PlanInstance> instances) {
+  Widget _buildDayPageView() {
     return Listener(
       onPointerDown: _onZoomPointerDown,
       onPointerMove: _onZoomPointerMove,
@@ -229,7 +224,8 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
           _changeDate(date, syncWeekPage: true);
         },
         itemBuilder: (context, page) {
-          return _buildTimeTable(instances);
+          final date = _getDateFromDayPage(page);
+          return _buildTimeTable(date);
         },
       ),
     );
@@ -280,15 +276,16 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
     final pts = _zoomPointers.values.toList();
     final midY = (pts[0].dy + pts[1].dy) / 2;
 
-    final renderBox =
-        _scrollKey.currentContext?.findRenderObject() as RenderBox?;
-    if (renderBox == null || !_scrollController.hasClients) return;
+    final ctx = _scrollableContext;
+    if (ctx == null) return;
+    final renderBox = ctx.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
 
     final viewportTop = renderBox.localToGlobal(Offset.zero).dy;
     _zoomAnchorScreenY = midY - viewportTop;
 
     // 当前滚动偏移 + 视口内Y = 内容绝对Y(含padding)
-    final contentY = _scrollController.offset + _zoomAnchorScreenY;
+    final contentY = _currentScrollOffset + _zoomAnchorScreenY;
     // 减去 padding 得到时间线内的Y
     final timelineY = (contentY - _scrollPaddingTop).clamp(0.0, double.infinity);
     // 转换为分钟
@@ -733,11 +730,14 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
         .add(Duration(days: weekOffset * 7));
   }
 
-  Widget _buildTimeTable(List<PlanInstance> instances) {
+  Widget _buildTimeTable(DateTime date) {
     final templatesFuture = ref.watch(allPlanTemplatesProvider);
+    final instancesAsync = ref.watch(planInstancesByDateProvider(date));
 
     return templatesFuture.when(
       data: (templates) {
+        return instancesAsync.when(
+          data: (instances) {
         final templateMap = {for (final t in templates) t.id: t};
 
         final allDayInstances = <PlanInstance>[];
@@ -759,29 +759,44 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
             if (allDayInstances.isNotEmpty)
               _buildAllDaySection(allDayInstances, templateMap),
             Expanded(
-              child: SingleChildScrollView(
-                key: _scrollKey,
-                controller: _scrollController,
-                padding: const EdgeInsets.only(
-                  top: _scrollPaddingTop,
-                  bottom: _scrollPaddingBottom,
-                ),
-                child: SizedBox(
-                  height: totalHeight,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildTimeLabels(totalHeight),
-                      Expanded(
-                        child: _buildPlanGrid(
-                            timedInstances, templateMap, totalHeight),
-                      ),
-                    ],
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  _currentScrollOffset = notification.metrics.pixels;
+                  _currentMaxScrollExtent = notification.metrics.maxScrollExtent;
+                  _scrollableContext = notification.context;
+                  return false;
+                },
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.only(
+                    top: _scrollPaddingTop,
+                    bottom: _scrollPaddingBottom,
+                  ),
+                  child: SizedBox(
+                    height: totalHeight,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildTimeLabels(totalHeight),
+                        Expanded(
+                          child: _buildPlanGrid(
+                              timedInstances, templateMap, totalHeight),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
           ],
+        );
+          },
+          loading: () => const Center(
+              child: CircularProgressIndicator(
+                  color: AppColors.primary, strokeWidth: 2)),
+          error: (e, _) => Center(
+              child: Text(S.of(context)!.loadFailed(e.toString()),
+                  style:
+                      TextStyles.body2.copyWith(color: AppColors.error))),
         );
       },
       loading: () => const Center(
@@ -1130,7 +1145,7 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
                 const SizedBox(height: 12),
                 _buildDetailProgressBar(progress),
                 const SizedBox(height: 12),
-                _buildAmountInput(instance),
+                _buildAmountInput(instance, context),
               ],
               if (template.description != null &&
                   template.description!.isNotEmpty) ...[
@@ -1195,9 +1210,8 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
           .read(planTemplateNotifierProvider.notifier)
           .deleteTemplate(template.id);
       if (mounted) {
-        ref
-            .read(planInstanceNotifierProvider.notifier)
-            .loadForDate(_selectedDate);
+        final date = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+        ref.invalidate(planInstancesByDateProvider(date));
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(s.planDeleted)),
         );
@@ -1309,7 +1323,7 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
     );
   }
 
-  Widget _buildAmountInput(PlanInstance instance) {
+  Widget _buildAmountInput(PlanInstance instance, BuildContext modalContext) {
     final s = S.of(context)!;
     final controller =
         TextEditingController(text: instance.completedAmount.toString());
@@ -1340,7 +1354,7 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
               ref
                   .read(planInstanceNotifierProvider.notifier)
                   .updateCompletedAmount(instance.id, amount);
-              Navigator.pop(context);
+              Navigator.pop(modalContext);
             },
           ),
         ),
