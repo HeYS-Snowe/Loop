@@ -16,6 +16,7 @@
 | 版本 Version | 日期 Date | 修改人 Modifier | 审核人 Reviewer | 修改内容 Description |
 |-------------|---------|---------------|---------------|-------------------|
 | v1.0.0 | 2026-03-16 | Snowe | | 初始版本 Initial Version |
+| v1.1.0 | 2026-07-01 | Snowe | | 同步实际依赖版本与架构现状：Riverpod 3.x / go_router 17 / Drift 2.22 / fl_chart 1.x；新增 timetable / file_picker / timezone / MiSans 字体；国际化扩展至 6 语言；主题改为暗色青绿系；平台工程扩展至 iOS/macOS/Windows/Web |
 
 ---
 
@@ -172,12 +173,18 @@
 
 | 数据表 Table | 用途 Purpose | 主要字段 Key Fields |
 |-----------|------------|------------------|
-| cycles | 周期数据 | id, type, start_date, end_date |
-| tasks | 任务数据 | id, cycle_id, name, target_amount, completed_amount |
-| progress_records | 进度记录 | id, task_id, date, amount |
-| check_in_records | 打卡记录 | id, date, streak_count |
-| categories | 分类数据 | id, name, color, icon |
-| cycle_summaries | 周期总结 | id, cycle_id, completion_rate, stats_json |
+| cycles | 周期数据 | id, name, start_date, end_date, status, is_active |
+| tasks | 任务数据 | id, cycle_id, name, target_amount, completed_amount, unit, category_id |
+| progress_records | 进度记录 | id, task_id, date, amount, note |
+| check_in_records | 打卡记录 | id, date, streak_count, note |
+| categories | 分类数据 | id, name, color, sort_order |
+| cycle_summaries | 周期总结 | id, cycle_id, completion_rate, total_tasks, max_streak |
+| plan_templates | 计划模板 | id, name, daily_target_amount, repeat_type, active_days, enable_time_slot |
+| plan_instances | 计划实例 | id, plan_template_id, date, target_amount, completed_amount, is_completed |
+| timetables | 课表 | id, name, academic_year, semester, first_week_monday, total_weeks |
+| timetable_courses | 课表课程 | id, timetable_id, course_name, weekday, start_period, end_period, week_ranges |
+
+> 注：schemaVersion = 4，共 10 张表，全部使用 UUID (TEXT 36) 主键。详见《数据库设计说明书 DB Design》。
 
 ---
 
@@ -294,7 +301,7 @@
 │                       基础设施 Infrastructure                  │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐      │
 │  │ Flutter  │  │  Dart    │  │ Android  │  │   Git    │      │
-│  │ SDK 3.22 │  │ SDK 3.4  │  │ API 23+  │  │ + GitHub │      │
+│  │ SDK 3.x  │  │ SDK 3.6+ │  │ API 23+  │  │ + GitHub │      │
 │  └──────────┘  └──────────┘  └──────────┘  └──────────┘      │
 └────────────────────────────────────────────────────────────────┘
 ```

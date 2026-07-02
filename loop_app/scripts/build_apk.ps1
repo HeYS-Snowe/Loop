@@ -3,7 +3,9 @@ param(
     [string]$BuildType = "release",
     
     [ValidateSet("release", "beta", "alpha", "rc", "fix", "hotfix", "feature", "dev", "debug")]
-    [string]$Status = "release"
+    [string]$Status = "release",
+
+    [string]$TargetVersion
 )
 
 $ErrorActionPreference = "Stop"
@@ -168,8 +170,18 @@ Write-Host "  BuildType: $BuildType" -ForegroundColor Gray
 Write-Host "  Status:    $Status" -ForegroundColor Gray
 Write-Host ""
 
-$releaseVersion = Get-IncrementedVersion -currentVersion $Version -status $Status
-$releaseBuildNumber = $BuildNumber + 1
+if ($TargetVersion) {
+    # 验证版本号格式
+    if ($TargetVersion -notmatch '^\d+\.\d+\.\d+$') {
+        Write-Error "Invalid TargetVersion format. Expected 'X.Y.Z', got: $TargetVersion"
+        exit 1
+    }
+    $releaseVersion = $TargetVersion
+    $releaseBuildNumber = $BuildNumber + 1
+} else {
+    $releaseVersion = Get-IncrementedVersion -currentVersion $Version -status $Status
+    $releaseBuildNumber = $BuildNumber + 1
+}
 
 Write-Host "Version:" -ForegroundColor Cyan
 Write-Host "  Current: $Version+$BuildNumber" -ForegroundColor Gray

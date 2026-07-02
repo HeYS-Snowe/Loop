@@ -1077,7 +1077,8 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
       ),
       builder: (context) {
         return Padding(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.fromLTRB(20, 20, 20,
+              20 + MediaQuery.of(context).viewInsets.bottom),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1114,7 +1115,7 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
                     },
                   ),
                   const SizedBox(width: 12),
-                  _buildCompletionToggle(instance),
+                  _buildCompletionToggle(instance, context),
                 ],
               ),
               const SizedBox(height: 16),
@@ -1235,13 +1236,13 @@ class _DailyPlanPageState extends ConsumerState<DailyPlanPage>
     }
   }
 
-  Widget _buildCompletionToggle(PlanInstance instance) {
+  Widget _buildCompletionToggle(PlanInstance instance, BuildContext modalContext) {
     return GestureDetector(
       onTap: () {
         ref
             .read(planInstanceNotifierProvider.notifier)
             .toggleComplete(instance.id);
-        Navigator.pop(context);
+        Navigator.pop(modalContext);
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
